@@ -39,6 +39,8 @@ arduino-cli compile --fqbn arduino:esp32:nano_nora --warnings default --build-pr
 ```
 
 ### Upload
+
+#### USB Upload
 ```bash
 # Using standalone arduino-cli
 arduino-cli upload --fqbn arduino:esp32:nano_nora .
@@ -46,6 +48,25 @@ arduino-cli upload --fqbn arduino:esp32:nano_nora .
 # Using bundled arduino-cli from Arduino IDE 2.x (macOS)
 "/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli" upload --fqbn arduino:esp32:nano_nora .
 ```
+
+#### OTA (Over-The-Air) Upload
+Once WiFi credentials are configured (see WiFi Setup section below), firmware can be uploaded wirelessly:
+
+```bash
+# Find the espota.py script location
+# Typical location: /Users/<user>/Library/Arduino15/packages/esp32/hardware/esp32/<version>/tools/espota.py
+
+# Upload via OTA using espota.py
+python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
+  -i 192.168.86.121 \
+  -p 3232 \
+  -f /Users/gustavoambrozio/Library/Caches/arduino/sketches/CFEAF06617210DBB2CA2FA8CA76E4A7E/sand-garden.ino.bin
+
+# Or use the device hostname (mDNS)
+python3 /path/to/espota.py -i sand-garden.local -p 3232 -f /path/to/sand-garden.ino.bin
+```
+
+**Note**: `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
 
 ### VS Code Tasks
 The repository includes VS Code tasks:
@@ -55,6 +76,33 @@ The repository includes VS Code tasks:
 ### Board Configuration
 - **Board**: Arduino Nano ESP32 (`arduino:esp32:nano_nora`)
 - **Required flag**: `-fpermissive` (compiler.cpp.extra_flags)
+
+### WiFi Setup
+
+The firmware supports WiFi connectivity for OTA updates and network features. WiFi credentials are stored persistently in NVS (Non-Volatile Storage) and survive reboots and firmware updates.
+
+#### Configuring WiFi Credentials
+
+1. **Open wifi-setup.html** in Chrome or Edge (requires Web Bluetooth)
+2. Click "Connect to Sand Garden via Bluetooth" and pair with the device
+3. Enter your WiFi SSID and password
+4. Click "Send WiFi Credentials"
+5. The device will connect to WiFi and display its IP address
+
+#### WiFi Persistence Implementation
+
+WiFi credentials are stored using the ESP32 Preferences library:
+- **Namespace**: `wifi`
+- **Keys**: `ssid` (String), `password` (String), `enabled` (bool)
+- **Functions**: `loadWiFiCredentials()` and `saveWiFiCredentials()` in sand-garden.ino
+- **Auto-connect**: On boot, `setup()` loads credentials and connects if available
+
+#### Network Discovery
+
+Once connected to WiFi:
+- **mDNS hostname**: `sand-garden.local`
+- **OTA port**: 3232 (ArduinoOTA)
+- Device IP can be obtained from Serial output or BLE WiFi status notifications
 
 ## Code Architecture
 

@@ -73,6 +73,26 @@ void BLEConfigServer::begin(ISGConfigListener *listener) {
   _scriptChar->setValue("");
   _scriptChar->setCallbacks(new ScriptCallbacks(this));
 
+  // WiFi SSID characteristic (write/read for network name)
+  _wifiSSIDChar = _service->createCharacteristic(
+    SG_WIFI_SSID_CHAR_UUID,
+    NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  _wifiSSIDChar->setValue("");
+  _wifiSSIDChar->setCallbacks(new WiFiSSIDCallbacks(this));
+
+  // WiFi Password characteristic (write-only for security)
+  _wifiPasswordChar = _service->createCharacteristic(
+    SG_WIFI_PASS_CHAR_UUID,
+    NIMBLE_PROPERTY::WRITE);
+  _wifiPasswordChar->setValue("");
+  _wifiPasswordChar->setCallbacks(new WiFiPasswordCallbacks(this));
+
+  // WiFi Status characteristic (read/notify for connection status)
+  _wifiStatusChar = _service->createCharacteristic(
+    SG_WIFI_STATUS_CHAR_UUID,
+    NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  _wifiStatusChar->setValue("Disconnected");
+
   _service->start();
   NimBLEAdvertising *adv = NimBLEDevice::getAdvertising();
   // --- Advertising configuration ---
@@ -176,6 +196,13 @@ void BLEConfigServer::notifyTelemetry(const String &msg) {
   if (_telemetryChar) {
     _telemetryChar->setValue(std::string(msg.c_str()));
     _telemetryChar->notify();
+  }
+}
+
+void BLEConfigServer::notifyWiFiStatus(const String &msg) {
+  if (_wifiStatusChar) {
+    _wifiStatusChar->setValue(std::string(msg.c_str()));
+    _wifiStatusChar->notify();
   }
 }
 
@@ -492,4 +519,46 @@ void BLEConfigServer::ScriptCallbacks::onWrite(NimBLECharacteristic *c, NimBLECo
   _parent->_scriptReceivedLen += chunkLen;
   _parent->_scriptLastChunkMs = millis();
   _parent->_scriptProgressDirty = true;
+}
+
+// WiFi SSID characteristic callback
+void BLEConfigServer::WiFiSSIDCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
+  (void)info;
+  _parent->_applyWiFiSSIDWrite(c->getValue());
+}
+
+// WiFi Password characteristic callback
+void BLEConfigServer::WiFiPasswordCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
+  (void)info;
+  _parent->_applyWiFiPasswordWrite(c->getValue());
+}
+
+// Apply WiFi SSID write
+void BLEConfigServer::_applyWiFiSSIDWrite(const std::string &valRaw) {
+  _wifiSSID = String(valRaw.c_str());
+  if (_wifiSSIDChar) {
+    _wifiSSIDChar->setValue(valRaw);
+  }
+  notifyStatus(String("[WiFi] SSID set: ") + _wifiSSID);
+
+  // If both SSID and password are set, trigger WiFi connection
+  if (_wifiSSID.length() > 0 && _wifiPassword.length() > 0) {
+    if (_listener) {
+      _listener->onWiFiCredentialsReceived(_wifiSSID, _wifiPassword);
+    }
+  }
+}
+
+// Apply WiFi Password write
+void BLEConfigServer::_applyWiFiPasswordWrite(const std::string &valRaw) {
+  _wifiPassword = String(valRaw.c_str());
+  // Don't echo password in notifications for security
+  notifyStatus("[WiFi] Password received");
+
+  // If both SSID and password are set, trigger WiFi connection
+  if (_wifiSSID.length() > 0 && _wifiPassword.length() > 0) {
+    if (_listener) {
+      _listener->onWiFiCredentialsReceived(_wifiSSID, _wifiPassword);
+    }
+  }
 }
