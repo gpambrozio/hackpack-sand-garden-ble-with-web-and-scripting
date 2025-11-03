@@ -21,6 +21,12 @@
 #define SG_COMMAND_CHAR_UUID        "9b6c7e17-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 // SandScript bulk transfer characteristic (write-only chunks)
 #define SG_SCRIPT_CHAR_UUID         "9b6c7e18-3b2c-4d8c-9d7c-5e2a6d1f8b01"
+// WiFi SSID characteristic (write/read for WiFi network name)
+#define SG_WIFI_SSID_CHAR_UUID      "9b6c7e19-3b2c-4d8c-9d7c-5e2a6d1f8b01"
+// WiFi Password characteristic (write-only for WiFi password)
+#define SG_WIFI_PASS_CHAR_UUID      "9b6c7e1a-3b2c-4d8c-9d7c-5e2a6d1f8b01"
+// WiFi Status characteristic (read/notify for connection status and IP)
+#define SG_WIFI_STATUS_CHAR_UUID    "9b6c7e1b-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 
 // Name of the BLE peripheral
 #define SG_DEVICE_NAME "Sand Garden"
@@ -39,6 +45,8 @@ public:
   virtual void onPatternScriptReceived(const std::string &script, int slotIndex) { (void)script; (void)slotIndex; }
   // Optional progress messages (BEGIN/CHUNK/END/ABORT) for UI logging. Default ignore.
   virtual void onPatternScriptStatus(const String &msg) { (void)msg; }
+  // Called when WiFi credentials are received via BLE. Default no-op.
+  virtual void onWiFiCredentialsReceived(const String &ssid, const String &password) { (void)ssid; (void)password; }
 };
 
 class BLEConfigServer {
@@ -58,6 +66,7 @@ public:
   void setRunState(bool r);
   void notifyStatus(const String &msg);
   void notifyTelemetry(const String &msg);
+  void notifyWiFiStatus(const String &msg);
   // Manual controls (invoked via command characteristic tokens or future API)
   void restartAdvertising(const char *reasonTag = nullptr);
   void disconnectAll(const char *reasonTag = nullptr);
@@ -105,12 +114,28 @@ private:
   private:
     BLEConfigServer *_parent;
   };
+  class WiFiSSIDCallbacks : public NimBLECharacteristicCallbacks {
+  public:
+    WiFiSSIDCallbacks(BLEConfigServer *parent) : _parent(parent) {}
+    void onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) override;
+  private:
+    BLEConfigServer *_parent;
+  };
+  class WiFiPasswordCallbacks : public NimBLECharacteristicCallbacks {
+  public:
+    WiFiPasswordCallbacks(BLEConfigServer *parent) : _parent(parent) {}
+    void onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) override;
+  private:
+    BLEConfigServer *_parent;
+  };
 
   void _applySpeedWrite(const std::string &valRaw);
   void _applyPatternWrite(const std::string &valRaw);
   void _applyModeWrite(const std::string &valRaw);
   void _applyRunWrite(const std::string &valRaw);
   void _applyCommandWrite(const std::string &valRaw);
+  void _applyWiFiSSIDWrite(const std::string &valRaw);
+  void _applyWiFiPasswordWrite(const std::string &valRaw);
   void _handleScriptCommand(const std::string &token, const std::string &payload);
   void _resetScriptTransfer(const char *reasonTag, bool notify = true);
   void _finalizeScriptTransfer();
@@ -125,6 +150,9 @@ private:
   NimBLECharacteristic *_telemetryChar = nullptr; // notify/read
   NimBLECharacteristic *_commandChar = nullptr;   // write/read
   NimBLECharacteristic *_scriptChar = nullptr;    // write-only chunk sink
+  NimBLECharacteristic *_wifiSSIDChar = nullptr;     // WiFi SSID (write/read)
+  NimBLECharacteristic *_wifiPasswordChar = nullptr; // WiFi password (write-only)
+  NimBLECharacteristic *_wifiStatusChar = nullptr;   // WiFi status (read/notify)
 
   ISGConfigListener *_listener = nullptr;
 
@@ -187,4 +215,8 @@ private:
   uint32_t _scriptLastChunkMs = 0;
   bool _scriptProgressDirty = false;
   uint32_t _scriptLastProgressNotifyMs = 0;
+
+  // WiFi credential storage
+  String _wifiSSID = "";
+  String _wifiPassword = "";
 };

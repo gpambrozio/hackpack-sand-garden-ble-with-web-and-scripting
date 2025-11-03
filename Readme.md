@@ -94,10 +94,46 @@ next_radius = pingpong(time * 0.005, 4)
 
    *Live telemetry (bottom pane) compares the device-reported step/radius/angle with the browser simulation.*
 
+## WiFi and OTA (Over-The-Air) Updates
+
+This firmware supports wireless updates via WiFi. Once configured, you can upload new firmware without needing a USB cable.
+
+### Setting up WiFi
+
+1. **Open `wifi-setup.html`** in Chrome or Edge (supports Web Bluetooth).
+2. **Click "Connect to Sand Garden"** and pair with your device.
+3. **Enter your WiFi credentials** (SSID and password) and click "Send WiFi Credentials".
+4. The device will attempt to connect to WiFi. Watch the status messages for connection confirmation.
+5. Once connected, you'll see a message with the device's IP address.
+
+### Uploading firmware via OTA
+
+After WiFi is configured and connected:
+
+**Using Arduino IDE:**
+1. Go to Tools → Port
+2. Select the network port: "sand-garden at [IP address]"
+3. Click Upload as normal
+
+**Using Arduino CLI:**
+```bash
+arduino-cli upload --fqbn arduino:esp32:nano_nora --port sand-garden.local .
+```
+
+**Note:** The device hostname is `sand-garden.local` for mDNS discovery.
+
+### OTA Features
+- Motor control is automatically disabled during updates for safety
+- Pattern execution stops during OTA
+- Progress is reported via BLE status notifications
+- WiFi credentials persist between reboots (stored in device memory)
+
 ## Tips & troubleshooting
 - The joystick is connected by default to 5V provided from USBc; the ESP32 analog pins prefer ~3.3V. I am scaling this roughly in the sfotware, but it may be dangerous for microprocessor. For long-term use add a simple voltage divider per axis so the readings stay within spec.
-- Use the web client’s status pane to inspect BLE messages.
+- Use the web client's status pane to inspect BLE messages.
 - Pattern slot 11 always runs the most recently compiled SandScript (preset or uploaded). Switching to another pattern and back will restart your script from its first step.
+- If WiFi connection fails, use `wifi-setup.html` to send credentials again.
+- OTA updates require the device to be on the same WiFi network as your computer.
 
  ![Visualizer showing a pattern][pattern-visualization]
 

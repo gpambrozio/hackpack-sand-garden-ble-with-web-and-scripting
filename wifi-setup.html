@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sand Garden WiFi Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        h2 {
+            color: #555;
+            font-size: 18px;
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .status-line {
+            margin: 5px 0;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏖️ Sand Garden WiFi Setup</h1>
+
+        <button id="connect">Connect to Sand Garden via Bluetooth</button>
+
+        <div id="wifiForm" style="display:none;">
+            <h2>Enter WiFi Credentials</h2>
+            <input type="text" id="ssid" placeholder="WiFi SSID (Network Name)" />
+            <input type="password" id="password" placeholder="WiFi Password (leave empty if no password)" />
+            <button id="sendWifi">Send WiFi Credentials</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // BLE UUIDs for WiFi characteristics
+        const WIFI_SSID_UUID = '9b6c7e19-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+        const WIFI_PASS_UUID = '9b6c7e1a-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+        const WIFI_STATUS_UUID = '9b6c7e1b-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+        const SERVICE_UUID = '9b6c7e10-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+
+        let device, server, service;
+        let ssidChar, passChar, statusChar;
+
+        function addStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const line = document.createElement('div');
+            line.className = `status-line ${type}`;
+            line.textContent = message;
+            statusDiv.appendChild(line);
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        function clearStatus() {
+            document.getElementById('status').innerHTML = '';
+        }
+
+        document.getElementById('connect').addEventListener('click', async () => {
+            clearStatus();
+
+            try {
+                addStatus('Searching for Sand Garden...');
+
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'Sand Garden' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                addStatus('Connecting to ' + device.name + '...');
+                server = await device.gatt.connect();
+
+                addStatus('Getting service...');
+                service = await server.getPrimaryService(SERVICE_UUID);
+
+                addStatus('Getting WiFi characteristics...');
+                ssidChar = await service.getCharacteristic(WIFI_SSID_UUID);
+                passChar = await service.getCharacteristic(WIFI_PASS_UUID);
+                statusChar = await service.getCharacteristic(WIFI_STATUS_UUID);
+
+                addStatus('Subscribing to WiFi status updates...');
+                await statusChar.startNotifications();
+                statusChar.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = new TextDecoder().decode(event.target.value);
+                    addStatus('Device: ' + value, 'info');
+                });
+
+                document.getElementById('wifiForm').style.display = 'block';
+                document.getElementById('connect').disabled = true;
+                addStatus('✓ Connected to Sand Garden successfully!', 'success');
+                addStatus('Enter your WiFi credentials below.', 'info');
+
+            } catch (error) {
+                addStatus('Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        document.getElementById('sendWifi').addEventListener('click', async () => {
+            const ssid = document.getElementById('ssid').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!ssid) {
+                alert('Please enter WiFi SSID');
+                return;
+            }
+
+            try {
+                addStatus('Sending SSID: ' + ssid + '...');
+                const encoder = new TextEncoder();
+
+                await ssidChar.writeValue(encoder.encode(ssid));
+                addStatus('✓ SSID sent successfully', 'success');
+
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                addStatus('Sending password...');
+                await passChar.writeValue(encoder.encode(password));
+                addStatus('✓ Password sent successfully', 'success');
+
+                addStatus('Device is now attempting to connect to WiFi...', 'info');
+                addStatus('Watch for status updates above. This may take 10-15 seconds.', 'info');
+
+                document.getElementById('sendWifi').disabled = true;
+
+            } catch (error) {
+                addStatus('Error sending credentials: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        // Handle disconnection
+        if (navigator.bluetooth) {
+            navigator.bluetooth.addEventListener('advertisementreceived', () => {
+                // Optional: handle reconnection
+            });
+        }
+    </script>
+</body>
+</html>

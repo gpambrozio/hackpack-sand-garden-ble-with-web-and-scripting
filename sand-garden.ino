@@ -35,6 +35,9 @@ INCLUDED LIBRARIES
 #include <FastLED.h>         //Controls the RGB LEDs
 #include <OneButtonTiny.h>   //Button management and debouncing
 #include <NimBLEDevice.h>    // Ensure NimBLE core available for BLEConfigServer
+#include <WiFi.h>            // WiFi for ESP32
+#include <ESPmDNS.h>         // mDNS for OTA discovery
+#include <ArduinoOTA.h>      // OTA update functionality
 #include "BLEConfigServer.h" // BLE configuration server (modular config service)
 #include "Positions.h"       // shared Positions struct for external modules
 #include "PatternScript.h"   // SandScript compiler/runtime
@@ -333,6 +336,12 @@ static bool compileSandScriptPreset(size_t index, String &errOut) {
 // ---------------- BLE Configuration Integration (listener defined later to access globals) ----------------
 static BLEConfigServer bleConfig; // forward object; listener class will be defined after globals
 
+// ---------------- WiFi and OTA Configuration ----------------
+static String g_wifiSSID = "";      // WiFi SSID (set via BLE)
+static String g_wifiPassword = "";  // WiFi password (set via BLE)
+static bool g_wifiEnabled = false;  // WiFi connection enabled flag
+static bool g_otaActive = false;    // OTA update in progress flag
+
 static std::string g_pendingScriptSource;
 static int g_pendingScriptSlot = -1;
 static String g_pendingScriptLabel;
@@ -381,6 +390,11 @@ static const uint8_t JOY_DELTA_THRESHOLD = 5;
 static void setPatternLocal(int p);
 static void setAutoModeLocal(bool m);
 static void setRunLocal(bool r);
+
+// Forward declarations for WiFi and OTA functions
+static void setupWiFi();
+static void setupOTA();
+static void handleOTA();
 
 // Listener implementation responding to remote config writes (now globals are defined)
 class SandGardenConfigListener : public ISGConfigListener
@@ -597,6 +611,19 @@ public:
     }
     // Unknown command
     bleConfig.notifyStatus(String("[CMD] UNKNOWN ") + cmd);
+  }
+
+  void onWiFiCredentialsReceived(const String &ssid, const String &password) override
+  {
+    // Store credentials in global variables
+    g_wifiSSID = ssid;
+    g_wifiPassword = password;
+    g_wifiEnabled = true;
+
+    bleConfig.notifyStatus("[WiFi] Connecting to " + ssid);
+
+    // Attempt WiFi connection
+    setupWiFi();
   }
 };
 static SandGardenConfigListener bleListener;
@@ -1000,6 +1027,107 @@ OneButtonTiny button(BUTTON_PIN, true, true); // set up the button (button pin, 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
+WiFi AND OTA SETUP FUNCTIONS
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void setupWiFi()
+{
+  if (!g_wifiEnabled || g_wifiSSID.length() == 0)
+  {
+    return;
+  }
+
+  bleConfig.notifyWiFiStatus("Connecting...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(g_wifiSSID.c_str(), g_wifiPassword.c_str());
+
+  // Wait up to 10 seconds for connection
+  uint32_t startAttempt = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 10000)
+  {
+    delay(100);
+    yield();
+  }
+
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    String msg = "Connected! IP: " + WiFi.localIP().toString();
+    bleConfig.notifyWiFiStatus(msg);
+    bleConfig.notifyStatus("[WiFi] " + msg);
+
+    // Setup OTA now that WiFi is connected
+    setupOTA();
+  }
+  else
+  {
+    String msg = "Connection failed";
+    bleConfig.notifyWiFiStatus(msg);
+    bleConfig.notifyStatus("[WiFi] " + msg);
+    WiFi.disconnect(true);
+    g_wifiEnabled = false;
+  }
+}
+
+static void setupOTA()
+{
+  // Hostname for OTA
+  ArduinoOTA.setHostname("sand-garden");
+
+  // Password for OTA (optional - comment out for no password)
+  // ArduinoOTA.setPassword("admin");
+
+  ArduinoOTA.onStart([]() {
+    g_otaActive = true;
+    String type = (ArduinoOTA.getCommand() == U_FLASH) ? "sketch" : "filesystem";
+    bleConfig.notifyStatus("[OTA] Update start: " + type);
+    // Stop pattern execution during OTA
+    setRunLocal(false);
+    // Disable motors during OTA
+    stepperAngle.disableOutputs();
+    stepperRadius.disableOutputs();
+  });
+
+  ArduinoOTA.onEnd([]() {
+    bleConfig.notifyStatus("[OTA] Update complete");
+    g_otaActive = false;
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    static unsigned int lastPercent = 0;
+    unsigned int percent = (progress / (total / 100));
+    if (percent != lastPercent && percent % 10 == 0)
+    {
+      bleConfig.notifyStatus("[OTA] Progress: " + String(percent) + "%");
+      lastPercent = percent;
+    }
+  });
+
+  ArduinoOTA.onError([](ota_error_t error) {
+    String errorMsg = "[OTA] Error[" + String(error) + "]: ";
+    if (error == OTA_AUTH_ERROR) errorMsg += "Auth Failed";
+    else if (error == OTA_BEGIN_ERROR) errorMsg += "Begin Failed";
+    else if (error == OTA_CONNECT_ERROR) errorMsg += "Connect Failed";
+    else if (error == OTA_RECEIVE_ERROR) errorMsg += "Receive Failed";
+    else if (error == OTA_END_ERROR) errorMsg += "End Failed";
+    bleConfig.notifyStatus(errorMsg);
+    g_otaActive = false;
+  });
+
+  ArduinoOTA.begin();
+  bleConfig.notifyStatus("[OTA] Ready. Hostname: sand-garden");
+}
+
+static void handleOTA()
+{
+  if (g_wifiEnabled && WiFi.status() == WL_CONNECTED)
+  {
+    ArduinoOTA.handle();
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
 SETUP FUNCTION (runs once when Arduino powers on)
 */
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1075,6 +1203,7 @@ void loop()
 {
   processPendingSandScript();
   bleConfig.loop(); // service BLE events if needed
+  handleOTA(); // handle OTA update requests
   // (Removed LED direct, self-test, and scan debug handling)
 
   // Check to see if the button has been pressed. This has to be called as often as possible to catch button presses.
