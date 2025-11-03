@@ -38,6 +38,7 @@ INCLUDED LIBRARIES
 #include <WiFi.h>            // WiFi for ESP32
 #include <ESPmDNS.h>         // mDNS for OTA discovery
 #include <ArduinoOTA.h>      // OTA update functionality
+#include <Preferences.h>     // Persistent storage for WiFi credentials
 #include "BLEConfigServer.h" // BLE configuration server (modular config service)
 #include "Positions.h"       // shared Positions struct for external modules
 #include "PatternScript.h"   // SandScript compiler/runtime
@@ -337,6 +338,7 @@ static bool compileSandScriptPreset(size_t index, String &errOut) {
 static BLEConfigServer bleConfig; // forward object; listener class will be defined after globals
 
 // ---------------- WiFi and OTA Configuration ----------------
+static Preferences g_wifiPrefs;     // Persistent storage for WiFi credentials
 static String g_wifiSSID = "";      // WiFi SSID (set via BLE)
 static String g_wifiPassword = "";  // WiFi password (set via BLE)
 static bool g_wifiEnabled = false;  // WiFi connection enabled flag
@@ -392,6 +394,8 @@ static void setAutoModeLocal(bool m);
 static void setRunLocal(bool r);
 
 // Forward declarations for WiFi and OTA functions
+static void loadWiFiCredentials();
+static void saveWiFiCredentials();
 static void setupWiFi();
 static void setupOTA();
 static void handleOTA();
@@ -619,6 +623,9 @@ public:
     g_wifiSSID = ssid;
     g_wifiPassword = password;
     g_wifiEnabled = true;
+
+    // Persist credentials to NVS
+    saveWiFiCredentials();
 
     bleConfig.notifyStatus("[WiFi] Connecting to " + ssid);
 
@@ -1031,6 +1038,31 @@ WiFi AND OTA SETUP FUNCTIONS
 */
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void loadWiFiCredentials()
+{
+  g_wifiPrefs.begin("wifi", true); // Open in read-only mode
+  g_wifiSSID = g_wifiPrefs.getString("ssid", "");
+  g_wifiPassword = g_wifiPrefs.getString("password", "");
+  g_wifiEnabled = g_wifiPrefs.getBool("enabled", false);
+  g_wifiPrefs.end();
+
+  if (g_wifiSSID.length() > 0)
+  {
+    bleConfig.notifyStatus("[WiFi] Loaded credentials for: " + g_wifiSSID);
+  }
+}
+
+static void saveWiFiCredentials()
+{
+  g_wifiPrefs.begin("wifi", false); // Open in read-write mode
+  g_wifiPrefs.putString("ssid", g_wifiSSID);
+  g_wifiPrefs.putString("password", g_wifiPassword);
+  g_wifiPrefs.putBool("enabled", g_wifiEnabled);
+  g_wifiPrefs.end();
+
+  bleConfig.notifyStatus("[WiFi] Credentials saved");
+}
+
 static void setupWiFi()
 {
   if (!g_wifiEnabled || g_wifiSSID.length() == 0)
@@ -1187,6 +1219,13 @@ void setup()
 
   bleConfig.begin(&bleListener);
   bleConfig.notifyStatus("Ready");
+
+  // Load WiFi credentials from persistent storage and connect if available
+  loadWiFiCredentials();
+  if (g_wifiEnabled && g_wifiSSID.length() > 0)
+  {
+    setupWiFi();
+  }
 }
 
 // (Removed LED self-test and LED scan utilities)
