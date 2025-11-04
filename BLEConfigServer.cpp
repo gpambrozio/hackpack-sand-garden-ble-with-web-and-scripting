@@ -201,7 +201,7 @@ void BLEConfigServer::setRunState(bool r) {
 }
 
 void BLEConfigServer::setLedEffect(uint8_t e) {
-  if (e > 9) return; // Valid range 0-9
+  if (e >= NUM_PATTERN_LED_EFFECTS) return; // Valid range 0 to NUM_PATTERN_LED_EFFECTS-1
   if (_ledEffect == e) return;
   _ledEffect = e;
   if (_ledEffectChar) {
@@ -347,7 +347,7 @@ void BLEConfigServer::_applyRunWrite(const std::string &valRaw) {
 
 void BLEConfigServer::_applyLedEffectWrite(const std::string &valRaw) {
   int v = atoi(valRaw.c_str());
-  if (v >= 0 && v <= 9) {
+  if (v >= 0 && v < NUM_PATTERN_LED_EFFECTS) {
     setLedEffect(static_cast<uint8_t>(v));
   }
 }

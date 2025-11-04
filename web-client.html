@@ -229,7 +229,7 @@
             </template>
           </ul>
           <!-- Color Picker (only visible when Solid Color effect is selected) -->
-          <div x-show="ledEffect === 9" class="mt-4 pt-4 border-t border-gray-700/50">
+          <div x-show="ledEffect === SOLID_COLOR_EFFECT_ID" class="mt-4 pt-4 border-t border-gray-700/50">
             <label class="block text-sm font-medium mb-2">Solid Color</label>
             <div class="flex items-center gap-3">
               <input type="color" x-model="ledColorHex" @input="onLedColorChange()"
@@ -746,6 +746,8 @@
         speedMultiplier: 1.0,
         pattern: 1,
         ledEffect: 1,
+        NUM_LED_EFFECTS: 10, // Total number of LED effects (max UI value)
+        SOLID_COLOR_EFFECT_ID: 9, // ID of the Solid Color effect (for showing color picker)
         // Trails always enabled now (formerly showTrails toggle removed)
         statusMessage: 'Idle',
         logs: [],
@@ -1359,7 +1361,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             }
             if (this.chars.ledEffect) {
               const v = await this.chars.ledEffect.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num <= 9) this.ledEffect = num + 1;
+              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) this.ledEffect = num + 1;
             }
             if (this.chars.ledColor) {
               const v = await this.chars.ledColor.readValue();
@@ -1395,7 +1397,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         },
         handleModeNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.autoMode = (num === 1); this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual')); },
         handleRunNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.running = (num === 1); this.log('Run->' + (this.running ? 'Running' : 'Stopped')); },
-        handleLedEffectNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num <= 9) { this.ledEffect = num + 1; this.log('LED Effect->' + (num + 1) + ' (' + this.ledEffectMeta[num].name + ')'); } },
+        handleLedEffectNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) { this.ledEffect = num + 1; this.log('LED Effect->' + (num + 1) + ' (' + this.ledEffectMeta[num].name + ')'); } },
         handleLedColorNotify(e) {
           const txt = this.textFromDV(e.target.value);
           const parts = txt.split(',');
@@ -2180,9 +2182,9 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           }
         },
         async selectLedEffect(id) {
-          if (id < 1 || id > 10) return;
+          if (id < 1 || id > this.NUM_LED_EFFECTS) return;
           this.ledEffect = id;
-          const effectIndex = id - 1; // Convert UI 1-10 to firmware 0-9
+          const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
           this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
           if (this.chars.ledEffect) {
             try { const txt = new TextEncoder().encode(String(effectIndex)); await this.chars.ledEffect.writeValue(txt); }

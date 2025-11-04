@@ -27,10 +27,13 @@
 #define SG_WIFI_PASS_CHAR_UUID      "9b6c7e1a-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 // WiFi Status characteristic (read/notify for connection status and IP)
 #define SG_WIFI_STATUS_CHAR_UUID    "9b6c7e1b-3b2c-4d8c-9d7c-5e2a6d1f8b01"
-// LED Effect characteristic (write/read for pattern LED effect selection, 0-9)
+// LED Effect characteristic (write/read for pattern LED effect selection, 0 to NUM_PATTERN_LED_EFFECTS-1)
 #define SG_LED_EFFECT_CHAR_UUID     "9b6c7e1c-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 // LED Color characteristic (write/read for solid color RGB, format: "R,G,B")
 #define SG_LED_COLOR_CHAR_UUID      "9b6c7e1d-3b2c-4d8c-9d7c-5e2a6d1f8b01"
+
+// LED effect constants
+#define NUM_PATTERN_LED_EFFECTS 10  // Total number of LED effects (0-9)
 
 // Name of the BLE peripheral
 #define SG_DEVICE_NAME "Sand Garden"
@@ -179,7 +182,7 @@ private:
   NimBLECharacteristic *_wifiSSIDChar = nullptr;     // WiFi SSID (write/read)
   NimBLECharacteristic *_wifiPasswordChar = nullptr; // WiFi password (write-only)
   NimBLECharacteristic *_wifiStatusChar = nullptr;   // WiFi status (read/notify)
-  NimBLECharacteristic *_ledEffectChar = nullptr;    // LED effect (write/read, 0-9)
+  NimBLECharacteristic *_ledEffectChar = nullptr;    // LED effect (write/read, 0 to NUM_PATTERN_LED_EFFECTS-1)
   NimBLECharacteristic *_ledColorChar = nullptr;     // LED color (write/read, "R,G,B")
 
   ISGConfigListener *_listener = nullptr;
@@ -188,7 +191,7 @@ private:
   int _currentPattern = 1;       // maps to sketch patterns (1-indexed like existing code)
   bool _autoMode = true;
   bool _runState = false;
-  uint8_t _ledEffect = 0;        // current LED effect (0-9)
+  uint8_t _ledEffect = 0;        // current LED effect (0 to NUM_PATTERN_LED_EFFECTS-1)
   uint8_t _ledColorR = 255;      // LED solid color red (0-255)
   uint8_t _ledColorG = 255;      // LED solid color green (0-255)
   uint8_t _ledColorB = 255;      // LED solid color blue (0-255)

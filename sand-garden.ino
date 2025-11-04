@@ -121,6 +121,7 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
 #define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
 #define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
+// NUM_PATTERN_LED_EFFECTS is defined in BLEConfigServer.h
 
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
@@ -1074,7 +1075,7 @@ class PatternLedDisplay
 private:
   CRGB patternLeds[NUM_PATTERN_LEDS]; // array that holds the state of each LED in the pattern strip
   uint8_t brightness;                  // Current brightness for this strip (0-255)
-  uint8_t currentEffect;               // Current effect index (0-9)
+  uint8_t currentEffect;               // Current effect index (0 to NUM_PATTERN_LED_EFFECTS-1)
 
   // Effect state variables
   uint8_t rainbowHue;                  // Rainbow effect hue offset
@@ -1121,10 +1122,10 @@ public:
     return brightness;
   }
 
-  // Set current effect (0-9)
+  // Set current effect (0 to NUM_PATTERN_LED_EFFECTS-1)
   void setEffect(uint8_t effect)
   {
-    if (effect < 10) {
+    if (effect < NUM_PATTERN_LED_EFFECTS) {
       currentEffect = effect;
       // Reset effect state when changing effects
       rainbowHue = 0;
@@ -1382,7 +1383,7 @@ PatternLedDisplay patternDisplay;
 // Implementation of onLedEffectChanged (declared earlier in SandGardenConfigListener)
 void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
 {
-  if (newEffect <= 9) {
+  if (newEffect < NUM_PATTERN_LED_EFFECTS) {
     patternDisplay.setEffect(newEffect);
     bleConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
   }
