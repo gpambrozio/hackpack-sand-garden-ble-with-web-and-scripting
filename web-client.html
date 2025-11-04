@@ -1303,8 +1303,22 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             try { telemetryChar = await service.getCharacteristic(TELEMETRY_UUID); } catch (_) { this.log('Telemetry characteristic not found (firmware older?)'); }
             try { commandChar = await service.getCharacteristic(COMMAND_UUID); } catch (_) { this.log('Command characteristic not found'); }
             try { scriptChar = await service.getCharacteristic(SCRIPT_UUID); } catch (_) { this.log('SandScript characteristic not found'); }
-            try { ledEffectChar = await service.getCharacteristic(LED_EFFECT_UUID); } catch (_) { this.log('LED Effect characteristic not found'); }
-            try { ledColorChar = await service.getCharacteristic(LED_COLOR_UUID); } catch (_) { this.log('LED Color characteristic not found'); }
+            try {
+              console.log('[DEBUG] Attempting to get LED Effect characteristic with UUID:', LED_EFFECT_UUID);
+              ledEffectChar = await service.getCharacteristic(LED_EFFECT_UUID);
+              console.log('[DEBUG] LED Effect characteristic found:', ledEffectChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Effect characteristic error:', e);
+              this.log('LED Effect characteristic not found: ' + e.message);
+            }
+            try {
+              console.log('[DEBUG] Attempting to get LED Color characteristic with UUID:', LED_COLOR_UUID);
+              ledColorChar = await service.getCharacteristic(LED_COLOR_UUID);
+              console.log('[DEBUG] LED Color characteristic found:', ledColorChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Color characteristic error:', e);
+              this.log('LED Color characteristic not found: ' + e.message);
+            }
             this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar, ledEffect: ledEffectChar, ledColor: ledColorChar };
             // Initial reads
             await this.readInitialValues();
@@ -2195,9 +2209,20 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           this.ledEffect = id;
           const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
           this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
+          console.log('[DEBUG] selectLedEffect: id=' + id + ', effectIndex=' + effectIndex + ', name=' + this.ledEffectMeta[effectIndex].name);
           if (this.chars.ledEffect) {
-            try { const txt = new TextEncoder().encode(String(effectIndex)); await this.chars.ledEffect.writeValue(txt); }
-            catch (e) { this.log('LED effect write err: ' + e.message); }
+            try {
+              const txt = new TextEncoder().encode(String(effectIndex));
+              console.log('[DEBUG] Writing to ledEffect characteristic:', effectIndex, 'bytes:', Array.from(txt));
+              await this.chars.ledEffect.writeValue(txt);
+              console.log('[DEBUG] Write successful');
+            }
+            catch (e) {
+              console.error('[DEBUG] LED effect write error:', e);
+              this.log('LED effect write err: ' + e.message);
+            }
+          } else {
+            console.warn('[DEBUG] ledEffect characteristic is null');
           }
         },
         async sendLedColor() {
