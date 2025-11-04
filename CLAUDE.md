@@ -58,7 +58,7 @@ Once WiFi credentials are configured (see WiFi Setup section below), firmware ca
 
 # Upload via OTA using espota.py
 python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
-  -i 192.168.86.121 \
+  -i sand-garden.local \
   -p 3232 \
   -f /Users/gustavoambrozio/Library/Caches/arduino/sketches/CFEAF06617210DBB2CA2FA8CA76E4A7E/sand-garden.ino.bin
 
@@ -242,11 +242,23 @@ This enables mirror/ping-pong patterns using `sin(rev * 180)` idioms.
 - Homing sequence on boot: crash radial axis to 0, then offset by `HOMING_BUFFER`
 - Manual joystick mode uses analog pins A2 (angular) and A3 (radial) with threshold-based dead zone
 
-### LED Bar
-- 8 RGB LEDs controlled via FastLED library
+### LED Strips
+The device has two independent WS2812B LED strips controlled via FastLED library:
+
+**Status LED Bar** (8 LEDs):
 - Connected to GPIO_NUM_1
 - Default max brightness: 40/255
 - Used for pattern selection indicator and status feedback
+- Managed by `LedDisplay` class
+
+**Pattern LED Strip** (39 LEDs):
+- Connected to D1 pin (GPIO 43 / PATTERN_LED_DATA_PIN)
+- Default max brightness: 100/255
+- Displays moving rainbow effect using HSV color space
+- Updates at 50 FPS for smooth animation
+- Managed by `PatternLedDisplay` class
+
+Both strips use per-strip brightness control and FastLED.show() is called once per loop cycle to coordinate updates.
 
 ## Common Development Tasks
 

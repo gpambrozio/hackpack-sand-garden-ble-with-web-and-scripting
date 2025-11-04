@@ -405,6 +405,10 @@ static void setupWiFi();
 static void setupOTA();
 static void handleOTA();
 
+// Forward declaration for PatternLedDisplay
+class PatternLedDisplay;
+extern PatternLedDisplay patternDisplay;
+
 // Listener implementation responding to remote config writes (now globals are defined)
 class SandGardenConfigListener : public ISGConfigListener
 {
@@ -637,6 +641,8 @@ public:
     // Attempt WiFi connection
     setupWiFi();
   }
+
+  void onLedEffectChanged(uint8_t newEffect) override;  // Implemented later after patternDisplay is defined
 };
 static SandGardenConfigListener bleListener;
 
@@ -1067,16 +1073,29 @@ class PatternLedDisplay
 private:
   CRGB patternLeds[NUM_PATTERN_LEDS]; // array that holds the state of each LED in the pattern strip
   uint8_t brightness;                  // Current brightness for this strip (0-255)
-  uint8_t rainbowHue;                  // Current hue offset for rainbow effect
+  uint8_t currentEffect;               // Current effect index (0-7)
+
+  // Effect state variables
+  uint8_t rainbowHue;                  // Rainbow effect hue offset
+  uint8_t heat[NUM_PATTERN_LEDS];      // Fire effect heat array
+  uint8_t wavePhase;                   // Color wave phase
+  uint16_t chasePosition;              // Theater chase position
+  uint8_t cometPosition;               // Comet position
+  uint8_t paletteIndex;                // Color palette index
 
 public:
   // Constructor - initializes the pattern LED strip
-  PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), rainbowHue(0)
+  PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), currentEffect(0),
+                        rainbowHue(0), wavePhase(0), chasePosition(0),
+                        cometPosition(0), paletteIndex(0)
   {
     FastLED.addLeds<WS2812B, PATTERN_LED_DATA_PIN, GRB>(patternLeds, NUM_PATTERN_LEDS);
 
     // Initialize all LEDs to black
     fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+    // Initialize heat array for fire effect
+    memset(heat, 0, sizeof(heat));
 
 #if SG_FASTLED_DIAG_BOOT
     // Diagnostic flash on boot - use green for pattern strip
@@ -1100,26 +1119,211 @@ public:
     return brightness;
   }
 
+  // Set current effect (0-7)
+  void setEffect(uint8_t effect)
+  {
+    if (effect < 8) {
+      currentEffect = effect;
+      // Reset effect state when changing effects
+      rainbowHue = 0;
+      wavePhase = 0;
+      chasePosition = 0;
+      cometPosition = 0;
+      paletteIndex = 0;
+      memset(heat, 0, sizeof(heat));
+      fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+    }
+  }
+
+  // Get current effect index
+  uint8_t getEffect() const
+  {
+    return currentEffect;
+  }
+
   /**
-   * @brief Updates the pattern strip with a moving rainbow effect.
-   *
-   * Uses fill_rainbow to create a smooth rainbow across the strip, then advances
-   * the hue to create movement. Brightness is applied per-LED using nscale8().
+   * @brief Main update function - calls the appropriate effect based on currentEffect
+   */
+  void update()
+  {
+    switch (currentEffect) {
+      case 0: updateRainbow(); break;
+      case 1: updateFire(); break;
+      case 2: updateColorWaves(); break;
+      case 3: updateTwinkle(); break;
+      case 4: updateTheaterChase(); break;
+      case 5: updatePaletteCycle(); break;
+      case 6: updateConfetti(); break;
+      case 7: updateComet(); break;
+      default: updateRainbow(); break;
+    }
+  }
+
+  /**
+   * @brief Effect 0: Moving rainbow
    */
   void updateRainbow()
   {
-    // Generate rainbow using HSV with brightness control
-    // This ensures fresh colors each frame, not cumulative scaling
     uint8_t deltaHue = 255 / NUM_PATTERN_LEDS;
-
     for (int i = 0; i < NUM_PATTERN_LEDS; i++)
     {
       uint8_t hue = rainbowHue + (i * deltaHue);
-      patternLeds[i] = CHSV(hue, 255, brightness); // Set color with brightness directly
+      patternLeds[i] = CHSV(hue, 255, brightness);
+    }
+    rainbowHue += 2; // Advance rainbow
+  }
+
+  /**
+   * @brief Effect 1: Fire/Flame effect
+   * Simulates flickering fire using heat array and warm color palette
+   */
+  void updateFire()
+  {
+    // Cool down every cell a little
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      int cooling = random(0, ((55 * 10) / NUM_PATTERN_LEDS) + 2);
+      heat[i] = (heat[i] > cooling) ? (heat[i] - cooling) : 0;
     }
 
-    // Advance the rainbow (this will be called periodically)
-    rainbowHue += 2; // Increment by 2 for visible movement, wraps at 255
+    // Heat from each cell drifts up and diffuses a little
+    for (int k = NUM_PATTERN_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+    }
+
+    // Randomly ignite new sparks near the bottom
+    if (random(255) < 120) {
+      int y = random(3);
+      int heating = heat[y] + random(160, 255);
+      heat[y] = (heating < 255) ? heating : 255;
+    }
+
+    // Convert heat to LED colors
+    for (int j = 0; j < NUM_PATTERN_LEDS; j++) {
+      // Scale heat value to 0-240 for heatmap
+      uint8_t t192 = scale8(heat[j], 240);
+      // Calculate color from palette
+      uint8_t heatramp = t192 & 0x3F; // 0..63
+      heatramp <<= 2; // scale up to 0..252
+
+      if (t192 > 0x80) { // Hottest
+        patternLeds[j] = CRGB(255, 255, heatramp);
+      } else if (t192 > 0x40) { // Medium
+        patternLeds[j] = CRGB(255, heatramp, 0);
+      } else { // Coolest
+        patternLeds[j] = CRGB(heatramp, 0, 0);
+      }
+
+      patternLeds[j].nscale8(brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 2: Color waves using sine waves
+   */
+  void updateColorWaves()
+  {
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      // Create multiple sine waves with different frequencies
+      uint8_t hue = wavePhase + (sin8(i * 16 + wavePhase) / 4);
+      uint8_t brightness_mod = sin8(i * 8 + wavePhase / 2);
+      patternLeds[i] = CHSV(hue, 255, scale8(brightness, brightness_mod));
+    }
+    wavePhase += 4;
+  }
+
+  /**
+   * @brief Effect 3: Twinkle/Sparkle
+   * Random LEDs fade in and out at different rates
+   */
+  void updateTwinkle()
+  {
+    // Fade all LEDs
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i].fadeToBlackBy(32);
+    }
+
+    // Randomly light up some LEDs
+    if (random(100) < 50) { // 50% chance each frame
+      int pos = random(NUM_PATTERN_LEDS);
+      patternLeds[pos] = CHSV(random(255), 255, brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 4: Theater chase/marquee
+   */
+  void updateTheaterChase()
+  {
+    // Clear all LEDs
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+    // Light up every 3rd LED, shifting position
+    uint8_t hue = (chasePosition / 3) * 32; // Change color as we move
+    for (int i = 0; i < NUM_PATTERN_LEDS; i += 3) {
+      int pos = (i + (chasePosition % 3)) % NUM_PATTERN_LEDS;
+      patternLeds[pos] = CHSV(hue, 255, brightness);
+    }
+    chasePosition++;
+  }
+
+  /**
+   * @brief Effect 5: Color palette cycling
+   * Uses FastLED's built-in color palettes
+   */
+  void updatePaletteCycle()
+  {
+    // Cycle through different palettes
+    CRGBPalette16 currentPalette;
+    uint8_t paletteSelect = (paletteIndex / 1024) % 4; // Change palette every ~20 seconds at 50fps
+
+    switch (paletteSelect) {
+      case 0: currentPalette = RainbowColors_p; break;
+      case 1: currentPalette = OceanColors_p; break;
+      case 2: currentPalette = LavaColors_p; break;
+      case 3: currentPalette = PartyColors_p; break;
+    }
+
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      uint8_t colorIndex = paletteIndex + (i * 255 / NUM_PATTERN_LEDS);
+      patternLeds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, LINEARBLEND);
+    }
+    paletteIndex += 2;
+  }
+
+  /**
+   * @brief Effect 6: Confetti
+   * Random colored dots appear and fade
+   */
+  void updateConfetti()
+  {
+    // Fade existing LEDs
+    fadeToBlackBy(patternLeds, NUM_PATTERN_LEDS, 16);
+
+    // Add random colored dots
+    int pos = random16(NUM_PATTERN_LEDS);
+    patternLeds[pos] += CHSV(random8(), 200, brightness);
+  }
+
+  /**
+   * @brief Effect 7: Comet/Meteor
+   * A bright head with fading tail
+   */
+  void updateComet()
+  {
+    // Fade all LEDs for the tail effect
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i].fadeToBlackBy(64);
+    }
+
+    // Draw the comet head
+    patternLeds[cometPosition] = CHSV(rainbowHue, 255, brightness);
+
+    // Advance position and hue
+    cometPosition++;
+    if (cometPosition >= NUM_PATTERN_LEDS) {
+      cometPosition = 0;
+    }
+    rainbowHue += 4; // Change color as it moves
   }
 
   /**
@@ -1138,6 +1342,15 @@ LedDisplay display;
 
 // Create an instance of the PatternLedDisplay class that controls the pattern LED strip.
 PatternLedDisplay patternDisplay;
+
+// Implementation of onLedEffectChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
+{
+  if (newEffect <= 7) {
+    patternDisplay.setEffect(newEffect);
+    bleConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -1369,7 +1582,7 @@ void loop()
   // Update pattern LED strip at ~50 FPS (every 20ms)
   if (patternLedUpdateTimer >= 20)
   {
-    patternDisplay.updateRainbow();
+    patternDisplay.update();
     patternLedUpdateTimer = 0;
   }
 

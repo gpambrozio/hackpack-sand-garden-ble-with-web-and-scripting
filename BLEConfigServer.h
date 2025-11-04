@@ -27,6 +27,8 @@
 #define SG_WIFI_PASS_CHAR_UUID      "9b6c7e1a-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 // WiFi Status characteristic (read/notify for connection status and IP)
 #define SG_WIFI_STATUS_CHAR_UUID    "9b6c7e1b-3b2c-4d8c-9d7c-5e2a6d1f8b01"
+// LED Effect characteristic (write/read for pattern LED effect selection, 0-7)
+#define SG_LED_EFFECT_CHAR_UUID     "9b6c7e1c-3b2c-4d8c-9d7c-5e2a6d1f8b01"
 
 // Name of the BLE peripheral
 #define SG_DEVICE_NAME "Sand Garden"
@@ -47,6 +49,8 @@ public:
   virtual void onPatternScriptStatus(const String &msg) { (void)msg; }
   // Called when WiFi credentials are received via BLE. Default no-op.
   virtual void onWiFiCredentialsReceived(const String &ssid, const String &password) { (void)ssid; (void)password; }
+  // Called when LED effect is changed via BLE. Default no-op.
+  virtual void onLedEffectChanged(uint8_t newEffect) { (void)newEffect; }
 };
 
 class BLEConfigServer {
@@ -64,6 +68,7 @@ public:
   void setCurrentPattern(int p);
   void setAutoMode(bool m);
   void setRunState(bool r);
+  void setLedEffect(uint8_t e);
   void notifyStatus(const String &msg);
   void notifyTelemetry(const String &msg);
   void notifyWiFiStatus(const String &msg);
@@ -128,6 +133,13 @@ private:
   private:
     BLEConfigServer *_parent;
   };
+  class LedEffectCallbacks : public NimBLECharacteristicCallbacks {
+  public:
+    LedEffectCallbacks(BLEConfigServer *parent) : _parent(parent) {}
+    void onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) override;
+  private:
+    BLEConfigServer *_parent;
+  };
 
   void _applySpeedWrite(const std::string &valRaw);
   void _applyPatternWrite(const std::string &valRaw);
@@ -136,6 +148,7 @@ private:
   void _applyCommandWrite(const std::string &valRaw);
   void _applyWiFiSSIDWrite(const std::string &valRaw);
   void _applyWiFiPasswordWrite(const std::string &valRaw);
+  void _applyLedEffectWrite(const std::string &valRaw);
   void _handleScriptCommand(const std::string &token, const std::string &payload);
   void _resetScriptTransfer(const char *reasonTag, bool notify = true);
   void _finalizeScriptTransfer();
@@ -153,6 +166,7 @@ private:
   NimBLECharacteristic *_wifiSSIDChar = nullptr;     // WiFi SSID (write/read)
   NimBLECharacteristic *_wifiPasswordChar = nullptr; // WiFi password (write-only)
   NimBLECharacteristic *_wifiStatusChar = nullptr;   // WiFi status (read/notify)
+  NimBLECharacteristic *_ledEffectChar = nullptr;    // LED effect (write/read, 0-7)
 
   ISGConfigListener *_listener = nullptr;
 
@@ -160,6 +174,7 @@ private:
   int _currentPattern = 1;       // maps to sketch patterns (1-indexed like existing code)
   bool _autoMode = true;
   bool _runState = false;
+  uint8_t _ledEffect = 0;        // current LED effect (0-7)
 
   // Server connection lifecycle callbacks (restart advertising after disconnect)
   class ServerCallbacks : public NimBLEServerCallbacks {

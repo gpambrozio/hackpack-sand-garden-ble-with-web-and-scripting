@@ -93,6 +93,13 @@ void BLEConfigServer::begin(ISGConfigListener *listener) {
     NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   _wifiStatusChar->setValue("Disconnected");
 
+  // LED Effect characteristic (write/read for pattern LED effect selection, 0-7)
+  _ledEffectChar = _service->createCharacteristic(
+    SG_LED_EFFECT_CHAR_UUID,
+    NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+  _ledEffectChar->setValue(String(_ledEffect).c_str());
+  _ledEffectChar->setCallbacks(new LedEffectCallbacks(this));
+
   _service->start();
   NimBLEAdvertising *adv = NimBLEDevice::getAdvertising();
   // --- Advertising configuration ---
@@ -183,6 +190,17 @@ void BLEConfigServer::setRunState(bool r) {
     _runChar->notify();
   }
   if (_listener) _listener->onRunStateChanged(_runState);
+}
+
+void BLEConfigServer::setLedEffect(uint8_t e) {
+  if (e > 7) return; // Valid range 0-7
+  if (_ledEffect == e) return;
+  _ledEffect = e;
+  if (_ledEffectChar) {
+    _ledEffectChar->setValue(String(_ledEffect).c_str());
+    _ledEffectChar->notify();
+  }
+  if (_listener) _listener->onLedEffectChanged(_ledEffect);
 }
 
 void BLEConfigServer::notifyStatus(const String &msg) {
@@ -304,6 +322,13 @@ void BLEConfigServer::_applyModeWrite(const std::string &valRaw) {
 void BLEConfigServer::_applyRunWrite(const std::string &valRaw) {
   int v = atoi(valRaw.c_str());
   setRunState(v != 0);
+}
+
+void BLEConfigServer::_applyLedEffectWrite(const std::string &valRaw) {
+  int v = atoi(valRaw.c_str());
+  if (v >= 0 && v <= 7) {
+    setLedEffect(static_cast<uint8_t>(v));
+  }
 }
 
 void BLEConfigServer::_applyCommandWrite(const std::string &valRaw) {
@@ -531,6 +556,12 @@ void BLEConfigServer::WiFiSSIDCallbacks::onWrite(NimBLECharacteristic *c, NimBLE
 void BLEConfigServer::WiFiPasswordCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
   (void)info;
   _parent->_applyWiFiPasswordWrite(c->getValue());
+}
+
+// LED Effect characteristic callback
+void BLEConfigServer::LedEffectCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
+  (void)info;
+  _parent->_applyLedEffectWrite(c->getValue());
 }
 
 // Apply WiFi SSID write
