@@ -117,6 +117,11 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define MAX_BRIGHTNESS 40       // Brightness values are 8-bit for a max of 255 (the range is [0-255]), this sets default maximum to 40 out of 255.
 #define LED_FADE_PERIOD 1000    // Amount of time in milliseconds it takes for LEDs to fade on and off.
 
+// Pattern LED strip (second strip for visual effects)
+#define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
+#define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
+#define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
+
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
 
@@ -846,14 +851,17 @@ class LedDisplay
 {
 private:
   CRGB leds[NUM_LEDS]; // array that holds the state of each LED
+  uint8_t brightness;   // Current brightness for this strip (0-255)
 
 public:
   // This is the constructor. It's called when a new instance of the class is created, and handles setting things up for use.
-  LedDisplay()
+  LedDisplay() : brightness(MAX_BRIGHTNESS)
   {
     FastLED.addLeds<WS2812B, LED_DATA_PIN, GRB>(leds, NUM_LEDS);
-    FastLED.setBrightness(MAX_BRIGHTNESS);
-    FastLED.clear();
+
+    // Initialize all LEDs to black
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+
     // Small stabilization delay; helps some ESP32 targets before first show
     delay(5);
 #if SG_FASTLED_DIAG_BOOT
@@ -867,11 +875,16 @@ public:
 #endif
   }
 
-  // a proxy function for setting the brightness of the LEDs. This way the class can handle all the LED stuff
-  // without relying on the user to sometimes call on FastLED directly.
+  // Set brightness for this strip (0-255)
   void setBrightness(uint8_t val)
   {
-    FastLED.setBrightness(val);
+    brightness = constrain(val, 0, 255);
+  }
+
+  // Get current brightness
+  uint8_t getBrightness() const
+  {
+    return brightness;
   }
 
   /**
@@ -889,10 +902,9 @@ public:
    */
   void indicatePattern(uint8_t value)
   { // used for showing which pattern is selected
-    FastLED.clear();
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
     if (value == 255)
     { // pattern255 is the manual drawing mode.
-      FastLED.clear();
       leds[0] = CRGB::DarkCyan;
     }
     else
@@ -905,7 +917,13 @@ public:
         }
       }
     }
-    FastLED.show(); // display the LEDs
+
+    // Apply brightness to all LEDs
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i].nscale8(brightness);
+    }
+    // Note: FastLED.show() is now called centrally in main loop for coordination
   }
 
   /**
@@ -925,23 +943,29 @@ public:
     unsigned long currentTime = millis();
     unsigned long timeInCycle = currentTime % period; // Time position in current cycle
     unsigned long halfPeriod = period / 2;
-    int brightness;
+    uint8_t fadeBrightness;
 
     // Determine phase and calculate brightness
     if (timeInCycle < halfPeriod)
     {
       // Fading in
-      brightness = map(timeInCycle, 0, halfPeriod, 0, maxBrightness);
+      fadeBrightness = map(timeInCycle, 0, halfPeriod, 0, maxBrightness);
     }
     else
     {
       // Fading out
-      brightness = map(timeInCycle, halfPeriod, period, maxBrightness, 0);
+      fadeBrightness = map(timeInCycle, halfPeriod, period, maxBrightness, 0);
     }
 
+    // Update the brightness for this strip
+    brightness = fadeBrightness;
+
     // Apply calculated brightness to all LEDs
-    FastLED.setBrightness(brightness);
-    FastLED.show();
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i].nscale8(brightness);
+    }
+    // Note: FastLED.show() is now called centrally in main loop for coordination
   }
 
   /**
@@ -970,7 +994,7 @@ public:
     static int position = 0;
     static int multiplier = 1;
 
-    FastLED.setBrightness(MAX_BRIGHTNESS);
+    brightness = MAX_BRIGHTNESS;
 
     if (!homingComplete)
     { // If the homing sequence is not complete, animate this pattern.
@@ -987,12 +1011,18 @@ public:
           leds[position + i].setHue(hue);
         }
 
-        // Randomly fade the LEDs
+        // Fade the LEDs
         for (int j = 0; j < NUM_LEDS; j++)
         {
-          // if (random(10) > 3)
           leds[j] = leds[j].fadeToBlackBy(fadeAmount);
         }
+
+        // Apply brightness to all LEDs
+        for (int i = 0; i < NUM_LEDS; i++)
+        {
+          leds[i].nscale8(brightness);
+        }
+
         FastLED.show();
         lastUpdate = millis();
       }
@@ -1006,7 +1036,14 @@ public:
 
       for (int j = 0; j < 8; j++)
       {
-        FastLED.setBrightness(constrain(MAX_BRIGHTNESS * multiplier, 0, MAX_BRIGHTNESS));
+        uint8_t flashBrightness = constrain(MAX_BRIGHTNESS * multiplier, 0, MAX_BRIGHTNESS);
+
+        // Apply flash brightness to all LEDs
+        for (int i = 0; i < NUM_LEDS; i++)
+        {
+          leds[i].nscale8(flashBrightness);
+        }
+
         multiplier *= -1;
         FastLED.show();
         delay(100);
@@ -1017,8 +1054,90 @@ public:
 
 #pragma endregion LedDisplayClass
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+PATTERN LED DISPLAY CLASS
+Manages the second LED strip for visual effects (rainbow, patterns, etc.)
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region PatternLedDisplayClass
+
+class PatternLedDisplay
+{
+private:
+  CRGB patternLeds[NUM_PATTERN_LEDS]; // array that holds the state of each LED in the pattern strip
+  uint8_t brightness;                  // Current brightness for this strip (0-255)
+  uint8_t rainbowHue;                  // Current hue offset for rainbow effect
+
+public:
+  // Constructor - initializes the pattern LED strip
+  PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), rainbowHue(0)
+  {
+    FastLED.addLeds<WS2812B, PATTERN_LED_DATA_PIN, GRB>(patternLeds, NUM_PATTERN_LEDS);
+
+    // Initialize all LEDs to black
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+#if SG_FASTLED_DIAG_BOOT
+    // Diagnostic flash on boot - use green for pattern strip
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Green);
+    FastLED.show();
+    delay(150);
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+    FastLED.show();
+#endif
+  }
+
+  // Set brightness for this strip (0-255)
+  void setBrightness(uint8_t val)
+  {
+    brightness = constrain(val, 0, 255);
+  }
+
+  // Get current brightness
+  uint8_t getBrightness() const
+  {
+    return brightness;
+  }
+
+  /**
+   * @brief Updates the pattern strip with a moving rainbow effect.
+   *
+   * Uses fill_rainbow to create a smooth rainbow across the strip, then advances
+   * the hue to create movement. Brightness is applied per-LED using nscale8().
+   */
+  void updateRainbow()
+  {
+    // Generate rainbow using HSV with brightness control
+    // This ensures fresh colors each frame, not cumulative scaling
+    uint8_t deltaHue = 255 / NUM_PATTERN_LEDS;
+
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++)
+    {
+      uint8_t hue = rainbowHue + (i * deltaHue);
+      patternLeds[i] = CHSV(hue, 255, brightness); // Set color with brightness directly
+    }
+
+    // Advance the rainbow (this will be called periodically)
+    rainbowHue += 2; // Increment by 2 for visible movement, wraps at 255
+  }
+
+  /**
+   * @brief Clears all LEDs in the pattern strip to black.
+   */
+  void clear()
+  {
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+  }
+};
+
+#pragma endregion PatternLedDisplayClass
+
 // Create an instance of the LedDisplay class that controls the RGB LEDs.
 LedDisplay display;
+
+// Create an instance of the PatternLedDisplay class that controls the pattern LED strip.
+PatternLedDisplay patternDisplay;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -1028,6 +1147,7 @@ Used for tracking time and button presses.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 elapsedMillis lastJoystickUpdate; // used to track the last time the joystick was updated to prevent absurdly fast scrolling
+elapsedMillis patternLedUpdateTimer; // used to track pattern LED strip refresh timing
 
 // Create an object that handles the joystick button
 OneButtonTiny button(BUTTON_PIN, true, true); // set up the button (button pin, active low, enable internal pull-up resistor)
@@ -1195,7 +1315,8 @@ void setup()
 
   FastLED.clear(); // clear the LEDs
   FastLED.show();
-  bleConfig.notifyStatus(String("[LEDINIT] pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
+  bleConfig.notifyStatus(String("[LEDINIT] status pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
+  bleConfig.notifyStatus(String("[LEDINIT] pattern pin=") + PATTERN_LED_DATA_PIN + " count=" + NUM_PATTERN_LEDS + " maxBrt=" + MAX_PATTERN_BRIGHTNESS);
 
   PatternScriptUnits units;
   units.stepsPerCm = STEPS_PER_MM * 10.0f;
@@ -1244,6 +1365,13 @@ void loop()
   bleConfig.loop(); // service BLE events if needed
   handleOTA(); // handle OTA update requests
   // (Removed LED direct, self-test, and scan debug handling)
+
+  // Update pattern LED strip at ~50 FPS (every 20ms)
+  if (patternLedUpdateTimer >= 20)
+  {
+    patternDisplay.updateRainbow();
+    patternLedUpdateTimer = 0;
+  }
 
   // Check to see if the button has been pressed. This has to be called as often as possible to catch button presses.
   button.tick();
@@ -1418,6 +1546,9 @@ void loop()
     lastRun = runPattern;
     lastBrt = brt;
   }
+
+  // Update both LED strips (status and pattern) - called once per loop for proper coordination
+  FastLED.show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
