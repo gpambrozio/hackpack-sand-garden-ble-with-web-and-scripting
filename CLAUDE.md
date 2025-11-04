@@ -52,21 +52,44 @@ arduino-cli upload --fqbn arduino:esp32:nano_nora .
 #### OTA (Over-The-Air) Upload
 Once WiFi credentials are configured (see WiFi Setup section below), firmware can be uploaded wirelessly:
 
-```bash
-# Find the espota.py script location
-# Typical location: /Users/<user>/Library/Arduino15/packages/esp32/hardware/esp32/<version>/tools/espota.py
+**Important**: Arduino CLI uses a build cache that can become stale. Always ensure you're uploading the latest binary by following these steps:
 
-# Upload via OTA using espota.py
+```bash
+# Step 1: Clean build cache and compile fresh binary
+rm -rf /Users/gustavoambrozio/Library/Caches/arduino/sketches/* && \
+"/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli" compile \
+  --fqbn arduino:esp32:nano_nora \
+  --warnings default \
+  --build-property compiler.cpp.extra_flags=-fpermissive \
+  --export-binaries .
+
+# Step 2: Find the latest binary location (sketch hash changes after cache clear)
+BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f | head -n 1)
+echo "Binary location: $BINARY_PATH"
+
+# Step 3: Upload via OTA using espota.py
 python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
   -i sand-garden.local \
   -p 3232 \
-  -f /Users/gustavoambrozio/Library/Caches/arduino/sketches/CFEAF06617210DBB2CA2FA8CA76E4A7E/sand-garden.ino.bin
-
-# Or use the device hostname (mDNS)
-python3 /path/to/espota.py -i sand-garden.local -p 3232 -f /path/to/sand-garden.ino.bin
+  -f "$BINARY_PATH"
 ```
 
-**Note**: `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
+**Alternative**: If you know the build cache is fresh (just compiled), you can skip the clean step and find the binary directly:
+
+```bash
+# Find the most recently modified binary
+BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f -exec ls -t {} + | head -n 1)
+
+# Upload via OTA
+python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
+  -i sand-garden.local \
+  -p 3232 \
+  -f "$BINARY_PATH"
+```
+
+**Note**:
+- `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
+- The sketch hash in the cache path (e.g., `CFEAF06617210DBB2CA2FA8CA76E4A7E`) changes when the build cache is cleared, so use the `find` command to locate the latest binary dynamically.
 
 ### VS Code Tasks
 The repository includes VS Code tasks:
