@@ -108,6 +108,13 @@ void BLEConfigServer::begin(ISGConfigListener *listener) {
   _ledColorChar->setValue(initColor.c_str());
   _ledColorChar->setCallbacks(new LedColorCallbacks(this));
 
+  // LED Brightness characteristic (write/read for pattern LED brightness, 0-255)
+  _ledBrightnessChar = _service->createCharacteristic(
+    SG_LED_BRIGHTNESS_CHAR_UUID,
+    NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+  _ledBrightnessChar->setValue(String(_ledBrightness).c_str());
+  _ledBrightnessChar->setCallbacks(new LedBrightnessCallbacks(this));
+
   _service->start();
   NimBLEAdvertising *adv = NimBLEDevice::getAdvertising();
   // --- Advertising configuration ---
@@ -222,6 +229,16 @@ void BLEConfigServer::setLedColor(uint8_t r, uint8_t g, uint8_t b) {
     _ledColorChar->notify();
   }
   if (_listener) _listener->onLedColorChanged(r, g, b);
+}
+
+void BLEConfigServer::setLedBrightness(uint8_t brightness) {
+  if (_ledBrightness == brightness) return;
+  _ledBrightness = brightness;
+  if (_ledBrightnessChar) {
+    _ledBrightnessChar->setValue(String(_ledBrightness).c_str());
+    _ledBrightnessChar->notify();
+  }
+  if (_listener) _listener->onLedBrightnessChanged(_ledBrightness);
 }
 
 void BLEConfigServer::notifyStatus(const String &msg) {
@@ -358,6 +375,13 @@ void BLEConfigServer::_applyLedColorWrite(const std::string &valRaw) {
   int parsed = sscanf(valRaw.c_str(), "%d,%d,%d", &r, &g, &b);
   if (parsed == 3 && r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
     setLedColor(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
+  }
+}
+
+void BLEConfigServer::_applyLedBrightnessWrite(const std::string &valRaw) {
+  int v = atoi(valRaw.c_str());
+  if (v >= 0 && v <= 255) {
+    setLedBrightness(static_cast<uint8_t>(v));
   }
 }
 
@@ -598,6 +622,12 @@ void BLEConfigServer::LedEffectCallbacks::onWrite(NimBLECharacteristic *c, NimBL
 void BLEConfigServer::LedColorCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
   (void)info;
   _parent->_applyLedColorWrite(c->getValue());
+}
+
+// LED Brightness characteristic callback
+void BLEConfigServer::LedBrightnessCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
+  (void)info;
+  _parent->_applyLedBrightnessWrite(c->getValue());
 }
 
 // Apply WiFi SSID write

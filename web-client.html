@@ -253,6 +253,16 @@
               </div>
             </div>
           </div>
+          <!-- Brightness Slider -->
+          <div class="mt-4 pt-4 border-t border-gray-700/50">
+            <label class="block text-sm font-medium mb-2">Brightness</label>
+            <div class="flex items-center gap-3">
+              <input type="range" min="0" max="150" x-model.number="ledBrightness" @input="sendLedBrightness()"
+                class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sg-accent" />
+              <input type="number" min="0" max="150" x-model.number="ledBrightness" @change="sendLedBrightness()"
+                class="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+            </div>
+          </div>
         </div>
 
         <!-- Device Status -->
@@ -800,6 +810,7 @@
           { id: 10, name: 'Off', description: 'Turn off all LEDs' }
         ],
         ledColor: { r: 255, g: 255, b: 255 }, // Current solid color (white by default)
+        ledBrightness: 100, // LED brightness (0-255, default 100)
         get ledColorHex() {
           // Compute hex color from RGB
           const toHex = (v) => {
@@ -1283,6 +1294,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           const SCRIPT_UUID = '9b6c7e18-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           const LED_EFFECT_UUID = '9b6c7e1c-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           const LED_COLOR_UUID = '9b6c7e1d-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+          const LED_BRIGHTNESS_UUID = '9b6c7e1e-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           try {
             this.device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [SERVICE_UUID] }],
@@ -1297,7 +1309,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             const patternChar = await service.getCharacteristic(PATTERN_UUID);
             const statusChar = await service.getCharacteristic(STATUS_UUID);
             // Mode/run are optional until firmware updated; wrap in try
-            let modeChar = null, runChar = null, telemetryChar = null, commandChar = null, scriptChar = null, ledEffectChar = null, ledColorChar = null;
+            let modeChar = null, runChar = null, telemetryChar = null, commandChar = null, scriptChar = null, ledEffectChar = null, ledColorChar = null, ledBrightnessChar = null;
             try { modeChar = await service.getCharacteristic(MODE_UUID); } catch (_) { }
             try { runChar = await service.getCharacteristic(RUN_UUID); } catch (_) { }
             try { telemetryChar = await service.getCharacteristic(TELEMETRY_UUID); } catch (_) { this.log('Telemetry characteristic not found (firmware older?)'); }
@@ -1319,7 +1331,15 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               console.error('[DEBUG] LED Color characteristic error:', e);
               this.log('LED Color characteristic not found: ' + e.message);
             }
-            this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar, ledEffect: ledEffectChar, ledColor: ledColorChar };
+            try {
+              console.log('[DEBUG] Attempting to get LED Brightness characteristic with UUID:', LED_BRIGHTNESS_UUID);
+              ledBrightnessChar = await service.getCharacteristic(LED_BRIGHTNESS_UUID);
+              console.log('[DEBUG] LED Brightness characteristic found:', ledBrightnessChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Brightness characteristic error:', e);
+              this.log('LED Brightness characteristic not found: ' + e.message);
+            }
+            this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar, ledEffect: ledEffectChar, ledColor: ledColorChar, ledBrightness: ledBrightnessChar };
             // Initial reads
             await this.readInitialValues();
             // Notifications
@@ -1347,6 +1367,9 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               }).catch(() => { }),
               ledColorChar && ledColorChar.startNotifications().then(() => {
                 ledColorChar.addEventListener('characteristicvaluechanged', e => { this.handleLedColorNotify(e); });
+              }).catch(() => { }),
+              ledBrightnessChar && ledBrightnessChar.startNotifications().then(() => {
+                ledBrightnessChar.addEventListener('characteristicvaluechanged', e => { this.handleLedBrightnessNotify(e); });
               }).catch(() => { })
             ]);
             this.debugStepsEnabled = false;
@@ -1395,6 +1418,10 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
                 if (!isNaN(r) && !isNaN(g) && !isNaN(b)) { this.ledColor = { r, g, b }; }
               }
             }
+            if (this.chars.ledBrightness) {
+              const v = await this.chars.ledBrightness.readValue();
+              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num <= 255) this.ledBrightness = num;
+            }
           } catch (e) { this.log('Read init failed: ' + e.message); }
         },
         // Notification handlers
@@ -1430,6 +1457,14 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               this.ledColor = { r, g, b };
               this.log('LED Color->RGB(' + r + ',' + g + ',' + b + ')');
             }
+          }
+        },
+        handleLedBrightnessNotify(e) {
+          const txt = this.textFromDV(e.target.value);
+          const num = parseInt(txt);
+          if (!isNaN(num) && num >= 0 && num <= 255) {
+            this.ledBrightness = num;
+            this.log('LED Brightness->' + num);
           }
         },
         handleTelemetryNotify(e) {
@@ -2231,6 +2266,13 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           if (this.chars.ledColor) {
             try { const txt = new TextEncoder().encode(colorStr); await this.chars.ledColor.writeValue(txt); }
             catch (e) { this.log('LED color write err: ' + e.message); }
+          }
+        },
+        async sendLedBrightness() {
+          this.setStatus('LED brightness -> ' + this.ledBrightness);
+          if (this.chars.ledBrightness) {
+            try { const txt = new TextEncoder().encode(String(this.ledBrightness)); await this.chars.ledBrightness.writeValue(txt); }
+            catch (e) { this.log('LED brightness write err: ' + e.message); }
           }
         },
         onLedColorChange() {

@@ -645,6 +645,7 @@ public:
 
   void onLedEffectChanged(uint8_t newEffect) override;  // Implemented later after patternDisplay is defined
   void onLedColorChanged(uint8_t r, uint8_t g, uint8_t b) override;  // Implemented later after patternDisplay is defined
+  void onLedBrightnessChanged(uint8_t brightness) override;  // Implemented later after patternDisplay is defined
 };
 static SandGardenConfigListener bleListener;
 
@@ -1394,6 +1395,13 @@ void SandGardenConfigListener::onLedColorChanged(uint8_t r, uint8_t g, uint8_t b
 {
   patternDisplay.setSolidColor(r, g, b);
   bleConfig.notifyStatus(String("[LED] Color set to RGB(") + String(r) + "," + String(g) + "," + String(b) + ")");
+}
+
+// Implementation of onLedBrightnessChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedBrightnessChanged(uint8_t brightness)
+{
+  patternDisplay.setBrightness(brightness);
+  bleConfig.notifyStatus(String("[LED] Brightness set to ") + String(brightness));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
