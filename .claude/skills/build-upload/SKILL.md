@@ -1,6 +1,6 @@
 ---
 name: build-upload
-description: Builds Sand Garden firmware and uploads it via OTA to sand-garden.local. Use this skill when the user asks to build and upload, deploy changes, upload firmware, test changes on the device, or compile and deploy. Automatically handles build cache management (clears stale binaries by default, optionally clears full cache with CLEAR_CACHE=1) and provides detailed progress reporting with pre-flight device checks.
+description: Builds Sand Garden firmware and uploads it via OTA to sand-garden.local. Use this skill when the user asks to build and upload, deploy changes, upload firmware, test changes on the device, or compile and deploy. Automatically handles build cache management and provides detailed progress reporting with pre-flight device checks.
 ---
 
 # Build and Upload Firmware
