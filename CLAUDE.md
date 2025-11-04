@@ -91,6 +91,28 @@ python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3
 - `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
 - The sketch hash in the cache path (e.g., `CFEAF06617210DBB2CA2FA8CA76E4A7E`) changes when the build cache is cleared, so use the `find` command to locate the latest binary dynamically.
 
+#### Automated Build & Upload (Recommended)
+
+For the easiest workflow, use the Claude Code skill which automates the entire build and OTA upload process:
+
+```bash
+bash .claude/skills/build-upload/build-upload.sh
+```
+
+**When working with Claude Code**, simply ask:
+- "Build and upload the firmware"
+- "Deploy the latest changes"
+- "Upload to the device"
+
+**What it does:**
+1. Cleans build cache (prevents stale binary issues)
+2. Compiles firmware with correct flags
+3. Dynamically locates the fresh binary
+4. Uploads via OTA to sand-garden.local
+5. Reports detailed progress and errors
+
+This is the recommended approach as it ensures you always upload a fresh build without cache issues.
+
 ### VS Code Tasks
 The repository includes VS Code tasks:
 - **Arduino: Compile Sand Garden** (default build task)
