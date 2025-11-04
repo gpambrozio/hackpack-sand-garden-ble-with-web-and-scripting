@@ -13,28 +13,50 @@ echo ""
 ARDUINO_CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
 FQBN="arduino:esp32:nano_nora"
 BUILD_CACHE="$HOME/Library/Caches/arduino/sketches"
-ESPOTA_SCRIPT="$HOME/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py"
 DEVICE_HOST="sand-garden.local"
 OTA_PORT="3232"
 
+# Find espota.py dynamically to handle version changes
+ESPOTA_SCRIPT=$(find "$HOME/Library/Arduino15/packages/esp32/hardware/esp32/" -name "espota.py" -type f 2>/dev/null | head -n 1)
+
+if [ -z "$ESPOTA_SCRIPT" ]; then
+  echo "✗ espota.py not found!"
+  echo "  Please ensure ESP32 board support is installed via Arduino IDE."
+  exit 1
+fi
+
 # Step 1: Clean build cache
 echo "Step 1: Cleaning build cache..."
-rm -rf "$BUILD_CACHE"/*
-echo "✓ Build cache cleaned"
+if [ "${CLEAR_CACHE:-0}" = "1" ]; then
+  echo "  Clearing entire build cache (CLEAR_CACHE=1)..."
+  rm -rf "$BUILD_CACHE"/*
+  echo "✓ Full build cache cleared"
+else
+  echo "  Removing stale binaries only..."
+  find "$BUILD_CACHE" -name "sand-garden.ino.bin" -type f -delete 2>/dev/null || true
+  echo "✓ Stale binaries removed (use CLEAR_CACHE=1 for full cache clear)"
+fi
 echo ""
 
 # Step 2: Compile firmware
 echo "Step 2: Compiling firmware..."
-"$ARDUINO_CLI" compile \
+COMPILE_OUTPUT=$("$ARDUINO_CLI" compile \
   --fqbn "$FQBN" \
   --warnings default \
   --build-property compiler.cpp.extra_flags=-fpermissive \
-  --export-binaries . 2>&1 | tail -5
+  --export-binaries . 2>&1)
+COMPILE_STATUS=$?
 
-if [ $? -ne 0 ]; then
+if [ $COMPILE_STATUS -ne 0 ]; then
   echo "✗ Compilation failed!"
+  echo ""
+  echo "Full compilation output:"
+  echo "$COMPILE_OUTPUT"
   exit 1
 fi
+
+# Show last few lines on success
+echo "$COMPILE_OUTPUT" | tail -5
 
 echo "✓ Compilation successful"
 echo ""
@@ -57,8 +79,22 @@ echo "  Size: $BINARY_SIZE"
 echo "  Date: $BINARY_DATE"
 echo ""
 
-# Step 4: Upload via OTA
-echo "Step 4: Uploading via OTA to $DEVICE_HOST..."
+# Step 4: Pre-flight checks
+echo "Step 4: Pre-flight checks..."
+
+# Check if device is reachable
+echo "  Checking device connectivity to $DEVICE_HOST..."
+if ping -c 1 -W 2 "$DEVICE_HOST" &>/dev/null; then
+  echo "✓ Device is reachable"
+else
+  echo "⚠ Warning: Cannot reach $DEVICE_HOST"
+  echo "  Device may be offline or not on the same network."
+  echo "  Upload will be attempted anyway, but may fail."
+fi
+echo ""
+
+# Step 5: Upload via OTA
+echo "Step 5: Uploading via OTA to $DEVICE_HOST..."
 python3 "$ESPOTA_SCRIPT" \
   -i "$DEVICE_HOST" \
   -p "$OTA_PORT" \
