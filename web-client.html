@@ -210,6 +210,61 @@
     <main class="flex-1 grid xl:grid-cols-3 gap-6 p-6">
       <!-- Left Column: Status, Config, Logs -->
       <section class="space-y-6">
+        <!-- LED Effects -->
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <h2 class="text-lg font-semibold mb-4">LED Effects</h2>
+          <ul class="grid sm:grid-cols-2 gap-3">
+            <template x-for="effect in ledEffectMeta" :key="effect.id">
+              <li>
+                <button @click="selectLedEffect(effect.id)"
+                  :class="ledEffect === effect.id ? 'ring-2 ring-sg-accent/70 bg-sg-accent/10' : 'hover:bg-gray-700/50'"
+                  class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/40 border border-gray-700/60 transition duration-150 focus:outline-none focus:ring-2 focus:ring-sg-accent/50">
+                  <div class="flex justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-medium truncate" x-text="effect.id + '. ' + effect.name"></span>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            </template>
+          </ul>
+          <!-- Color Picker (only visible when Solid Color effect is selected) -->
+          <div x-show="ledEffect === SOLID_COLOR_EFFECT_ID" class="mt-4 pt-4 border-t border-gray-700/50">
+            <label class="block text-sm font-medium mb-2">Solid Color</label>
+            <div class="flex items-center gap-3">
+              <input type="color" x-model="ledColorHex" @input="onLedColorChange()"
+                class="w-16 h-10 rounded border border-gray-600 bg-gray-800 cursor-pointer" />
+              <div class="flex-1 flex gap-2">
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">R</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.r" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">G</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.g" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">B</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.b" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Brightness Slider -->
+          <div class="mt-4 pt-4 border-t border-gray-700/50">
+            <label class="block text-sm font-medium mb-2">Brightness</label>
+            <div class="flex items-center gap-3">
+              <input type="range" min="0" max="150" x-model.number="ledBrightness" @input="sendLedBrightness()"
+                class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sg-accent" />
+              <input type="number" min="0" max="150" x-model.number="ledBrightness" @change="sendLedBrightness()"
+                class="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+            </div>
+          </div>
+        </div>
+
         <!-- Device Status -->
         <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
           <div class="flex items-center mb-4">
@@ -700,11 +755,14 @@
         autoMode: true,
         speedMultiplier: 1.0,
         pattern: 1,
+        ledEffect: 1,
+        NUM_LED_EFFECTS: 10, // Total number of LED effects (max UI value)
+        SOLID_COLOR_EFFECT_ID: 9, // ID of the Solid Color effect (for showing color picker)
         // Trails always enabled now (formerly showTrails toggle removed)
         statusMessage: 'Idle',
         logs: [],
         device: null, server: null,
-        chars: { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null },
+        chars: { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null },
         debugStepsEnabled: false,
         debugCanvas: null,
         debugCtx: null,
@@ -739,6 +797,40 @@
           { id: 10, type: 'builtin', name: 'Accidental Butterfly', short: 'butterfly', description: 'Sinusoidally modulated spiral (butterfly).', pointsTarget: 4600 },
           { id: 11, type: 'sandscript', name: 'Sandscript', short: 'script', description: 'Your custom Sandscript.' }
         ],
+        ledEffectMeta: [
+          { id: 1, name: 'Rainbow', description: 'Moving rainbow wave across the strip' },
+          { id: 2, name: 'Fire', description: 'Flickering fire/flame effect with warm colors' },
+          { id: 3, name: 'Color Waves', description: 'Sine wave color patterns' },
+          { id: 4, name: 'Twinkle', description: 'Random sparkling stars' },
+          { id: 5, name: 'Theater Chase', description: 'Marquee-style chase effect' },
+          { id: 6, name: 'Palette Cycle', description: 'Cycling through color palettes' },
+          { id: 7, name: 'Confetti', description: 'Random colored dots' },
+          { id: 8, name: 'Comet', description: 'Comet/meteor with fading tail' },
+          { id: 9, name: 'Solid Color', description: 'Single solid color across all LEDs' },
+          { id: 10, name: 'Off', description: 'Turn off all LEDs' }
+        ],
+        ledColor: { r: 255, g: 255, b: 255 }, // Current solid color (white by default)
+        ledBrightness: 100, // LED brightness (0-255, default 100)
+        get ledColorHex() {
+          // Compute hex color from RGB
+          const toHex = (v) => {
+            const hex = Math.round(v).toString(16).padStart(2, '0');
+            return hex;
+          };
+          return '#' + toHex(this.ledColor.r) + toHex(this.ledColor.g) + toHex(this.ledColor.b);
+        },
+        set ledColorHex(value) {
+          // Parse hex color and update RGB values
+          if (value && value.length === 7 && value.startsWith('#')) {
+            const r = parseInt(value.substr(1, 2), 16);
+            const g = parseInt(value.substr(3, 2), 16);
+            const b = parseInt(value.substr(5, 2), 16);
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+              this.ledColor = { r, g, b };
+              this.sendLedColor();
+            }
+          }
+        },
         scriptPatternId: 11,
         // Sandscript state (internal variables still prefixed dsl for now)
         scriptSource: `# simple back and forth with the ball 
@@ -1200,6 +1292,9 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           const TELEMETRY_UUID = '9b6c7e16-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           const COMMAND_UUID = '9b6c7e17-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           const SCRIPT_UUID = '9b6c7e18-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+          const LED_EFFECT_UUID = '9b6c7e1c-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+          const LED_COLOR_UUID = '9b6c7e1d-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+          const LED_BRIGHTNESS_UUID = '9b6c7e1e-3b2c-4d8c-9d7c-5e2a6d1f8b01';
           try {
             this.device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [SERVICE_UUID] }],
@@ -1214,13 +1309,37 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             const patternChar = await service.getCharacteristic(PATTERN_UUID);
             const statusChar = await service.getCharacteristic(STATUS_UUID);
             // Mode/run are optional until firmware updated; wrap in try
-            let modeChar = null, runChar = null, telemetryChar = null, commandChar = null, scriptChar = null;
+            let modeChar = null, runChar = null, telemetryChar = null, commandChar = null, scriptChar = null, ledEffectChar = null, ledColorChar = null, ledBrightnessChar = null;
             try { modeChar = await service.getCharacteristic(MODE_UUID); } catch (_) { }
             try { runChar = await service.getCharacteristic(RUN_UUID); } catch (_) { }
             try { telemetryChar = await service.getCharacteristic(TELEMETRY_UUID); } catch (_) { this.log('Telemetry characteristic not found (firmware older?)'); }
             try { commandChar = await service.getCharacteristic(COMMAND_UUID); } catch (_) { this.log('Command characteristic not found'); }
             try { scriptChar = await service.getCharacteristic(SCRIPT_UUID); } catch (_) { this.log('SandScript characteristic not found'); }
-            this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar };
+            try {
+              console.log('[DEBUG] Attempting to get LED Effect characteristic with UUID:', LED_EFFECT_UUID);
+              ledEffectChar = await service.getCharacteristic(LED_EFFECT_UUID);
+              console.log('[DEBUG] LED Effect characteristic found:', ledEffectChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Effect characteristic error:', e);
+              this.log('LED Effect characteristic not found: ' + e.message);
+            }
+            try {
+              console.log('[DEBUG] Attempting to get LED Color characteristic with UUID:', LED_COLOR_UUID);
+              ledColorChar = await service.getCharacteristic(LED_COLOR_UUID);
+              console.log('[DEBUG] LED Color characteristic found:', ledColorChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Color characteristic error:', e);
+              this.log('LED Color characteristic not found: ' + e.message);
+            }
+            try {
+              console.log('[DEBUG] Attempting to get LED Brightness characteristic with UUID:', LED_BRIGHTNESS_UUID);
+              ledBrightnessChar = await service.getCharacteristic(LED_BRIGHTNESS_UUID);
+              console.log('[DEBUG] LED Brightness characteristic found:', ledBrightnessChar);
+            } catch (e) {
+              console.error('[DEBUG] LED Brightness characteristic error:', e);
+              this.log('LED Brightness characteristic not found: ' + e.message);
+            }
+            this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar, ledEffect: ledEffectChar, ledColor: ledColorChar, ledBrightness: ledBrightnessChar };
             // Initial reads
             await this.readInitialValues();
             // Notifications
@@ -1242,6 +1361,15 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               }).catch(() => { }),
               telemetryChar && telemetryChar.startNotifications().then(() => {
                 telemetryChar.addEventListener('characteristicvaluechanged', e => { this.handleTelemetryNotify(e); });
+              }).catch(() => { }),
+              ledEffectChar && ledEffectChar.startNotifications().then(() => {
+                ledEffectChar.addEventListener('characteristicvaluechanged', e => { this.handleLedEffectNotify(e); });
+              }).catch(() => { }),
+              ledColorChar && ledColorChar.startNotifications().then(() => {
+                ledColorChar.addEventListener('characteristicvaluechanged', e => { this.handleLedColorNotify(e); });
+              }).catch(() => { }),
+              ledBrightnessChar && ledBrightnessChar.startNotifications().then(() => {
+                ledBrightnessChar.addEventListener('characteristicvaluechanged', e => { this.handleLedBrightnessNotify(e); });
               }).catch(() => { })
             ]);
             this.debugStepsEnabled = false;
@@ -1277,6 +1405,23 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               const v = await this.chars.run.readValue();
               const txt = this.textFromDV(v); const num = parseInt(txt); this.running = (num === 1);
             }
+            if (this.chars.ledEffect) {
+              const v = await this.chars.ledEffect.readValue();
+              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) this.ledEffect = num + 1;
+            }
+            if (this.chars.ledColor) {
+              const v = await this.chars.ledColor.readValue();
+              const txt = this.textFromDV(v);
+              const parts = txt.split(',');
+              if (parts.length === 3) {
+                const r = parseInt(parts[0]), g = parseInt(parts[1]), b = parseInt(parts[2]);
+                if (!isNaN(r) && !isNaN(g) && !isNaN(b)) { this.ledColor = { r, g, b }; }
+              }
+            }
+            if (this.chars.ledBrightness) {
+              const v = await this.chars.ledBrightness.readValue();
+              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num <= 255) this.ledBrightness = num;
+            }
           } catch (e) { this.log('Read init failed: ' + e.message); }
         },
         // Notification handlers
@@ -1302,6 +1447,26 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         },
         handleModeNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.autoMode = (num === 1); this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual')); },
         handleRunNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.running = (num === 1); this.log('Run->' + (this.running ? 'Running' : 'Stopped')); },
+        handleLedEffectNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) { this.ledEffect = num + 1; this.log('LED Effect->' + (num + 1) + ' (' + this.ledEffectMeta[num].name + ')'); } },
+        handleLedColorNotify(e) {
+          const txt = this.textFromDV(e.target.value);
+          const parts = txt.split(',');
+          if (parts.length === 3) {
+            const r = parseInt(parts[0]), g = parseInt(parts[1]), b = parseInt(parts[2]);
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+              this.ledColor = { r, g, b };
+              this.log('LED Color->RGB(' + r + ',' + g + ',' + b + ')');
+            }
+          }
+        },
+        handleLedBrightnessNotify(e) {
+          const txt = this.textFromDV(e.target.value);
+          const num = parseInt(txt);
+          if (!isNaN(num) && num >= 0 && num <= 255) {
+            this.ledBrightness = num;
+            this.log('LED Brightness->' + num);
+          }
+        },
         handleTelemetryNotify(e) {
           const txt = this.textFromDV(e.target.value);
           // Expect lines like: JOY a=12 r=-3 mag=12 | STATE pat=1 auto=1 run=1 brt=40 | STEP idx=... | HB
@@ -2057,7 +2222,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           this.connected = false;
           this.connecting = false;
           this.server = null;
-          this.chars = { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null };
+          this.chars = { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null };
           this.debugStepsEnabled = false;
           this.clearDebugTrail();
           this.lastDebugStep = null;
@@ -2073,6 +2238,51 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             try { const txt = new TextEncoder().encode(String(id)); await this.chars.pattern.writeValue(txt); }
             catch (e) { this.log('Pattern write err: ' + e.message); }
           }
+        },
+        async selectLedEffect(id) {
+          if (id < 1 || id > this.NUM_LED_EFFECTS) return;
+          this.ledEffect = id;
+          const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
+          this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
+          console.log('[DEBUG] selectLedEffect: id=' + id + ', effectIndex=' + effectIndex + ', name=' + this.ledEffectMeta[effectIndex].name);
+          if (this.chars.ledEffect) {
+            try {
+              const txt = new TextEncoder().encode(String(effectIndex));
+              console.log('[DEBUG] Writing to ledEffect characteristic:', effectIndex, 'bytes:', Array.from(txt));
+              await this.chars.ledEffect.writeValue(txt);
+              console.log('[DEBUG] Write successful');
+            }
+            catch (e) {
+              console.error('[DEBUG] LED effect write error:', e);
+              this.log('LED effect write err: ' + e.message);
+            }
+          } else {
+            console.warn('[DEBUG] ledEffect characteristic is null');
+          }
+        },
+        async sendLedColor() {
+          const colorStr = this.ledColor.r + ',' + this.ledColor.g + ',' + this.ledColor.b;
+          this.setStatus('LED color -> RGB(' + colorStr + ')');
+          if (this.chars.ledColor) {
+            try { const txt = new TextEncoder().encode(colorStr); await this.chars.ledColor.writeValue(txt); }
+            catch (e) { this.log('LED color write err: ' + e.message); }
+          }
+        },
+        async sendLedBrightness() {
+          this.setStatus('LED brightness -> ' + this.ledBrightness);
+          if (this.chars.ledBrightness) {
+            try { const txt = new TextEncoder().encode(String(this.ledBrightness)); await this.chars.ledBrightness.writeValue(txt); }
+            catch (e) { this.log('LED brightness write err: ' + e.message); }
+          }
+        },
+        onLedColorChange() {
+          // Convert hex color to RGB
+          const hex = this.ledColorHex;
+          const r = parseInt(hex.substr(1, 2), 16);
+          const g = parseInt(hex.substr(3, 2), 16);
+          const b = parseInt(hex.substr(5, 2), 16);
+          this.ledColor = { r, g, b };
+          this.sendLedColor();
         },
         initializePattern() {
           // Initialize the pattern generator for on-the-fly step generation

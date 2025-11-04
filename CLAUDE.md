@@ -52,21 +52,66 @@ arduino-cli upload --fqbn arduino:esp32:nano_nora .
 #### OTA (Over-The-Air) Upload
 Once WiFi credentials are configured (see WiFi Setup section below), firmware can be uploaded wirelessly:
 
+**Important**: Arduino CLI uses a build cache that can become stale. Always ensure you're uploading the latest binary by following these steps:
+
 ```bash
-# Find the espota.py script location
-# Typical location: /Users/<user>/Library/Arduino15/packages/esp32/hardware/esp32/<version>/tools/espota.py
+# Step 1: Clean build cache and compile fresh binary
+rm -rf /Users/gustavoambrozio/Library/Caches/arduino/sketches/* && \
+"/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli" compile \
+  --fqbn arduino:esp32:nano_nora \
+  --warnings default \
+  --build-property compiler.cpp.extra_flags=-fpermissive \
+  --export-binaries .
 
-# Upload via OTA using espota.py
+# Step 2: Find the latest binary location (sketch hash changes after cache clear)
+BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f | head -n 1)
+echo "Binary location: $BINARY_PATH"
+
+# Step 3: Upload via OTA using espota.py
 python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
-  -i 192.168.86.121 \
+  -i sand-garden.local \
   -p 3232 \
-  -f /Users/gustavoambrozio/Library/Caches/arduino/sketches/CFEAF06617210DBB2CA2FA8CA76E4A7E/sand-garden.ino.bin
-
-# Or use the device hostname (mDNS)
-python3 /path/to/espota.py -i sand-garden.local -p 3232 -f /path/to/sand-garden.ino.bin
+  -f "$BINARY_PATH"
 ```
 
-**Note**: `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
+**Alternative**: If you know the build cache is fresh (just compiled), you can skip the clean step and find the binary directly:
+
+```bash
+# Find the most recently modified binary
+BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f -exec ls -t {} + | head -n 1)
+
+# Upload via OTA
+python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
+  -i sand-garden.local \
+  -p 3232 \
+  -f "$BINARY_PATH"
+```
+
+**Note**:
+- `arduino-cli upload --port sand-garden.local` will still use USB if a USB cable is connected. For true OTA upload, use `espota.py` directly or disconnect USB.
+- The sketch hash in the cache path (e.g., `CFEAF06617210DBB2CA2FA8CA76E4A7E`) changes when the build cache is cleared, so use the `find` command to locate the latest binary dynamically.
+
+#### Automated Build & Upload (Recommended)
+
+For the easiest workflow, use the Claude Code skill which automates the entire build and OTA upload process:
+
+```bash
+bash .claude/skills/build-upload/build-upload.sh
+```
+
+**When working with Claude Code**, simply ask:
+- "Build and upload the firmware"
+- "Deploy the latest changes"
+- "Upload to the device"
+
+**What it does:**
+1. Cleans build cache (prevents stale binary issues)
+2. Compiles firmware with correct flags
+3. Dynamically locates the fresh binary
+4. Uploads via OTA to sand-garden.local
+5. Reports detailed progress and errors
+
+This is the recommended approach as it ensures you always upload a fresh build without cache issues.
 
 ### VS Code Tasks
 The repository includes VS Code tasks:
@@ -242,11 +287,23 @@ This enables mirror/ping-pong patterns using `sin(rev * 180)` idioms.
 - Homing sequence on boot: crash radial axis to 0, then offset by `HOMING_BUFFER`
 - Manual joystick mode uses analog pins A2 (angular) and A3 (radial) with threshold-based dead zone
 
-### LED Bar
-- 8 RGB LEDs controlled via FastLED library
+### LED Strips
+The device has two independent WS2812B LED strips controlled via FastLED library:
+
+**Status LED Bar** (8 LEDs):
 - Connected to GPIO_NUM_1
 - Default max brightness: 40/255
 - Used for pattern selection indicator and status feedback
+- Managed by `LedDisplay` class
+
+**Pattern LED Strip** (39 LEDs):
+- Connected to D1 pin (GPIO 43 / PATTERN_LED_DATA_PIN)
+- Default max brightness: 100/255
+- Displays moving rainbow effect using HSV color space
+- Updates at 50 FPS for smooth animation
+- Managed by `PatternLedDisplay` class
+
+Both strips use per-strip brightness control and FastLED.show() is called once per loop cycle to coordinate updates.
 
 ## Common Development Tasks
 

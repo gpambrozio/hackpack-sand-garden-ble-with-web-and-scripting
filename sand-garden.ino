@@ -117,6 +117,12 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define MAX_BRIGHTNESS 40       // Brightness values are 8-bit for a max of 255 (the range is [0-255]), this sets default maximum to 40 out of 255.
 #define LED_FADE_PERIOD 1000    // Amount of time in milliseconds it takes for LEDs to fade on and off.
 
+// Pattern LED strip (second strip for visual effects)
+#define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
+#define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
+#define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
+// NUM_PATTERN_LED_EFFECTS is defined in BLEConfigServer.h
+
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
 
@@ -400,6 +406,10 @@ static void setupWiFi();
 static void setupOTA();
 static void handleOTA();
 
+// Forward declaration for PatternLedDisplay
+class PatternLedDisplay;
+extern PatternLedDisplay patternDisplay;
+
 // Listener implementation responding to remote config writes (now globals are defined)
 class SandGardenConfigListener : public ISGConfigListener
 {
@@ -632,6 +642,10 @@ public:
     // Attempt WiFi connection
     setupWiFi();
   }
+
+  void onLedEffectChanged(uint8_t newEffect) override;  // Implemented later after patternDisplay is defined
+  void onLedColorChanged(uint8_t r, uint8_t g, uint8_t b) override;  // Implemented later after patternDisplay is defined
+  void onLedBrightnessChanged(uint8_t brightness) override;  // Implemented later after patternDisplay is defined
 };
 static SandGardenConfigListener bleListener;
 
@@ -846,14 +860,17 @@ class LedDisplay
 {
 private:
   CRGB leds[NUM_LEDS]; // array that holds the state of each LED
+  uint8_t brightness;   // Current brightness for this strip (0-255)
 
 public:
   // This is the constructor. It's called when a new instance of the class is created, and handles setting things up for use.
-  LedDisplay()
+  LedDisplay() : brightness(MAX_BRIGHTNESS)
   {
     FastLED.addLeds<WS2812B, LED_DATA_PIN, GRB>(leds, NUM_LEDS);
-    FastLED.setBrightness(MAX_BRIGHTNESS);
-    FastLED.clear();
+
+    // Initialize all LEDs to black
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+
     // Small stabilization delay; helps some ESP32 targets before first show
     delay(5);
 #if SG_FASTLED_DIAG_BOOT
@@ -867,11 +884,16 @@ public:
 #endif
   }
 
-  // a proxy function for setting the brightness of the LEDs. This way the class can handle all the LED stuff
-  // without relying on the user to sometimes call on FastLED directly.
+  // Set brightness for this strip (0-255)
   void setBrightness(uint8_t val)
   {
-    FastLED.setBrightness(val);
+    brightness = constrain(val, 0, 255);
+  }
+
+  // Get current brightness
+  uint8_t getBrightness() const
+  {
+    return brightness;
   }
 
   /**
@@ -889,10 +911,9 @@ public:
    */
   void indicatePattern(uint8_t value)
   { // used for showing which pattern is selected
-    FastLED.clear();
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
     if (value == 255)
     { // pattern255 is the manual drawing mode.
-      FastLED.clear();
       leds[0] = CRGB::DarkCyan;
     }
     else
@@ -905,7 +926,13 @@ public:
         }
       }
     }
-    FastLED.show(); // display the LEDs
+
+    // Apply brightness to all LEDs
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i].nscale8(brightness);
+    }
+    // Note: FastLED.show() is now called centrally in main loop for coordination
   }
 
   /**
@@ -925,23 +952,29 @@ public:
     unsigned long currentTime = millis();
     unsigned long timeInCycle = currentTime % period; // Time position in current cycle
     unsigned long halfPeriod = period / 2;
-    int brightness;
+    uint8_t fadeBrightness;
 
     // Determine phase and calculate brightness
     if (timeInCycle < halfPeriod)
     {
       // Fading in
-      brightness = map(timeInCycle, 0, halfPeriod, 0, maxBrightness);
+      fadeBrightness = map(timeInCycle, 0, halfPeriod, 0, maxBrightness);
     }
     else
     {
       // Fading out
-      brightness = map(timeInCycle, halfPeriod, period, maxBrightness, 0);
+      fadeBrightness = map(timeInCycle, halfPeriod, period, maxBrightness, 0);
     }
 
+    // Update the brightness for this strip
+    brightness = fadeBrightness;
+
     // Apply calculated brightness to all LEDs
-    FastLED.setBrightness(brightness);
-    FastLED.show();
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i].nscale8(brightness);
+    }
+    // Note: FastLED.show() is now called centrally in main loop for coordination
   }
 
   /**
@@ -970,7 +1003,7 @@ public:
     static int position = 0;
     static int multiplier = 1;
 
-    FastLED.setBrightness(MAX_BRIGHTNESS);
+    brightness = MAX_BRIGHTNESS;
 
     if (!homingComplete)
     { // If the homing sequence is not complete, animate this pattern.
@@ -987,12 +1020,18 @@ public:
           leds[position + i].setHue(hue);
         }
 
-        // Randomly fade the LEDs
+        // Fade the LEDs
         for (int j = 0; j < NUM_LEDS; j++)
         {
-          // if (random(10) > 3)
           leds[j] = leds[j].fadeToBlackBy(fadeAmount);
         }
+
+        // Apply brightness to all LEDs
+        for (int i = 0; i < NUM_LEDS; i++)
+        {
+          leds[i].nscale8(brightness);
+        }
+
         FastLED.show();
         lastUpdate = millis();
       }
@@ -1006,7 +1045,14 @@ public:
 
       for (int j = 0; j < 8; j++)
       {
-        FastLED.setBrightness(constrain(MAX_BRIGHTNESS * multiplier, 0, MAX_BRIGHTNESS));
+        uint8_t flashBrightness = constrain(MAX_BRIGHTNESS * multiplier, 0, MAX_BRIGHTNESS);
+
+        // Apply flash brightness to all LEDs
+        for (int i = 0; i < NUM_LEDS; i++)
+        {
+          leds[i].nscale8(flashBrightness);
+        }
+
         multiplier *= -1;
         FastLED.show();
         delay(100);
@@ -1017,8 +1063,346 @@ public:
 
 #pragma endregion LedDisplayClass
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+PATTERN LED DISPLAY CLASS
+Manages the second LED strip for visual effects (rainbow, patterns, etc.)
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region PatternLedDisplayClass
+
+class PatternLedDisplay
+{
+private:
+  CRGB patternLeds[NUM_PATTERN_LEDS]; // array that holds the state of each LED in the pattern strip
+  uint8_t brightness;                  // Current brightness for this strip (0-255)
+  uint8_t currentEffect;               // Current effect index (0 to NUM_PATTERN_LED_EFFECTS-1)
+
+  // Effect state variables
+  uint8_t rainbowHue;                  // Rainbow effect hue offset
+  uint8_t heat[NUM_PATTERN_LEDS];      // Fire effect heat array
+  uint8_t wavePhase;                   // Color wave phase
+  uint16_t chasePosition;              // Theater chase position
+  uint8_t cometPosition;               // Comet position
+  uint8_t paletteIndex;                // Color palette index
+  CRGB solidColor;                     // Solid color for effect 8
+
+public:
+  // Constructor - initializes the pattern LED strip
+  PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), currentEffect(0),
+                        rainbowHue(0), wavePhase(0), chasePosition(0),
+                        cometPosition(0), paletteIndex(0), solidColor(CRGB::White)
+  {
+    FastLED.addLeds<WS2812B, PATTERN_LED_DATA_PIN, GRB>(patternLeds, NUM_PATTERN_LEDS);
+
+    // Initialize all LEDs to black
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+    // Initialize heat array for fire effect
+    memset(heat, 0, sizeof(heat));
+
+#if SG_FASTLED_DIAG_BOOT
+    // Diagnostic flash on boot - use green for pattern strip
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Green);
+    FastLED.show();
+    delay(150);
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+    FastLED.show();
+#endif
+  }
+
+  // Set brightness for this strip (0-255)
+  void setBrightness(uint8_t val)
+  {
+    brightness = constrain(val, 0, 255);
+  }
+
+  // Get current brightness
+  uint8_t getBrightness() const
+  {
+    return brightness;
+  }
+
+  // Set current effect (0 to NUM_PATTERN_LED_EFFECTS-1)
+  void setEffect(uint8_t effect)
+  {
+    if (effect < NUM_PATTERN_LED_EFFECTS) {
+      currentEffect = effect;
+      // Reset effect state when changing effects
+      rainbowHue = 0;
+      wavePhase = 0;
+      chasePosition = 0;
+      cometPosition = 0;
+      paletteIndex = 0;
+      memset(heat, 0, sizeof(heat));
+      fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+    }
+  }
+
+  // Get current effect index
+  uint8_t getEffect() const
+  {
+    return currentEffect;
+  }
+
+  /**
+   * @brief Main update function - calls the appropriate effect based on currentEffect
+   */
+  void update()
+  {
+    switch (currentEffect) {
+      case 0: updateRainbow(); break;
+      case 1: updateFire(); break;
+      case 2: updateColorWaves(); break;
+      case 3: updateTwinkle(); break;
+      case 4: updateTheaterChase(); break;
+      case 5: updatePaletteCycle(); break;
+      case 6: updateConfetti(); break;
+      case 7: updateComet(); break;
+      case 8: updateSolidColor(); break;
+      case 9: updateOff(); break;
+      default: updateRainbow(); break;
+    }
+  }
+
+  /**
+   * @brief Effect 0: Moving rainbow
+   */
+  void updateRainbow()
+  {
+    uint8_t deltaHue = 255 / NUM_PATTERN_LEDS;
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++)
+    {
+      uint8_t hue = rainbowHue + (i * deltaHue);
+      patternLeds[i] = CHSV(hue, 255, brightness);
+    }
+    rainbowHue += 2; // Advance rainbow
+  }
+
+  /**
+   * @brief Effect 1: Fire/Flame effect
+   * Simulates flickering fire using heat array and warm color palette
+   */
+  void updateFire()
+  {
+    // Cool down every cell a little
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      int cooling = random(0, ((55 * 10) / NUM_PATTERN_LEDS) + 2);
+      heat[i] = (heat[i] > cooling) ? (heat[i] - cooling) : 0;
+    }
+
+    // Heat from each cell drifts up and diffuses a little
+    for (int k = NUM_PATTERN_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+    }
+
+    // Randomly ignite new sparks near the bottom
+    if (random(255) < 120) {
+      int y = random(3);
+      int heating = heat[y] + random(160, 255);
+      heat[y] = (heating < 255) ? heating : 255;
+    }
+
+    // Convert heat to LED colors
+    for (int j = 0; j < NUM_PATTERN_LEDS; j++) {
+      // Scale heat value to 0-240 for heatmap
+      uint8_t t192 = scale8(heat[j], 240);
+      // Calculate color from palette
+      uint8_t heatramp = t192 & 0x3F; // 0..63
+      heatramp <<= 2; // scale up to 0..252
+
+      if (t192 > 0x80) { // Hottest
+        patternLeds[j] = CRGB(255, 255, heatramp);
+      } else if (t192 > 0x40) { // Medium
+        patternLeds[j] = CRGB(255, heatramp, 0);
+      } else { // Coolest
+        patternLeds[j] = CRGB(heatramp, 0, 0);
+      }
+
+      patternLeds[j].nscale8(brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 2: Color waves using sine waves
+   */
+  void updateColorWaves()
+  {
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      // Create multiple sine waves with different frequencies
+      uint8_t hue = wavePhase + (sin8(i * 16 + wavePhase) / 4);
+      uint8_t brightness_mod = sin8(i * 8 + wavePhase / 2);
+      patternLeds[i] = CHSV(hue, 255, scale8(brightness, brightness_mod));
+    }
+    wavePhase += 4;
+  }
+
+  /**
+   * @brief Effect 3: Twinkle/Sparkle
+   * Random LEDs fade in and out at different rates
+   */
+  void updateTwinkle()
+  {
+    // Fade all LEDs
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i].fadeToBlackBy(32);
+    }
+
+    // Randomly light up some LEDs
+    if (random(100) < 50) { // 50% chance each frame
+      int pos = random(NUM_PATTERN_LEDS);
+      patternLeds[pos] = CHSV(random(255), 255, brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 4: Theater chase/marquee
+   */
+  void updateTheaterChase()
+  {
+    // Clear all LEDs
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+    // Light up every 3rd LED, shifting position
+    uint8_t hue = (chasePosition / 3) * 32; // Change color as we move
+    for (int i = 0; i < NUM_PATTERN_LEDS; i += 3) {
+      int pos = (i + (chasePosition % 3)) % NUM_PATTERN_LEDS;
+      patternLeds[pos] = CHSV(hue, 255, brightness);
+    }
+    chasePosition++;
+  }
+
+  /**
+   * @brief Effect 5: Color palette cycling
+   * Uses FastLED's built-in color palettes
+   */
+  void updatePaletteCycle()
+  {
+    // Cycle through different palettes
+    CRGBPalette16 currentPalette;
+    uint8_t paletteSelect = (paletteIndex / 1024) % 4; // Change palette every ~20 seconds at 50fps
+
+    switch (paletteSelect) {
+      case 0: currentPalette = RainbowColors_p; break;
+      case 1: currentPalette = OceanColors_p; break;
+      case 2: currentPalette = LavaColors_p; break;
+      case 3: currentPalette = PartyColors_p; break;
+    }
+
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      uint8_t colorIndex = paletteIndex + (i * 255 / NUM_PATTERN_LEDS);
+      patternLeds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, LINEARBLEND);
+    }
+    paletteIndex += 2;
+  }
+
+  /**
+   * @brief Effect 6: Confetti
+   * Random colored dots appear and fade
+   */
+  void updateConfetti()
+  {
+    // Fade existing LEDs
+    fadeToBlackBy(patternLeds, NUM_PATTERN_LEDS, 16);
+
+    // Add random colored dots
+    int pos = random16(NUM_PATTERN_LEDS);
+    patternLeds[pos] += CHSV(random8(), 200, brightness);
+  }
+
+  /**
+   * @brief Effect 7: Comet/Meteor
+   * A bright head with fading tail
+   */
+  void updateComet()
+  {
+    // Fade all LEDs for the tail effect
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i].fadeToBlackBy(64);
+    }
+
+    // Draw the comet head
+    patternLeds[cometPosition] = CHSV(rainbowHue, 255, brightness);
+
+    // Advance position and hue
+    cometPosition++;
+    if (cometPosition >= NUM_PATTERN_LEDS) {
+      cometPosition = 0;
+    }
+    rainbowHue += 4; // Change color as it moves
+  }
+
+  /**
+   * @brief Effect 8: Solid color
+   * Displays a single solid color across all LEDs
+   */
+  void updateSolidColor()
+  {
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i] = solidColor;
+      patternLeds[i].nscale8(brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 9: Off
+   * Turns all LEDs off
+   */
+  void updateOff()
+  {
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+  }
+
+  /**
+   * @brief Set the solid color for effect 8
+   * @param r Red value (0-255)
+   * @param g Green value (0-255)
+   * @param b Blue value (0-255)
+   */
+  void setSolidColor(uint8_t r, uint8_t g, uint8_t b)
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  /**
+   * @brief Clears all LEDs in the pattern strip to black.
+   */
+  void clear()
+  {
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+  }
+};
+
+#pragma endregion PatternLedDisplayClass
+
 // Create an instance of the LedDisplay class that controls the RGB LEDs.
 LedDisplay display;
+
+// Create an instance of the PatternLedDisplay class that controls the pattern LED strip.
+PatternLedDisplay patternDisplay;
+
+// Implementation of onLedEffectChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
+{
+  if (newEffect < NUM_PATTERN_LED_EFFECTS) {
+    patternDisplay.setEffect(newEffect);
+    bleConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
+  }
+}
+
+// Implementation of onLedColorChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedColorChanged(uint8_t r, uint8_t g, uint8_t b)
+{
+  patternDisplay.setSolidColor(r, g, b);
+  bleConfig.notifyStatus(String("[LED] Color set to RGB(") + String(r) + "," + String(g) + "," + String(b) + ")");
+}
+
+// Implementation of onLedBrightnessChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedBrightnessChanged(uint8_t brightness)
+{
+  patternDisplay.setBrightness(brightness);
+  bleConfig.notifyStatus(String("[LED] Brightness set to ") + String(brightness));
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -1028,6 +1412,7 @@ Used for tracking time and button presses.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 elapsedMillis lastJoystickUpdate; // used to track the last time the joystick was updated to prevent absurdly fast scrolling
+elapsedMillis patternLedUpdateTimer; // used to track pattern LED strip refresh timing
 
 // Create an object that handles the joystick button
 OneButtonTiny button(BUTTON_PIN, true, true); // set up the button (button pin, active low, enable internal pull-up resistor)
@@ -1195,7 +1580,8 @@ void setup()
 
   FastLED.clear(); // clear the LEDs
   FastLED.show();
-  bleConfig.notifyStatus(String("[LEDINIT] pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
+  bleConfig.notifyStatus(String("[LEDINIT] status pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
+  bleConfig.notifyStatus(String("[LEDINIT] pattern pin=") + PATTERN_LED_DATA_PIN + " count=" + NUM_PATTERN_LEDS + " maxBrt=" + MAX_PATTERN_BRIGHTNESS);
 
   PatternScriptUnits units;
   units.stepsPerCm = STEPS_PER_MM * 10.0f;
@@ -1244,6 +1630,13 @@ void loop()
   bleConfig.loop(); // service BLE events if needed
   handleOTA(); // handle OTA update requests
   // (Removed LED direct, self-test, and scan debug handling)
+
+  // Update pattern LED strip at ~50 FPS (every 20ms)
+  if (patternLedUpdateTimer >= 20)
+  {
+    patternDisplay.update();
+    patternLedUpdateTimer = 0;
+  }
 
   // Check to see if the button has been pressed. This has to be called as often as possible to catch button presses.
   button.tick();
@@ -1418,6 +1811,9 @@ void loop()
     lastRun = runPattern;
     lastBrt = brt;
   }
+
+  // Update both LED strips (status and pattern) - called once per loop for proper coordination
+  FastLED.show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
