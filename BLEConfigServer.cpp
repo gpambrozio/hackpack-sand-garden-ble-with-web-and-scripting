@@ -93,12 +93,20 @@ void BLEConfigServer::begin(ISGConfigListener *listener) {
     NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   _wifiStatusChar->setValue("Disconnected");
 
-  // LED Effect characteristic (write/read for pattern LED effect selection, 0-7)
+  // LED Effect characteristic (write/read for pattern LED effect selection, 0-9)
   _ledEffectChar = _service->createCharacteristic(
     SG_LED_EFFECT_CHAR_UUID,
     NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
   _ledEffectChar->setValue(String(_ledEffect).c_str());
   _ledEffectChar->setCallbacks(new LedEffectCallbacks(this));
+
+  // LED Color characteristic (write/read for solid color RGB, format: "R,G,B")
+  _ledColorChar = _service->createCharacteristic(
+    SG_LED_COLOR_CHAR_UUID,
+    NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+  String initColor = String(_ledColorR) + "," + String(_ledColorG) + "," + String(_ledColorB);
+  _ledColorChar->setValue(initColor.c_str());
+  _ledColorChar->setCallbacks(new LedColorCallbacks(this));
 
   _service->start();
   NimBLEAdvertising *adv = NimBLEDevice::getAdvertising();
@@ -193,7 +201,7 @@ void BLEConfigServer::setRunState(bool r) {
 }
 
 void BLEConfigServer::setLedEffect(uint8_t e) {
-  if (e > 7) return; // Valid range 0-7
+  if (e > 9) return; // Valid range 0-9
   if (_ledEffect == e) return;
   _ledEffect = e;
   if (_ledEffectChar) {
@@ -201,6 +209,19 @@ void BLEConfigServer::setLedEffect(uint8_t e) {
     _ledEffectChar->notify();
   }
   if (_listener) _listener->onLedEffectChanged(_ledEffect);
+}
+
+void BLEConfigServer::setLedColor(uint8_t r, uint8_t g, uint8_t b) {
+  if (_ledColorR == r && _ledColorG == g && _ledColorB == b) return;
+  _ledColorR = r;
+  _ledColorG = g;
+  _ledColorB = b;
+  if (_ledColorChar) {
+    String colorStr = String(r) + "," + String(g) + "," + String(b);
+    _ledColorChar->setValue(colorStr.c_str());
+    _ledColorChar->notify();
+  }
+  if (_listener) _listener->onLedColorChanged(r, g, b);
 }
 
 void BLEConfigServer::notifyStatus(const String &msg) {
@@ -326,8 +347,17 @@ void BLEConfigServer::_applyRunWrite(const std::string &valRaw) {
 
 void BLEConfigServer::_applyLedEffectWrite(const std::string &valRaw) {
   int v = atoi(valRaw.c_str());
-  if (v >= 0 && v <= 7) {
+  if (v >= 0 && v <= 9) {
     setLedEffect(static_cast<uint8_t>(v));
+  }
+}
+
+void BLEConfigServer::_applyLedColorWrite(const std::string &valRaw) {
+  // Expected format: "R,G,B" where R, G, B are 0-255
+  int r = 0, g = 0, b = 0;
+  int parsed = sscanf(valRaw.c_str(), "%d,%d,%d", &r, &g, &b);
+  if (parsed == 3 && r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+    setLedColor(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
   }
 }
 
@@ -562,6 +592,12 @@ void BLEConfigServer::WiFiPasswordCallbacks::onWrite(NimBLECharacteristic *c, Ni
 void BLEConfigServer::LedEffectCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
   (void)info;
   _parent->_applyLedEffectWrite(c->getValue());
+}
+
+// LED Color characteristic callback
+void BLEConfigServer::LedColorCallbacks::onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) {
+  (void)info;
+  _parent->_applyLedColorWrite(c->getValue());
 }
 
 // Apply WiFi SSID write

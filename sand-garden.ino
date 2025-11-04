@@ -643,6 +643,7 @@ public:
   }
 
   void onLedEffectChanged(uint8_t newEffect) override;  // Implemented later after patternDisplay is defined
+  void onLedColorChanged(uint8_t r, uint8_t g, uint8_t b) override;  // Implemented later after patternDisplay is defined
 };
 static SandGardenConfigListener bleListener;
 
@@ -1073,7 +1074,7 @@ class PatternLedDisplay
 private:
   CRGB patternLeds[NUM_PATTERN_LEDS]; // array that holds the state of each LED in the pattern strip
   uint8_t brightness;                  // Current brightness for this strip (0-255)
-  uint8_t currentEffect;               // Current effect index (0-7)
+  uint8_t currentEffect;               // Current effect index (0-9)
 
   // Effect state variables
   uint8_t rainbowHue;                  // Rainbow effect hue offset
@@ -1082,12 +1083,13 @@ private:
   uint16_t chasePosition;              // Theater chase position
   uint8_t cometPosition;               // Comet position
   uint8_t paletteIndex;                // Color palette index
+  CRGB solidColor;                     // Solid color for effect 8
 
 public:
   // Constructor - initializes the pattern LED strip
   PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), currentEffect(0),
                         rainbowHue(0), wavePhase(0), chasePosition(0),
-                        cometPosition(0), paletteIndex(0)
+                        cometPosition(0), paletteIndex(0), solidColor(CRGB::White)
   {
     FastLED.addLeds<WS2812B, PATTERN_LED_DATA_PIN, GRB>(patternLeds, NUM_PATTERN_LEDS);
 
@@ -1119,10 +1121,10 @@ public:
     return brightness;
   }
 
-  // Set current effect (0-7)
+  // Set current effect (0-9)
   void setEffect(uint8_t effect)
   {
-    if (effect < 8) {
+    if (effect < 10) {
       currentEffect = effect;
       // Reset effect state when changing effects
       rainbowHue = 0;
@@ -1155,6 +1157,8 @@ public:
       case 5: updatePaletteCycle(); break;
       case 6: updateConfetti(); break;
       case 7: updateComet(); break;
+      case 8: updateSolidColor(); break;
+      case 9: updateOff(); break;
       default: updateRainbow(); break;
     }
   }
@@ -1327,6 +1331,38 @@ public:
   }
 
   /**
+   * @brief Effect 8: Solid color
+   * Displays a single solid color across all LEDs
+   */
+  void updateSolidColor()
+  {
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i] = solidColor;
+      patternLeds[i].nscale8(brightness);
+    }
+  }
+
+  /**
+   * @brief Effect 9: Off
+   * Turns all LEDs off
+   */
+  void updateOff()
+  {
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+  }
+
+  /**
+   * @brief Set the solid color for effect 8
+   * @param r Red value (0-255)
+   * @param g Green value (0-255)
+   * @param b Blue value (0-255)
+   */
+  void setSolidColor(uint8_t r, uint8_t g, uint8_t b)
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  /**
    * @brief Clears all LEDs in the pattern strip to black.
    */
   void clear()
@@ -1346,10 +1382,17 @@ PatternLedDisplay patternDisplay;
 // Implementation of onLedEffectChanged (declared earlier in SandGardenConfigListener)
 void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
 {
-  if (newEffect <= 7) {
+  if (newEffect <= 9) {
     patternDisplay.setEffect(newEffect);
     bleConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
   }
+}
+
+// Implementation of onLedColorChanged (declared earlier in SandGardenConfigListener)
+void SandGardenConfigListener::onLedColorChanged(uint8_t r, uint8_t g, uint8_t b)
+{
+  patternDisplay.setSolidColor(r, g, b);
+  bleConfig.notifyStatus(String("[LED] Color set to RGB(") + String(r) + "," + String(g) + "," + String(b) + ")");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
