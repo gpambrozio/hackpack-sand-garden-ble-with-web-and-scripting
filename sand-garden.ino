@@ -1979,6 +1979,13 @@ void moveToPosition(long angularSteps, long radialSteps)
       lastJoyPoll = now;
       Positions tmp = readJoystick();
     }
+    // Update pattern LED animation at ~50 FPS during moves to keep animation smooth
+    if (patternLedUpdateTimer >= 20)
+    {
+      patternDisplay.update();
+      FastLED.show(); // Display the updated LED colors
+      patternLedUpdateTimer = 0;
+    }
   }
 }
 
