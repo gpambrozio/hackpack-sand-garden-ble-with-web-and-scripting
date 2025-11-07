@@ -122,7 +122,7 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
 #define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
 #define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
-// NUM_PATTERN_LED_EFFECTS is defined in BLEConfigServer.h
+#define NUM_PATTERN_LED_EFFECTS 10      // Total number of LED effects available
 
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
