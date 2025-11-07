@@ -8,7 +8,8 @@ This is an ESP32-based firmware for the CrunchLabs Sand Garden, a kinetic sand a
 
 - **Firmware (`sand-garden.ino`)**: Arduino sketch for ESP32 (Arduino Nano ESP32)
 - **SandScript DSL**: A custom math-expression language for defining motion patterns
-- **BLE control system**: Web Bluetooth interface for remote control and script upload
+- **HTTP control system**: REST API with Server-Sent Events for remote control and script upload
+- **BLE WiFi setup**: Minimal Bluetooth service for WiFi credential configuration
 - **Web client (`web-client.html`)**: Browser-based pattern preview and device control
 
 ## Build & Upload
@@ -16,8 +17,18 @@ This is an ESP32-based firmware for the CrunchLabs Sand Garden, a kinetic sand a
 ### Required Libraries
 Install these via Arduino IDE Library Manager or Arduino CLI:
 ```bash
-arduino-cli lib install "AccelStepper" "FastLED" "OneButtonTiny" "elapsedMillis" "NimBLE-Arduino"
+arduino-cli lib install "AccelStepper" "FastLED" "OneButtonTiny" "elapsedMillis" "NimBLE-Arduino" "ESP Async WebServer" "AsyncTCP" "ArduinoJson"
 ```
+
+**Library descriptions:**
+- **AccelStepper**: Stepper motor control with acceleration
+- **FastLED**: WS2812B LED strip control
+- **OneButtonTiny**: Button debouncing and event handling
+- **elapsedMillis**: Non-blocking timing
+- **NimBLE-Arduino**: Bluetooth Low Energy (for WiFi setup only)
+- **ESP Async WebServer**: Asynchronous HTTP server
+- **AsyncTCP**: Async TCP library for ESP32
+- **ArduinoJson**: JSON parsing and generation for HTTP API
 
 ### Arduino CLI Location
 On macOS, if Arduino CLI is not installed separately, you can use the bundled version from Arduino IDE 2.x:
@@ -146,8 +157,183 @@ WiFi credentials are stored using the ESP32 Preferences library:
 
 Once connected to WiFi:
 - **mDNS hostname**: `sand-garden.local`
+- **HTTP server**: Port 80 (REST API and web interface)
 - **OTA port**: 3232 (ArduinoOTA)
 - Device IP can be obtained from Serial output or BLE WiFi status notifications
+
+#### HTTP API Access
+
+After WiFi is configured, the device starts an HTTP server on port 80:
+- **Control API**: `http://sand-garden.local/api/*` (or use IP address)
+- **Real-time updates**: Server-Sent Events at `/api/events`
+- **Web client**: Access the web interface by connecting to the device's IP or hostname
+
+### HTTP API Reference
+
+All POST endpoints accept JSON payloads and return JSON responses. The API supports CORS for web client access.
+
+#### State Management
+
+**GET /api/state** - Get all current device state
+```bash
+curl http://sand-garden.local/api/state
+```
+Response:
+```json
+{
+  "speedMultiplier": 1.0,
+  "pattern": 1,
+  "autoMode": true,
+  "running": false,
+  "ledEffect": 0,
+  "ledColorR": 255,
+  "ledColorG": 255,
+  "ledColorB": 255,
+  "ledBrightness": 100
+}
+```
+
+#### Pattern Control
+
+**POST /api/speed** - Set speed multiplier (0.01 - 5.0)
+```bash
+curl -X POST http://sand-garden.local/api/speed \
+  -H "Content-Type: application/json" \
+  -d '{"value": 1.5}'
+```
+
+**POST /api/pattern** - Set pattern (1-based index)
+```bash
+curl -X POST http://sand-garden.local/api/pattern \
+  -H "Content-Type: application/json" \
+  -d '{"value": 3}'
+```
+
+**POST /api/mode** - Set auto/manual mode
+```bash
+curl -X POST http://sand-garden.local/api/mode \
+  -H "Content-Type: application/json" \
+  -d '{"value": true}'  # true = auto, false = manual
+```
+
+**POST /api/run** - Start/stop pattern execution
+```bash
+curl -X POST http://sand-garden.local/api/run \
+  -H "Content-Type: application/json" \
+  -d '{"value": true}'  # true = running, false = stopped
+```
+
+#### LED Control
+
+**POST /api/led/effect** - Set LED effect (0-9)
+```bash
+curl -X POST http://sand-garden.local/api/led/effect \
+  -H "Content-Type: application/json" \
+  -d '{"value": 2}'
+```
+
+**POST /api/led/color** - Set LED RGB color (0-255)
+```bash
+curl -X POST http://sand-garden.local/api/led/color \
+  -H "Content-Type: application/json" \
+  -d '{"r": 255, "g": 0, "b": 128}'
+```
+
+**POST /api/led/brightness** - Set LED brightness (0-255)
+```bash
+curl -X POST http://sand-garden.local/api/led/brightness \
+  -H "Content-Type: application/json" \
+  -d '{"value": 150}'
+```
+
+#### Commands
+
+**POST /api/command** - Execute command
+```bash
+curl -X POST http://sand-garden.local/api/command \
+  -H "Content-Type: application/json" \
+  -d '{"command": "HOME"}'
+```
+
+#### SandScript Upload
+
+**POST /api/script/begin** - Start script upload
+```bash
+curl -X POST http://sand-garden.local/api/script/begin \
+  -H "Content-Type: application/json" \
+  -d '{"length": 45, "slot": 11}'
+```
+
+**POST /api/script/chunk** - Upload script data (can be sent as single request for small scripts)
+```bash
+curl -X POST http://sand-garden.local/api/script/chunk \
+  -H "Content-Type: text/plain" \
+  --data-binary @script.txt
+```
+
+**POST /api/script/end** - Finalize script upload
+```bash
+curl -X POST http://sand-garden.local/api/script/end
+```
+
+Complete SandScript upload example:
+```bash
+# Create a simple script
+cat > /tmp/script.txt << 'EOF'
+next_radius = clamp(radius + 0.2, 0, 10)
+next_angle = angle + 34
+EOF
+
+# Get script length
+SCRIPT_LEN=$(wc -c < /tmp/script.txt)
+
+# Upload script
+curl -X POST http://sand-garden.local/api/script/begin \
+  -H "Content-Type: application/json" \
+  -d "{\"length\": $SCRIPT_LEN, \"slot\": 11}"
+
+curl -X POST http://sand-garden.local/api/script/chunk \
+  -H "Content-Type: text/plain" \
+  --data-binary @/tmp/script.txt
+
+curl -X POST http://sand-garden.local/api/script/end
+
+# Switch to SandScript pattern (pattern 11)
+curl -X POST http://sand-garden.local/api/pattern \
+  -H "Content-Type: application/json" \
+  -d '{"value": 11}'
+```
+
+#### Real-time Updates (Server-Sent Events)
+
+**GET /api/events** - Subscribe to device events
+```bash
+curl -N http://sand-garden.local/api/events
+```
+
+Event types:
+- `state` - Initial state snapshot on connect
+- `speed` - Speed multiplier changed
+- `pattern` - Pattern changed
+- `mode` - Auto/manual mode changed
+- `run` - Run state changed
+- `ledEffect` - LED effect changed
+- `ledColor` - LED color changed
+- `ledBrightness` - LED brightness changed
+- `status` - Status messages
+- `telemetry` - Position and motion telemetry
+
+Example SSE stream:
+```
+event: state
+data: {"speed":1.0,"pattern":1,"mode":1,"run":0,"ledEffect":0,"ledBrightness":100}
+
+event: status
+data: [SCRIPT] BEGIN len=45 slot=11
+
+event: telemetry
+data: r=350 a=1234 fault=0
+```
 
 ## Code Architecture
 
@@ -228,38 +414,67 @@ next_angle = angle + 34
 
 **Error codes**: See `PSGCompileResult` enum (PatternScript.h:6-17)
 
-### BLE Configuration System
-**Module files**: `BLEConfigServer.h`, `BLEConfigServer.cpp`
+### HTTP Configuration System
+**Module files**: `HTTPConfigServer.h`, `HTTPConfigServer.cpp`
+
+The device exposes a REST API with JSON endpoints for all control operations. Real-time updates are delivered via Server-Sent Events (SSE).
+
+**HTTP API Endpoints**:
+- `GET /api/state` - Get all current values (JSON)
+- `POST /api/speed` - Set speed multiplier `{value: float}`
+- `POST /api/pattern` - Set pattern `{value: int}`
+- `POST /api/mode` - Set auto/manual mode `{value: bool}`
+- `POST /api/run` - Start/stop pattern `{value: bool}`
+- `POST /api/command` - Execute command `{command: string}`
+- `POST /api/script/begin` - Start script upload `{length: int, slot: int}`
+- `POST /api/script/chunk` - Upload script chunk (raw binary)
+- `POST /api/script/end` - Finalize script upload
+- `POST /api/led/effect` - Set LED effect `{value: int}`
+- `POST /api/led/color` - Set LED color `{r: int, g: int, b: int}`
+- `POST /api/led/brightness` - Set LED brightness `{value: int}`
+- `GET /api/events` - Server-Sent Events stream (status, telemetry, state updates)
+
+**Script upload protocol**:
+1. POST to `/api/script/begin` with `{length: <bytes>, slot: <index>}`
+2. POST script data to `/api/script/chunk` (can be sent in one request)
+3. POST to `/api/script/end` to finalize
+4. Device compiles and responds via SSE status events
+
+**Listener interface**: `ISGConfigListener` (HTTPConfigServer.h:17) allows main sketch to react to HTTP API calls.
+
+**CORS**: All endpoints support CORS with `Access-Control-Allow-Origin: *` for easy web client access.
+
+### BLE WiFi Setup (Minimal)
+**Module files**: `BLEWiFiSetup.h`, `BLEWiFiSetup.cpp`
+
+BLE is now used **only for WiFi credential configuration**. This minimal service reduces complexity and memory usage.
 
 **Service UUID**: `9b6c7e10-3b2c-4d8c-9d7c-5e2a6d1f8b01`
 
 **Characteristics**:
-- Speed multiplier (float)
-- Pattern selection (int, 1-indexed)
-- Mode (0=manual, 1=automatic)
-- Run state (0=stopped, 1=running)
-- Status (read + notify, for log messages)
-- Telemetry (notify + read, for live position streaming)
-- Command (write, for generic commands like "SELFTEST")
-- Script upload (write, chunked transfer for SandScript source)
+- WiFi SSID (write/read): `9b6c7e19-3b2c-4d8c-9d7c-5e2a6d1f8b01`
+- WiFi Password (write-only): `9b6c7e1a-3b2c-4d8c-9d7c-5e2a6d1f8b01`
+- WiFi Status (read/notify): `9b6c7e1b-3b2c-4d8c-9d7c-5e2a6d1f8b01`
 
-**Script upload protocol** (BLEConfigServer.cpp):
-1. Client writes `SCRIPT_BEGIN:<length>:<slotIndex>`
-2. Client writes chunks `SCRIPT_DATA:<payload>`
-3. Client writes `SCRIPT_END`
-4. Device compiles and responds via status characteristic
-
-**Listener interface**: `ISGConfigListener` (BLEConfigServer.h:29) allows main sketch to react to BLE events.
+**Listener interface**: `IWiFiSetupListener` (BLEWiFiSetup.h:23) allows main sketch to handle credential updates.
 
 ### Web Client
 Single-file HTML application (`web-client.html`) with:
-- Web Bluetooth connectivity (Chrome/Edge only)
+- HTTP connectivity (works in all modern browsers)
+- Real-time updates via Server-Sent Events (SSE)
 - Pattern visualizer (renders simulated paths)
 - SandScript editor with live preview
 - Device telemetry comparison (simulation vs actual position)
 - Built-in SandScript preset library
 
 The web client uses the same SandScript compiler (JavaScript port) as firmware, ensuring preview accuracy.
+
+**Connection setup**:
+1. Ensure device is connected to WiFi (use wifi-setup.html via BLE if needed)
+2. Open web-client.html in any browser
+3. Enter device hostname (`sand-garden.local`) or IP address
+4. Click Connect to establish HTTP connection
+5. SSE stream provides real-time status and telemetry updates
 
 ## Important Implementation Details
 
@@ -330,15 +545,18 @@ Edit constants in PatternScript.h (lines 26-31). Increase carefully—larger lim
 - Compile locally with arduino-cli or VS Code task
 - Use web-client.html to preview SandScript without hardware
 - For firmware changes, upload to device and monitor Serial output
-- BLE debugging: enable Device Debug Stream in web client
+- HTTP debugging: Use browser DevTools Network tab to inspect API calls and SSE stream
+- Test WiFi setup: Use wifi-setup.html with Web Bluetooth to configure credentials
 
 ## Key Files Reference
 
 - **sand-garden.ino**: Main firmware (setup, loop, pattern functions, joystick/button handling)
 - **PatternScript.h/cpp**: SandScript compiler and runtime
-- **BLEConfigServer.h/cpp**: BLE service and characteristics
+- **HTTPConfigServer.h/cpp**: HTTP REST API server with SSE
+- **BLEWiFiSetup.h/cpp**: Minimal BLE service for WiFi credential setup
 - **Positions.h**: Shared position struct
-- **web-client.html**: Browser-based controller and simulator
+- **web-client.html**: Browser-based controller and simulator (HTTP-based)
+- **wifi-setup.html**: WiFi credential configuration tool (BLE-based)
 - **Readme.md**: User-facing documentation and quick start
 - **DSL_IMPLEMENTATION_PLAN.md**: Technical specification for SandScript (grammar, opcodes, memory layout)
 
@@ -346,5 +564,7 @@ Edit constants in PatternScript.h (lines 26-31). Increase carefully—larger lim
 
 - The joystick runs on 5V (from USB-C) but ESP32 analog pins expect 3.3V. Current code scales input but adding voltage dividers is recommended for production use (see Readme.md:98).
 - Pattern slot 11 is always the active SandScript slot—switching to another pattern and back restarts the script.
-- BLE device name is "Sand Garden" (defined in BLEConfigServer.h:26).
+- **WiFi required**: The HTTP server only starts after WiFi is connected. Use wifi-setup.html to configure credentials via BLE first.
+- BLE device name is "Sand Garden" (defined in BLEWiFiSetup.h:15).
 - NaN/Infinity in SandScript outputs trigger fault state; device halts and reports fault mask via telemetry.
+- HTTP server uses port 80; ensure no firewall blocks access on your network.

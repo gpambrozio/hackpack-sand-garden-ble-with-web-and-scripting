@@ -194,6 +194,9 @@
             class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white rounded px-2 py-1 shadow">
           </div>
         </div>
+        <input x-show="!connected" type="text" x-model="deviceHost" placeholder="sand-garden.local or IP"
+          class="px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-sg-accent/60 w-48"
+          @keyup.enter="connect()" />
         <button @click="connect()"
           class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60"
           :disabled="connecting || connected" :class="(connecting||connected) ? 'opacity-60 cursor-not-allowed' : ''">
@@ -201,8 +204,8 @@
           <span x-show="connecting">Connecting...</span>
           <span x-show="connected">Connected</span>
         </button>
-        <button x-show="!connected && device && !connecting" @click="reconnect()"
-          class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Reconnect</button>
+        <button x-show="connected" @click="disconnect()"
+          class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Disconnect</button>
       </div>
     </header>
 
@@ -761,8 +764,9 @@
         // Trails always enabled now (formerly showTrails toggle removed)
         statusMessage: 'Idle',
         logs: [],
-        device: null, server: null,
-        chars: { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null },
+        deviceHost: 'sand-garden.local', // HTTP host
+        baseUrl: '', // Will be set to http://deviceHost
+        eventSource: null, // Server-Sent Events connection
         debugStepsEnabled: false,
         debugCanvas: null,
         debugCtx: null,
@@ -1279,222 +1283,192 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           return working.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         },
         async connect() {
-          if (!navigator.bluetooth) { this.setStatus('Web Bluetooth not supported'); return; }
           if (this.connected || this.connecting) return;
-          this.connecting = true; this.setStatus('Requesting Sand Garden device...');
-          // UUIDs from firmware BLEConfigServer.h
-          const SERVICE_UUID = '9b6c7e10-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const SPEED_UUID = '9b6c7e11-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const PATTERN_UUID = '9b6c7e12-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const STATUS_UUID = '9b6c7e13-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const MODE_UUID = '9b6c7e14-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const RUN_UUID = '9b6c7e15-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const TELEMETRY_UUID = '9b6c7e16-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const COMMAND_UUID = '9b6c7e17-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const SCRIPT_UUID = '9b6c7e18-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const LED_EFFECT_UUID = '9b6c7e1c-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const LED_COLOR_UUID = '9b6c7e1d-3b2c-4d8c-9d7c-5e2a6d1f8b01';
-          const LED_BRIGHTNESS_UUID = '9b6c7e1e-3b2c-4d8c-9d7c-5e2a6d1f8b01';
+          if (!this.deviceHost || this.deviceHost.trim() === '') {
+            this.setStatus('Please enter device hostname or IP');
+            return;
+          }
+
+          this.connecting = true;
+          this.baseUrl = `http://${this.deviceHost}`;
+          this.setStatus('Connecting to ' + this.baseUrl + '...');
+
           try {
-            this.device = await navigator.bluetooth.requestDevice({
-              filters: [{ services: [SERVICE_UUID] }],
-              optionalServices: [SERVICE_UUID]
-            });
-            this.device.addEventListener('gattserverdisconnected', () => { this.onDisconnect(); });
-            this.setStatus('Connecting GATT...');
-            this.server = await this.device.gatt.connect();
-            const service = await this.server.getPrimaryService(SERVICE_UUID);
-            this.setStatus('Discovering characteristics...');
-            const speedChar = await service.getCharacteristic(SPEED_UUID);
-            const patternChar = await service.getCharacteristic(PATTERN_UUID);
-            const statusChar = await service.getCharacteristic(STATUS_UUID);
-            // Mode/run are optional until firmware updated; wrap in try
-            let modeChar = null, runChar = null, telemetryChar = null, commandChar = null, scriptChar = null, ledEffectChar = null, ledColorChar = null, ledBrightnessChar = null;
-            try { modeChar = await service.getCharacteristic(MODE_UUID); } catch (_) { }
-            try { runChar = await service.getCharacteristic(RUN_UUID); } catch (_) { }
-            try { telemetryChar = await service.getCharacteristic(TELEMETRY_UUID); } catch (_) { this.log('Telemetry characteristic not found (firmware older?)'); }
-            try { commandChar = await service.getCharacteristic(COMMAND_UUID); } catch (_) { this.log('Command characteristic not found'); }
-            try { scriptChar = await service.getCharacteristic(SCRIPT_UUID); } catch (_) { this.log('SandScript characteristic not found'); }
-            try {
-              console.log('[DEBUG] Attempting to get LED Effect characteristic with UUID:', LED_EFFECT_UUID);
-              ledEffectChar = await service.getCharacteristic(LED_EFFECT_UUID);
-              console.log('[DEBUG] LED Effect characteristic found:', ledEffectChar);
-            } catch (e) {
-              console.error('[DEBUG] LED Effect characteristic error:', e);
-              this.log('LED Effect characteristic not found: ' + e.message);
+            // Test connection and get initial state
+            const response = await fetch(`${this.baseUrl}/api/state`);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            try {
-              console.log('[DEBUG] Attempting to get LED Color characteristic with UUID:', LED_COLOR_UUID);
-              ledColorChar = await service.getCharacteristic(LED_COLOR_UUID);
-              console.log('[DEBUG] LED Color characteristic found:', ledColorChar);
-            } catch (e) {
-              console.error('[DEBUG] LED Color characteristic error:', e);
-              this.log('LED Color characteristic not found: ' + e.message);
+
+            const state = await response.json();
+            this.log('Initial state received: ' + JSON.stringify(state));
+
+            // Update state from server
+            if (state.speedMultiplier !== undefined) this.speedMultiplier = state.speedMultiplier;
+            if (state.pattern !== undefined) this.pattern = state.pattern;
+            if (state.autoMode !== undefined) this.autoMode = state.autoMode;
+            if (state.running !== undefined) this.running = state.running;
+            if (state.ledEffect !== undefined) this.ledEffect = state.ledEffect + 1; // Convert 0-based to 1-based
+            if (state.ledColorR !== undefined && state.ledColorG !== undefined && state.ledColorB !== undefined) {
+              this.ledColor = { r: state.ledColorR, g: state.ledColorG, b: state.ledColorB };
             }
-            try {
-              console.log('[DEBUG] Attempting to get LED Brightness characteristic with UUID:', LED_BRIGHTNESS_UUID);
-              ledBrightnessChar = await service.getCharacteristic(LED_BRIGHTNESS_UUID);
-              console.log('[DEBUG] LED Brightness characteristic found:', ledBrightnessChar);
-            } catch (e) {
-              console.error('[DEBUG] LED Brightness characteristic error:', e);
-              this.log('LED Brightness characteristic not found: ' + e.message);
-            }
-            this.chars = { speed: speedChar, pattern: patternChar, status: statusChar, mode: modeChar, run: runChar, telemetry: telemetryChar, command: commandChar, script: scriptChar, ledEffect: ledEffectChar, ledColor: ledColorChar, ledBrightness: ledBrightnessChar };
-            // Initial reads
-            await this.readInitialValues();
-            // Notifications
-            await Promise.all([
-              speedChar.startNotifications().then(() => {
-                speedChar.addEventListener('characteristicvaluechanged', e => { this.handleSpeedNotify(e); });
-              }),
-              patternChar.startNotifications().then(() => {
-                patternChar.addEventListener('characteristicvaluechanged', e => { this.handlePatternNotify(e); });
-              }),
-              statusChar.startNotifications().then(() => {
-                statusChar.addEventListener('characteristicvaluechanged', e => { this.handleStatusNotify(e); });
-              }),
-              modeChar && modeChar.startNotifications().then(() => {
-                modeChar.addEventListener('characteristicvaluechanged', e => { this.handleModeNotify(e); });
-              }).catch(() => { }),
-              runChar && runChar.startNotifications().then(() => {
-                runChar.addEventListener('characteristicvaluechanged', e => { this.handleRunNotify(e); });
-              }).catch(() => { }),
-              telemetryChar && telemetryChar.startNotifications().then(() => {
-                telemetryChar.addEventListener('characteristicvaluechanged', e => { this.handleTelemetryNotify(e); });
-              }).catch(() => { }),
-              ledEffectChar && ledEffectChar.startNotifications().then(() => {
-                ledEffectChar.addEventListener('characteristicvaluechanged', e => { this.handleLedEffectNotify(e); });
-              }).catch(() => { }),
-              ledColorChar && ledColorChar.startNotifications().then(() => {
-                ledColorChar.addEventListener('characteristicvaluechanged', e => { this.handleLedColorNotify(e); });
-              }).catch(() => { }),
-              ledBrightnessChar && ledBrightnessChar.startNotifications().then(() => {
-                ledBrightnessChar.addEventListener('characteristicvaluechanged', e => { this.handleLedBrightnessNotify(e); });
-              }).catch(() => { })
-            ]);
+            if (state.ledBrightness !== undefined) this.ledBrightness = state.ledBrightness;
+
+            // Setup Server-Sent Events for real-time updates
+            this.setupSSE();
+
             this.debugStepsEnabled = false;
             this.clearDebugTrail();
             this.lastDebugStep = null;
-            this.connected = true; this.setStatus('Connected');
-            this.log('BLE ready.');
+            this.connected = true;
+            this.setStatus('Connected to ' + this.deviceHost);
+            this.log('HTTP connection established');
           } catch (err) {
             this.setStatus('Connection failed: ' + err.message);
-            this.log('Error: ' + err.stack);
-          } finally { this.connecting = false; }
+            this.log('Error: ' + err.message);
+            this.baseUrl = '';
+          } finally {
+            this.connecting = false;
+          }
         },
-        async readInitialValues() {
-          // Firmware sends ASCII; parse accordingly
-          try {
-            if (this.chars.speed) {
-              const v = await this.chars.speed.readValue();
-              const txt = this.textFromDV(v); const num = parseFloat(txt); if (!isNaN(num)) this.speedMultiplier = num;
+        setupSSE() {
+          // Close existing connection if any
+          if (this.eventSource) {
+            this.eventSource.close();
+          }
+
+          // Create new EventSource for Server-Sent Events
+          this.eventSource = new EventSource(`${this.baseUrl}/api/events`);
+
+          this.eventSource.addEventListener('speed', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.speed !== undefined) {
+              this.speedMultiplier = data.speed;
+              this.log('Speed->' + data.speed.toFixed(3));
             }
-            if (this.chars.pattern) {
-              const v = await this.chars.pattern.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num)) this.pattern = num;
+          });
+
+          this.eventSource.addEventListener('pattern', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.pattern !== undefined) {
+              this.pattern = data.pattern;
+              this.regeneratePattern();
+              this.log('Pattern->' + data.pattern);
             }
-            if (this.chars.status) {
-              const v = await this.chars.status.readValue();
-              this.statusMessage = this.textFromDV(v);
+          });
+
+          this.eventSource.addEventListener('mode', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.mode !== undefined) {
+              this.autoMode = data.mode === 1;
+              this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual'));
             }
-            if (this.chars.mode) {
-              const v = await this.chars.mode.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); this.autoMode = (num === 1);
+          });
+
+          this.eventSource.addEventListener('run', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.run !== undefined) {
+              this.running = data.run === 1;
+              this.log('Run->' + (this.running ? 'Running' : 'Stopped'));
             }
-            if (this.chars.run) {
-              const v = await this.chars.run.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); this.running = (num === 1);
+          });
+
+          this.eventSource.addEventListener('ledEffect', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.ledEffect !== undefined) {
+              this.ledEffect = data.ledEffect + 1; // Convert 0-based to 1-based
+              this.log('LED Effect->' + this.ledEffect + ' (' + this.ledEffectMeta[data.ledEffect].name + ')');
             }
-            if (this.chars.ledEffect) {
-              const v = await this.chars.ledEffect.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) this.ledEffect = num + 1;
+          });
+
+          this.eventSource.addEventListener('ledColor', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.r !== undefined && data.g !== undefined && data.b !== undefined) {
+              this.ledColor = { r: data.r, g: data.g, b: data.b };
+              this.log('LED Color->RGB(' + data.r + ',' + data.g + ',' + data.b + ')');
             }
-            if (this.chars.ledColor) {
-              const v = await this.chars.ledColor.readValue();
-              const txt = this.textFromDV(v);
-              const parts = txt.split(',');
-              if (parts.length === 3) {
-                const r = parseInt(parts[0]), g = parseInt(parts[1]), b = parseInt(parts[2]);
-                if (!isNaN(r) && !isNaN(g) && !isNaN(b)) { this.ledColor = { r, g, b }; }
-              }
+          });
+
+          this.eventSource.addEventListener('ledBrightness', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.ledBrightness !== undefined) {
+              this.ledBrightness = data.ledBrightness;
+              this.log('LED Brightness->' + data.ledBrightness);
             }
-            if (this.chars.ledBrightness) {
-              const v = await this.chars.ledBrightness.readValue();
-              const txt = this.textFromDV(v); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num <= 255) this.ledBrightness = num;
-            }
-          } catch (e) { this.log('Read init failed: ' + e.message); }
-        },
-        // Notification handlers
-        handleSpeedNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseFloat(txt); if (!isNaN(num)) { this.speedMultiplier = num; this.log('Speed->' + num.toFixed(3)); } },
-        handlePatternNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); if (!isNaN(num)) { this.pattern = num; this.regeneratePattern(); this.log('Pattern->' + num); } },
-        handleStatusNotify(e) {
-          const txt = this.textFromDV(e.target.value);
-          if (txt.startsWith('[DEBUG] STEPS')) {
-            if (!txt.includes('ERR')) {
-              const modeMatch = txt.match(/\b(ON|OFF)\b/i);
-              if (modeMatch) {
-                const enable = modeMatch[1].toUpperCase() === 'ON';
-                if (enable && !this.debugStepsEnabled) {
-                  this.clearDebugTrail();
+          });
+
+          this.eventSource.addEventListener('status', (e) => {
+            const txt = e.data;
+            if (txt.startsWith('[DEBUG] STEPS')) {
+              if (!txt.includes('ERR')) {
+                const modeMatch = txt.match(/\b(ON|OFF)\b/i);
+                if (modeMatch) {
+                  const enable = modeMatch[1].toUpperCase() === 'ON';
+                  if (enable && !this.debugStepsEnabled) {
+                    this.clearDebugTrail();
+                  }
+                  this.debugStepsEnabled = enable;
                 }
-                this.debugStepsEnabled = enable;
+              } else {
+                this.debugStepsEnabled = false;
               }
-            } else {
-              this.debugStepsEnabled = false;
             }
-          }
-          this.setStatus(txt);
-        },
-        handleModeNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.autoMode = (num === 1); this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual')); },
-        handleRunNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); this.running = (num === 1); this.log('Run->' + (this.running ? 'Running' : 'Stopped')); },
-        handleLedEffectNotify(e) { const txt = this.textFromDV(e.target.value); const num = parseInt(txt); if (!isNaN(num) && num >= 0 && num < this.NUM_LED_EFFECTS) { this.ledEffect = num + 1; this.log('LED Effect->' + (num + 1) + ' (' + this.ledEffectMeta[num].name + ')'); } },
-        handleLedColorNotify(e) {
-          const txt = this.textFromDV(e.target.value);
-          const parts = txt.split(',');
-          if (parts.length === 3) {
-            const r = parseInt(parts[0]), g = parseInt(parts[1]), b = parseInt(parts[2]);
-            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-              this.ledColor = { r, g, b };
-              this.log('LED Color->RGB(' + r + ',' + g + ',' + b + ')');
+            this.setStatus(txt);
+          });
+
+          this.eventSource.addEventListener('telemetry', (e) => {
+            const txt = e.data;
+            // Handle telemetry messages (same logic as before)
+            if (txt.startsWith('JOY ')) {
+              const parts = Object.fromEntries(txt.substring(4).split(/\s+/).map(kv => kv.split('=')));
+              const a = parseInt(parts.a) || 0; const r = parseInt(parts.r) || 0; const mag = parseInt(parts.mag) || Math.max(Math.abs(a), Math.abs(r));
+              this.joy = { a, r, mag };
+              this.log(`JOY a=${a} r=${r} mag=${mag}`);
+            } else if (txt.startsWith('STATE ')) {
+              const parts = Object.fromEntries(txt.substring(6).split(/\s+/).map(kv => kv.split('=')));
+              const pat = parseInt(parts.pat); const auto = parts.auto === '1'; const run = parts.run === '1'; const brt = parseInt(parts.brt);
+              if (!isNaN(pat) && this.lastState.pat !== pat) { this.lastState.pat = pat; }
+              if (auto !== undefined && this.lastState.auto !== auto) { this.lastState.auto = auto; }
+              if (run !== undefined && this.lastState.run !== run) { this.lastState.run = run; }
+              if (!isNaN(brt) && this.lastState.brt !== brt) { this.lastState.brt = brt; }
+              this.log(txt);
+            } else if (txt.startsWith('STEP ')) {
+              this.handleStepTelemetry(txt);
+            } else if (txt === 'HB') {
+              this.heartbeatCount++;
+              this.lastHeartbeat = Date.now();
+              this.heartbeatActive = true;
+              setTimeout(() => { this.heartbeatActive = false; }, 800);
             }
-          }
+          });
+
+          this.eventSource.addEventListener('state', (e) => {
+            // Handle initial state broadcast to new clients
+            const data = JSON.parse(e.data);
+            if (data.speed !== undefined) this.speedMultiplier = data.speed;
+            if (data.pattern !== undefined) this.pattern = data.pattern;
+            if (data.mode !== undefined) this.autoMode = data.mode === 1;
+            if (data.run !== undefined) this.running = data.run === 1;
+            if (data.ledEffect !== undefined) this.ledEffect = data.ledEffect + 1;
+            if (data.ledBrightness !== undefined) this.ledBrightness = data.ledBrightness;
+          });
+
+          this.eventSource.onerror = (err) => {
+            this.log('SSE error: Connection lost');
+            if (this.connected) {
+              this.onDisconnect();
+            }
+          };
         },
-        handleLedBrightnessNotify(e) {
-          const txt = this.textFromDV(e.target.value);
-          const num = parseInt(txt);
-          if (!isNaN(num) && num >= 0 && num <= 255) {
-            this.ledBrightness = num;
-            this.log('LED Brightness->' + num);
+        disconnect() {
+          if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
           }
-        },
-        handleTelemetryNotify(e) {
-          const txt = this.textFromDV(e.target.value);
-          // Expect lines like: JOY a=12 r=-3 mag=12 | STATE pat=1 auto=1 run=1 brt=40 | STEP idx=... | HB
-          if (txt.startsWith('JOY ')) {
-            const parts = Object.fromEntries(txt.substring(4).split(/\s+/).map(kv => kv.split('=')));
-            const a = parseInt(parts.a) || 0; const r = parseInt(parts.r) || 0; const mag = parseInt(parts.mag) || Math.max(Math.abs(a), Math.abs(r));
-            this.joy = { a, r, mag };
-            this.log(`JOY a=${a} r=${r} mag=${mag}`);
-          } else if (txt.startsWith('STATE ')) {
-            const parts = Object.fromEntries(txt.substring(6).split(/\s+/).map(kv => kv.split('=')));
-            const pat = parseInt(parts.pat); const auto = parts.auto === '1'; const run = parts.run === '1'; const brt = parseInt(parts.brt);
-            this.lastState = { pat, auto, run, brt };
-            // Optionally sync if drifted
-            if (!isNaN(pat) && pat !== this.pattern) this.pattern = pat;
-            if (typeof auto === 'boolean' && auto !== this.autoMode) this.autoMode = auto;
-            if (typeof run === 'boolean' && run !== this.running) this.running = run;
-          } else if (txt.startsWith('STEP ')) {
-            this.handleStepTelemetry(txt);
-          } else if (txt === 'HB') {
-            // Heartbeat: do not log to event log to avoid noise. Show heartbeat icon pulse and record timestamp.
-            this.heartbeatCount++;
-            this.lastHeartbeat = Date.now();
-            // Trigger a brief visual pulse on the heart icon
-            this.heartbeatActive = true;
-            setTimeout(() => { this.heartbeatActive = false; }, 2000);
-          } else {
-            this.log('TL ' + txt);
-          }
+          this.connected = false;
+          this.baseUrl = '';
+          this.setStatus('Disconnected');
+          this.log('Disconnected from device');
         },
         handleStepTelemetry(line) {
           const payload = line.length > 5 ? line.substring(5) : '';
@@ -1964,31 +1938,61 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         toggleRun() { this.running = !this.running; this.sendRun(); },
         debouncedSendSpeed: debounce(function () { this.sendSpeed(); }, 400),
         async sendSpeed() {
+          if (!this.connected) return;
           this.setStatus('Speed multiplier -> ' + this.speedMultiplier.toFixed(2));
-          if (this.chars.speed) {
-            try { const txt = new TextEncoder().encode(this.speedMultiplier.toFixed(3)); await this.chars.speed.writeValue(txt); }
-            catch (e) { this.log('Speed write err: ' + e.message); }
+          try {
+            const response = await fetch(`${this.baseUrl}/api/speed`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: parseFloat(this.speedMultiplier.toFixed(3)) })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Speed write err: ' + e.message);
           }
         },
         async sendMode() {
+          if (!this.connected) return;
           this.setStatus('Mode -> ' + (this.autoMode ? 'Automatic' : 'Manual'));
-          if (this.chars.mode) {
-            try { const txt = new TextEncoder().encode(this.autoMode ? '1' : '0'); await this.chars.mode.writeValue(txt); }
-            catch (e) { this.log('Mode write err: ' + e.message); }
+          try {
+            const response = await fetch(`${this.baseUrl}/api/mode`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: this.autoMode })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Mode write err: ' + e.message);
           }
         },
         async sendRun() {
+          if (!this.connected) return;
           this.setStatus(this.running ? 'Pattern running' : 'Pattern stopped');
-          if (this.chars.run) {
-            try { const txt = new TextEncoder().encode(this.running ? '1' : '0'); await this.chars.run.writeValue(txt); }
-            catch (e) { this.log('Run write err: ' + e.message); }
+          try {
+            const response = await fetch(`${this.baseUrl}/api/run`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: this.running })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Run write err: ' + e.message);
           }
         },
         async sendCommand(cmd) {
-          if (!this.chars.command) { throw new Error('Command characteristic unavailable'); }
-          const payload = new TextEncoder().encode(cmd);
-          await this.chars.command.writeValue(payload);
-          this.log('CMD ' + cmd);
+          if (!this.connected) throw new Error('Not connected to device');
+          try {
+            const response = await fetch(`${this.baseUrl}/api/command`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ command: cmd })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.log('CMD ' + cmd);
+          } catch (e) {
+            this.log('Command err: ' + e.message);
+            throw e;
+          }
         },
         async onDebugToggle(evt) {
           const desired = evt.target.checked;
@@ -2026,11 +2030,11 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         },
         async uploadScriptToDevice() {
           if (this.scriptUploadInProgress) return;
-          if (!this.connected) { this.setStatus('Connect to the device before uploading'); return; }
-          if (!this.chars.command || !this.chars.script) {
-            this.setStatus('Firmware does not expose SandScript characteristics');
+          if (!this.connected) {
+            this.setStatus('Connect to the device before uploading');
             return;
           }
+
           if (!this.compiledScript) {
             this.compileScript();
             if (!this.compiledScript) {
@@ -2038,9 +2042,11 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               return;
             }
           }
+
           const encoder = new TextEncoder();
           const normalized = this.scriptSource.replace(/\r\n?/g, '\n');
           const scriptBytes = encoder.encode(normalized);
+
           if (scriptBytes.length === 0) {
             this.setStatus('Script is empty');
             return;
@@ -2049,70 +2055,68 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             this.setStatus(`Script exceeds ${this.maxScriptBytes} byte limit (${scriptBytes.length})`);
             return;
           }
-          let slotArg = '';
+
+          let slotNum = -1;
           if (this.scriptTargetSlot) {
-            const slotNum = parseInt(this.scriptTargetSlot, 10);
-            if (Number.isFinite(slotNum) && slotNum > 0) {
-              slotArg = ' ' + slotNum;
-            } else {
+            slotNum = parseInt(this.scriptTargetSlot, 10);
+            if (!Number.isFinite(slotNum) || slotNum <= 0) {
               this.setStatus('Slot must be a positive integer');
               return;
             }
           }
-          const chunkCandidates = this.scriptChunkCandidates();
-          if (!chunkCandidates.length) chunkCandidates.push(20);
-          this.log(`[SCRIPT] Upload start len=${scriptBytes.length} candidates=${chunkCandidates.join(',')}`);
-          let success = false;
-          let lastError = null;
+
           this.scriptUploadInProgress = true;
           this.scriptUploadProgress = 0;
           this.scriptUploadStatus = 'Preparing upload...';
+          this.log(`[SCRIPT] Upload start len=${scriptBytes.length}`);
+
           try {
-            for (const chunkSize of chunkCandidates) {
-              this.scriptUploadProgress = 0;
-              this.scriptUploadStatus = `Uploading script (${chunkSize}-byte chunks)...`;
-              this.log(`[SCRIPT] Attempting chunk size ${chunkSize}`);
-              try {
-                await this.sendCommand(`SCRIPT_BEGIN ${scriptBytes.length}${slotArg}`);
-              } catch (beginErr) {
-                lastError = beginErr;
-                throw beginErr;
-              }
-              await this.sleep(35);
-              try {
-                await this.transmitScriptChunks(scriptBytes, chunkSize);
-                await this.sleep(25);
-                await this.sendCommand('SCRIPT_END');
-                success = true;
-                this.preferredScriptChunkSize = chunkSize;
-                break;
-              } catch (err) {
-                lastError = err;
-                this.log(`[SCRIPT] Chunk transfer failed (chunk=${chunkSize}): ${err.message || err}`);
-                this.scriptUploadStatus = `Attempt with ${chunkSize}-byte chunks failed: ${err.message || err}`;
-                try { await this.sendCommand('SCRIPT_ABORT'); } catch (_) { }
-                await this.sleep(200);
-              }
-            }
-            if (!success) {
-              const attempts = chunkCandidates.join(', ');
-              throw new Error(`Unable to upload script after trying chunk sizes ${attempts}${lastError ? ` (${lastError.message || lastError})` : ''}`);
-            }
-            this.scriptUploadStatus = `Uploaded ${scriptBytes.length} bytes (chunk ${this.preferredScriptChunkSize} B)`;
+            // Step 1: Begin script upload
+            const beginPayload = { length: scriptBytes.length };
+            if (slotNum > 0) beginPayload.slot = slotNum;
+
+            let response = await fetch(`${this.baseUrl}/api/script/begin`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(beginPayload)
+            });
+            if (!response.ok) throw new Error(`Begin failed: HTTP ${response.status}`);
+
+            this.scriptUploadStatus = 'Uploading script data...';
+            this.scriptUploadProgress = 25;
+
+            // Step 2: Send script data
+            response = await fetch(`${this.baseUrl}/api/script/chunk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/octet-stream' },
+              body: scriptBytes
+            });
+            if (!response.ok) throw new Error(`Chunk failed: HTTP ${response.status}`);
+
+            this.scriptUploadProgress = 75;
+
+            // Step 3: Finalize upload
+            response = await fetch(`${this.baseUrl}/api/script/end`, {
+              method: 'POST'
+            });
+            if (!response.ok) throw new Error(`End failed: HTTP ${response.status}`);
+
+            this.scriptUploadStatus = `Uploaded ${scriptBytes.length} bytes`;
             this.scriptUploadProgress = 100;
             this.setStatus(`[SCRIPT] Uploaded ${scriptBytes.length} bytes`);
+            this.log('[SCRIPT] Upload successful');
+
+            // Switch to pattern 11 if not already there
             if (this.pattern !== 11) {
               await this.selectPattern(11);
             }
           } catch (err) {
-            if (!success) {
-              try { await this.sendCommand('SCRIPT_ABORT'); } catch (_) { }
-            }
             this.scriptUploadStatus = 'Upload failed: ' + (err.message || err);
             this.setStatus('Script upload failed: ' + (err.message || err));
+            this.log('[SCRIPT] Upload error: ' + (err.message || err));
           } finally {
             this.scriptUploadInProgress = false;
-            if (!success) {
+            if (this.scriptUploadProgress !== 100) {
               this.scriptUploadProgress = 0;
             }
           }
@@ -2228,15 +2232,24 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           this.lastDebugStep = null;
           this.setStatus('Device disconnected');
         },
-        async reconnect() { if (!this.device) { return this.connect(); } if (this.connected || this.connecting) return; try { this.connecting = true; this.setStatus('Reconnecting...'); await this.device.gatt.connect(); this.connecting = false; await this.connect(); } catch (e) { this.connecting = false; this.setStatus('Reconnect failed: ' + e.message); } },
         async selectPattern(id) {
-          this.pattern = id; this.setStatus('Selected pattern ' + id); this.initializePattern();
+          this.pattern = id;
+          this.setStatus('Selected pattern ' + id);
+          this.initializePattern();
           if (this.debugPoints.length) {
             this.clearDebugTrail();
           }
-          if (this.chars.pattern) {
-            try { const txt = new TextEncoder().encode(String(id)); await this.chars.pattern.writeValue(txt); }
-            catch (e) { this.log('Pattern write err: ' + e.message); }
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/pattern`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: id })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('Pattern write err: ' + e.message);
+            }
           }
         },
         async selectLedEffect(id) {
@@ -2244,35 +2257,48 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           this.ledEffect = id;
           const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
           this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
-          console.log('[DEBUG] selectLedEffect: id=' + id + ', effectIndex=' + effectIndex + ', name=' + this.ledEffectMeta[effectIndex].name);
-          if (this.chars.ledEffect) {
+          if (this.connected) {
             try {
-              const txt = new TextEncoder().encode(String(effectIndex));
-              console.log('[DEBUG] Writing to ledEffect characteristic:', effectIndex, 'bytes:', Array.from(txt));
-              await this.chars.ledEffect.writeValue(txt);
-              console.log('[DEBUG] Write successful');
-            }
-            catch (e) {
-              console.error('[DEBUG] LED effect write error:', e);
+              const response = await fetch(`${this.baseUrl}/api/led/effect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: effectIndex })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
               this.log('LED effect write err: ' + e.message);
             }
-          } else {
-            console.warn('[DEBUG] ledEffect characteristic is null');
           }
         },
         async sendLedColor() {
           const colorStr = this.ledColor.r + ',' + this.ledColor.g + ',' + this.ledColor.b;
           this.setStatus('LED color -> RGB(' + colorStr + ')');
-          if (this.chars.ledColor) {
-            try { const txt = new TextEncoder().encode(colorStr); await this.chars.ledColor.writeValue(txt); }
-            catch (e) { this.log('LED color write err: ' + e.message); }
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/led/color`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ r: this.ledColor.r, g: this.ledColor.g, b: this.ledColor.b })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('LED color write err: ' + e.message);
+            }
           }
         },
         async sendLedBrightness() {
           this.setStatus('LED brightness -> ' + this.ledBrightness);
-          if (this.chars.ledBrightness) {
-            try { const txt = new TextEncoder().encode(String(this.ledBrightness)); await this.chars.ledBrightness.writeValue(txt); }
-            catch (e) { this.log('LED brightness write err: ' + e.message); }
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/led/brightness`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: this.ledBrightness })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('LED brightness write err: ' + e.message);
+            }
           }
         },
         onLedColorChange() {

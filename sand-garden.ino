@@ -34,12 +34,13 @@ INCLUDED LIBRARIES
 #include <AccelStepper.h>  //Controls the stepper motors
 #include <FastLED.h>         //Controls the RGB LEDs
 #include <OneButtonTiny.h>   //Button management and debouncing
-#include <NimBLEDevice.h>    // Ensure NimBLE core available for BLEConfigServer
+#include <NimBLEDevice.h>    // Ensure NimBLE core available for BLEWiFiSetup
 #include <WiFi.h>            // WiFi for ESP32
 #include <ESPmDNS.h>         // mDNS for OTA discovery
 #include <ArduinoOTA.h>      // OTA update functionality
 #include <Preferences.h>     // Persistent storage for WiFi credentials
-#include "BLEConfigServer.h" // BLE configuration server (modular config service)
+#include "HTTPConfigServer.h" // HTTP REST API server (replaces BLE for control)
+#include "BLEWiFiSetup.h"    // BLE WiFi credential setup (minimal BLE service)
 #include "Positions.h"       // shared Positions struct for external modules
 #include "PatternScript.h"   // SandScript compiler/runtime
 
@@ -121,7 +122,7 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
 #define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
 #define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
-// NUM_PATTERN_LED_EFFECTS is defined in BLEConfigServer.h
+#define NUM_PATTERN_LED_EFFECTS 10      // Total number of LED effects available
 
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
@@ -340,8 +341,9 @@ static bool compileSandScriptPreset(size_t index, String &errOut) {
   return compileAndActivateSandScript(preset.source, strlen(preset.source), String(preset.name), errOut);
 }
 
-// ---------------- BLE Configuration Integration (listener defined later to access globals) ----------------
-static BLEConfigServer bleConfig; // forward object; listener class will be defined after globals
+// ---------------- HTTP & BLE Configuration Integration (listener defined later to access globals) ----------------
+static HTTPConfigServer httpConfig; // HTTP REST API server for control
+static BLEWiFiSetup bleWiFiSetup;  // BLE service for WiFi credential setup only
 
 // ---------------- WiFi and OTA Configuration ----------------
 static Preferences g_wifiPrefs;     // Persistent storage for WiFi credentials
@@ -359,7 +361,7 @@ static uint32_t g_pendingScriptQueuedMs = 0;
 static bool g_debugStepStreaming = false;
 static uint32_t g_debugStepCounter = 0;
 
-// Now that bleConfig is defined we implement the calibration function which emits a status line.
+// Now that httpConfig is defined we implement the calibration function which emits a status line.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -411,7 +413,8 @@ class PatternLedDisplay;
 extern PatternLedDisplay patternDisplay;
 
 // Listener implementation responding to remote config writes (now globals are defined)
-class SandGardenConfigListener : public ISGConfigListener
+// Implements both HTTP (ISGConfigListener) and BLE WiFi (IWiFiSetupListener) interfaces
+class SandGardenConfigListener : public ISGConfigListener, public IWiFiSetupListener
 {
 public:
   void onSpeedMultiplierChanged(float newValue) override
@@ -461,11 +464,11 @@ public:
   }
   void onPatternScriptStatus(const String &msg) override
   {
-    bleConfig.notifyStatus(msg);
+    httpConfig.notifyStatus(msg);
   }
   void onPatternScriptReceived(const std::string &script, int slotIndex) override
   {
-    String label = String("BLE");
+    String label = String("HTTP");
     if (slotIndex >= 1)
     {
       label += String("-slot") + String(slotIndex);
@@ -481,7 +484,7 @@ public:
     {
       msg += " (replacing previous pending)";
     }
-    bleConfig.notifyStatus(msg);
+    httpConfig.notifyStatus(msg);
   }
   void onCommandReceived(const String &cmd, const std::string &raw) override
   {
@@ -505,7 +508,7 @@ public:
           msg += ":";
           msg += kSandScriptPresets[i].name;
         }
-        bleConfig.notifyStatus(msg);
+        httpConfig.notifyStatus(msg);
         return;
       }
 
@@ -548,7 +551,7 @@ public:
 
       if (!presetResolved)
       {
-        bleConfig.notifyStatus(String("[SCRIPT] PRESET_ERR unknown ") + arg);
+        httpConfig.notifyStatus(String("[SCRIPT] PRESET_ERR unknown ") + arg);
         return;
       }
 
@@ -556,7 +559,7 @@ public:
       if (compileSandScriptPreset(presetIndex, err))
       {
         String msg = String("[SCRIPT] PRESET_LOAD idx=") + String(presetIndex + 1) + " name=" + kSandScriptPresets[presetIndex].name;
-        bleConfig.notifyStatus(msg);
+        httpConfig.notifyStatus(msg);
         if (currentPattern == SCRIPT_PATTERN_INDEX)
         {
           patternSwitched = true;
@@ -572,7 +575,7 @@ public:
         {
           err = g_activeScript.lastError;
         }
-        bleConfig.notifyStatus(String("[SCRIPT] PRESET_ERR ") + err);
+        httpConfig.notifyStatus(String("[SCRIPT] PRESET_ERR ") + err);
       }
       return;
     }
@@ -590,7 +593,7 @@ public:
 
       if (!arg.length())
       {
-        bleConfig.notifyStatus(String("[DEBUG] STEPS ") + (g_debugStepStreaming ? "ON" : "OFF") + " count=" + String((unsigned long)g_debugStepCounter));
+        httpConfig.notifyStatus(String("[DEBUG] STEPS ") + (g_debugStepStreaming ? "ON" : "OFF") + " count=" + String((unsigned long)g_debugStepCounter));
         return;
       }
 
@@ -609,22 +612,22 @@ public:
       }
       else
       {
-        bleConfig.notifyStatus(String("[DEBUG] STEPS_ERR arg=") + arg);
+        httpConfig.notifyStatus(String("[DEBUG] STEPS_ERR arg=") + arg);
         return;
       }
 
       g_debugStepStreaming = newState;
       g_debugStepCounter = 0;
-      bleConfig.notifyStatus(String("[DEBUG] STEPS ") + (newState ? "ON" : "OFF"));
+      httpConfig.notifyStatus(String("[DEBUG] STEPS ") + (newState ? "ON" : "OFF"));
       return;
     }
 
     if (cmd.startsWith("SCRIPT_"))
     {
-      return; // handled by BLEConfigServer internally
+      return; // handled by HTTPConfigServer internally
     }
     // Unknown command
-    bleConfig.notifyStatus(String("[CMD] UNKNOWN ") + cmd);
+    httpConfig.notifyStatus(String("[CMD] UNKNOWN ") + cmd);
   }
 
   void onWiFiCredentialsReceived(const String &ssid, const String &password) override
@@ -637,7 +640,7 @@ public:
     // Persist credentials to NVS
     saveWiFiCredentials();
 
-    bleConfig.notifyStatus("[WiFi] Connecting to " + ssid);
+    bleWiFiSetup.notifyWiFiStatus("[WiFi] Connecting to " + ssid);
 
     // Attempt WiFi connection
     setupWiFi();
@@ -647,7 +650,7 @@ public:
   void onLedColorChanged(uint8_t r, uint8_t g, uint8_t b) override;  // Implemented later after patternDisplay is defined
   void onLedBrightnessChanged(uint8_t brightness) override;  // Implemented later after patternDisplay is defined
 };
-static SandGardenConfigListener bleListener;
+static SandGardenConfigListener configListener;
 
 static void processPendingSandScript()
 {
@@ -675,7 +678,7 @@ static void processPendingSandScript()
     startMsg += String((unsigned long)waitMs);
     startMsg += "ms";
   }
-  bleConfig.notifyStatus(startMsg);
+  httpConfig.notifyStatus(startMsg);
 
   yield();
 
@@ -683,14 +686,14 @@ static void processPendingSandScript()
   bool ok = compileAndActivateSandScript(script, label, err);
   if (ok)
   {
-    bleConfig.notifyStatus("[SCRIPT] COMPILE ok");
+    httpConfig.notifyStatus("[SCRIPT] COMPILE ok");
     int resolvedSlot = (slot >= 1 && slot <= (int)PATTERN_COUNT) ? slot : SCRIPT_PATTERN_INDEX;
     String msg = String("[SCRIPT] LOADED bytes=") + String((unsigned long)script.size()) + " slot=" + String(resolvedSlot);
     if (g_activeScript.label.length())
     {
       msg += " tag=" + g_activeScript.label;
     }
-    bleConfig.notifyStatus(msg);
+    httpConfig.notifyStatus(msg);
     if (currentPattern == resolvedSlot)
     {
       patternSwitched = true;
@@ -703,15 +706,15 @@ static void processPendingSandScript()
   else
   {
     String msg = String("[SCRIPT] COMPILE_ERR ") + err;
-    bleConfig.notifyStatus(msg);
+    httpConfig.notifyStatus(msg);
     if (!err.length())
     {
-      bleConfig.notifyStatus(String("[SCRIPT] CODE ") + psgErrorToString(PSG_ERR_SYNTAX));
+      httpConfig.notifyStatus(String("[SCRIPT] CODE ") + psgErrorToString(PSG_ERR_SYNTAX));
     }
   }
 }
 
-// Wrapper functions ensure BLE characteristics stay authoritative when local inputs change
+// Wrapper functions ensure HTTP state stays authoritative when local inputs change
 static void setPatternLocal(int p)
 {
   int total = sizeof(patterns) / sizeof(patterns[0]);
@@ -721,24 +724,24 @@ static void setPatternLocal(int p)
     p = total;
   if (p == currentPattern)
     return;
-  bleConfig.setCurrentPattern(p); // triggers listener which updates currentPattern & patternSwitched
-  bleConfig.notifyStatus("[PATTERN] id=" + String(p));
+  httpConfig.setCurrentPattern(p); // triggers listener which updates currentPattern & patternSwitched
+  httpConfig.notifyStatus("[PATTERN] id=" + String(p));
 }
 
 static void setAutoModeLocal(bool m)
 {
   if (m == autoMode)
     return;
-  bleConfig.setAutoMode(m); // listener handles side-effects
-  bleConfig.notifyStatus(String("[MODE] mode=") + (m ? "AUTO" : "MANUAL"));
+  httpConfig.setAutoMode(m); // listener handles side-effects
+  httpConfig.notifyStatus(String("[MODE] mode=") + (m ? "AUTO" : "MANUAL"));
 }
 
 static void setRunLocal(bool r)
 {
   if (r == runPattern)
     return;
-  bleConfig.setRunState(r); // listener updates runPattern
-  bleConfig.notifyStatus(String("[RUN] state=") + (r ? "STARTED" : "STOPPED"));
+  httpConfig.setRunState(r); // listener updates runPattern
+  httpConfig.notifyStatus(String("[RUN] state=") + (r ? "STARTED" : "STOPPED"));
 }
 
 static void sendStateTelemetry()
@@ -748,7 +751,7 @@ static void sendStateTelemetry()
                " auto=" + String(autoMode ? 1 : 0) +
                " run=" + String(runPattern ? 1 : 0) +
                " brt=" + String(FastLED.getBrightness());
-  bleConfig.notifyTelemetry(msg);
+  httpConfig.notifyTelemetry(msg);
 }
 
 static void heartbeatTelemetry()
@@ -756,7 +759,7 @@ static void heartbeatTelemetry()
   if (telemetryHeartbeat >= TELEMETRY_HEARTBEAT_PERIOD)
   {
     telemetryHeartbeat = 0;
-    bleConfig.notifyTelemetry("HB");
+    httpConfig.notifyTelemetry("HB");
   }
 }
 
@@ -809,7 +812,7 @@ static void emitPatternStepTelemetry(const Positions &planned, const Positions &
     msg += g_activeScript.label;
   }
 
-  bleConfig.notifyTelemetry(msg);
+  httpConfig.notifyTelemetry(msg);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1386,7 +1389,7 @@ void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
 {
   if (newEffect < NUM_PATTERN_LED_EFFECTS) {
     patternDisplay.setEffect(newEffect);
-    bleConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
+    httpConfig.notifyStatus(String("[LED] Effect set to ") + String(newEffect));
   }
 }
 
@@ -1394,14 +1397,14 @@ void SandGardenConfigListener::onLedEffectChanged(uint8_t newEffect)
 void SandGardenConfigListener::onLedColorChanged(uint8_t r, uint8_t g, uint8_t b)
 {
   patternDisplay.setSolidColor(r, g, b);
-  bleConfig.notifyStatus(String("[LED] Color set to RGB(") + String(r) + "," + String(g) + "," + String(b) + ")");
+  httpConfig.notifyStatus(String("[LED] Color set to RGB(") + String(r) + "," + String(g) + "," + String(b) + ")");
 }
 
 // Implementation of onLedBrightnessChanged (declared earlier in SandGardenConfigListener)
 void SandGardenConfigListener::onLedBrightnessChanged(uint8_t brightness)
 {
   patternDisplay.setBrightness(brightness);
-  bleConfig.notifyStatus(String("[LED] Brightness set to ") + String(brightness));
+  httpConfig.notifyStatus(String("[LED] Brightness set to ") + String(brightness));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1433,7 +1436,8 @@ static void loadWiFiCredentials()
 
   if (g_wifiSSID.length() > 0)
   {
-    bleConfig.notifyStatus("[WiFi] Loaded credentials for: " + g_wifiSSID);
+    Serial.println("[WiFi] Loaded credentials for: " + g_wifiSSID);
+    bleWiFiSetup.notifyWiFiStatus("[WiFi] Loaded credentials for: " + g_wifiSSID);
   }
 }
 
@@ -1445,7 +1449,8 @@ static void saveWiFiCredentials()
   g_wifiPrefs.putBool("enabled", g_wifiEnabled);
   g_wifiPrefs.end();
 
-  bleConfig.notifyStatus("[WiFi] Credentials saved");
+  Serial.println("[WiFi] Credentials saved");
+  bleWiFiSetup.notifyWiFiStatus("[WiFi] Credentials saved");
 }
 
 static void setupWiFi()
@@ -1455,7 +1460,7 @@ static void setupWiFi()
     return;
   }
 
-  bleConfig.notifyWiFiStatus("Connecting...");
+  bleWiFiSetup.notifyWiFiStatus("Connecting...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(g_wifiSSID.c_str(), g_wifiPassword.c_str());
 
@@ -1470,8 +1475,12 @@ static void setupWiFi()
   if (WiFi.status() == WL_CONNECTED)
   {
     String msg = "Connected! IP: " + WiFi.localIP().toString();
-    bleConfig.notifyWiFiStatus(msg);
-    bleConfig.notifyStatus("[WiFi] " + msg);
+    bleWiFiSetup.notifyWiFiStatus(msg);
+    Serial.println("[WiFi] " + msg);
+
+    // Start HTTP server now that WiFi is connected
+    httpConfig.begin(&configListener);
+    httpConfig.notifyStatus("[WiFi] " + msg);
 
     // Setup OTA now that WiFi is connected
     setupOTA();
@@ -1479,8 +1488,8 @@ static void setupWiFi()
   else
   {
     String msg = "Connection failed";
-    bleConfig.notifyWiFiStatus(msg);
-    bleConfig.notifyStatus("[WiFi] " + msg);
+    bleWiFiSetup.notifyWiFiStatus(msg);
+    Serial.println("[WiFi] " + msg);
     WiFi.disconnect(true);
     g_wifiEnabled = false;
   }
@@ -1497,7 +1506,8 @@ static void setupOTA()
   ArduinoOTA.onStart([]() {
     g_otaActive = true;
     String type = (ArduinoOTA.getCommand() == U_FLASH) ? "sketch" : "filesystem";
-    bleConfig.notifyStatus("[OTA] Update start: " + type);
+    httpConfig.notifyStatus("[OTA] Update start: " + type);
+    Serial.println("[OTA] Update start: " + type);
     // Stop pattern execution during OTA
     setRunLocal(false);
     // Disable motors during OTA
@@ -1506,7 +1516,8 @@ static void setupOTA()
   });
 
   ArduinoOTA.onEnd([]() {
-    bleConfig.notifyStatus("[OTA] Update complete");
+    httpConfig.notifyStatus("[OTA] Update complete");
+    Serial.println("[OTA] Update complete");
     g_otaActive = false;
   });
 
@@ -1515,7 +1526,8 @@ static void setupOTA()
     unsigned int percent = (progress / (total / 100));
     if (percent != lastPercent && percent % 10 == 0)
     {
-      bleConfig.notifyStatus("[OTA] Progress: " + String(percent) + "%");
+      httpConfig.notifyStatus("[OTA] Progress: " + String(percent) + "%");
+      Serial.printf("[OTA] Progress: %d%%\n", percent);
       lastPercent = percent;
     }
   });
@@ -1527,12 +1539,14 @@ static void setupOTA()
     else if (error == OTA_CONNECT_ERROR) errorMsg += "Connect Failed";
     else if (error == OTA_RECEIVE_ERROR) errorMsg += "Receive Failed";
     else if (error == OTA_END_ERROR) errorMsg += "End Failed";
-    bleConfig.notifyStatus(errorMsg);
+    httpConfig.notifyStatus(errorMsg);
+    Serial.println(errorMsg);
     g_otaActive = false;
   });
 
   ArduinoOTA.begin();
-  bleConfig.notifyStatus("[OTA] Ready. Hostname: sand-garden");
+  httpConfig.notifyStatus("[OTA] Ready. Hostname: sand-garden");
+  Serial.println("[OTA] Ready. Hostname: sand-garden");
 }
 
 static void handleOTA()
@@ -1563,14 +1577,14 @@ void setup()
   // Single press of button is for starting or stopping the current pattern.
   button.attachClick([]() {   // This is called a lambda function. Basically it's a nameless function that runs when the button is single pressed.
     setRunLocal(!runPattern); // route via BLE sync wrapper
-    bleConfig.notifyStatus("[BTN] state=CLICK");
+    httpConfig.notifyStatus("[BTN] state=CLICK");
   });
 
   // Attaching an event to the long press of the button. Currently, long pressing the button lets you end the homing process early.
   button.attachLongPressStart([]()
                               {
-    buttonLongPressed = true;         
-    bleConfig.notifyStatus("[BTN] state=LONGPRESS"); });
+    buttonLongPressed = true;
+    httpConfig.notifyStatus("[BTN] state=LONGPRESS"); });
 
   // set the maximum speeds and accelerations for the stepper motors.
   stepperAngle.setMaxSpeed(MAX_SPEED_A_MOTOR);
@@ -1580,8 +1594,8 @@ void setup()
 
   FastLED.clear(); // clear the LEDs
   FastLED.show();
-  bleConfig.notifyStatus(String("[LEDINIT] status pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
-  bleConfig.notifyStatus(String("[LEDINIT] pattern pin=") + PATTERN_LED_DATA_PIN + " count=" + NUM_PATTERN_LEDS + " maxBrt=" + MAX_PATTERN_BRIGHTNESS);
+  Serial.println(String("[LEDINIT] status pin=") + LED_DATA_PIN + " count=" + NUM_LEDS + " maxBrt=" + MAX_BRIGHTNESS);
+  Serial.println(String("[LEDINIT] pattern pin=") + PATTERN_LED_DATA_PIN + " count=" + NUM_PATTERN_LEDS + " maxBrt=" + MAX_PATTERN_BRIGHTNESS);
 
   PatternScriptUnits units;
   units.stepsPerCm = STEPS_PER_MM * 10.0f;
@@ -1592,19 +1606,26 @@ void setup()
   String presetInitErr;
   if (compileSandScriptPreset(0, presetInitErr))
   {
-    bleConfig.notifyStatus(String("[SCRIPT] PRESET ") + kSandScriptPresets[0].name + " ready");
+    Serial.println(String("[SCRIPT] PRESET ") + kSandScriptPresets[0].name + " ready");
   }
   else if (presetInitErr.length())
   {
-    bleConfig.notifyStatus(String("[SCRIPT] PRESET_ERR ") + presetInitErr);
+    Serial.println(String("[SCRIPT] PRESET_ERR ") + presetInitErr);
   }
 
   // (Removed startup LED self-test)
 
   homeRadius(); // crash home the radial axis. This is a blocking function.
 
-  bleConfig.begin(&bleListener);
-  bleConfig.notifyStatus("Ready");
+  // Start BLE WiFi setup service (for credential configuration only)
+  bleWiFiSetup.begin(&configListener);
+
+  // Start HTTP server for control (after WiFi is ready)
+  // Note: HTTP server will be available once WiFi connects
+  if (g_wifiEnabled && WiFi.status() == WL_CONNECTED) {
+    httpConfig.begin(&configListener);
+    httpConfig.notifyStatus("Ready");
+  }
 
   // Load WiFi credentials from persistent storage and connect if available
   loadWiFiCredentials();
@@ -1627,7 +1648,8 @@ the gantry from the selected pattern functions or from manual mode.
 void loop()
 {
   processPendingSandScript();
-  bleConfig.loop(); // service BLE events if needed
+  bleWiFiSetup.loop(); // service BLE WiFi setup events
+  httpConfig.loop(); // service HTTP server events
   handleOTA(); // handle OTA update requests
   // (Removed LED direct, self-test, and scan debug handling)
 
@@ -2641,7 +2663,7 @@ Positions pattern_SandScript(Positions current, bool restartPattern)
     }
     String err = String("Runtime error: NaN/Inf in ") + outputs;
     g_activeScript.lastError = err;
-    bleConfig.notifyStatus(String("[SCRIPT] RUNTIME_ERR ") + err);
+    httpConfig.notifyStatus(String("[SCRIPT] RUNTIME_ERR ") + err);
     setRunLocal(false);
     return current;
   }
@@ -2683,7 +2705,7 @@ Positions pattern_SandScript(Positions current, bool restartPattern)
       g_sandScriptIdleBackoffActive = true;
       if (!g_sandScriptIdleNotified)
       {
-        bleConfig.notifyStatus("[SCRIPT] idle backoff engaged");
+        httpConfig.notifyStatus("[SCRIPT] idle backoff engaged");
         g_sandScriptIdleNotified = true;
       }
     }
@@ -2692,7 +2714,7 @@ Positions pattern_SandScript(Positions current, bool restartPattern)
   {
     if (g_sandScriptIdleNotified)
     {
-      bleConfig.notifyStatus("[SCRIPT] idle cleared");
+      httpConfig.notifyStatus("[SCRIPT] idle cleared");
       g_sandScriptIdleNotified = false;
     }
     g_sandScriptIdleSpinCount = 0;
