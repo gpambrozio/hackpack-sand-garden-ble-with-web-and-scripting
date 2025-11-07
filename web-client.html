@@ -194,6 +194,9 @@
             class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white rounded px-2 py-1 shadow">
           </div>
         </div>
+        <input x-show="!connected" type="text" x-model="deviceHost" placeholder="sand-garden.local or IP"
+          class="px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-sg-accent/60 w-48"
+          @keyup.enter="connect()" />
         <button @click="connect()"
           class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60"
           :disabled="connecting || connected" :class="(connecting||connected) ? 'opacity-60 cursor-not-allowed' : ''">
@@ -201,8 +204,8 @@
           <span x-show="connecting">Connecting...</span>
           <span x-show="connected">Connected</span>
         </button>
-        <button x-show="!connected && device && !connecting" @click="reconnect()"
-          class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Reconnect</button>
+        <button x-show="connected" @click="disconnect()"
+          class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Disconnect</button>
       </div>
     </header>
 
@@ -761,8 +764,9 @@
         // Trails always enabled now (formerly showTrails toggle removed)
         statusMessage: 'Idle',
         logs: [],
-        device: null, server: null,
-        chars: { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null },
+        deviceHost: 'sand-garden.local', // HTTP host
+        baseUrl: '', // Will be set to http://deviceHost
+        eventSource: null, // Server-Sent Events connection
         debugStepsEnabled: false,
         debugCanvas: null,
         debugCtx: null,
