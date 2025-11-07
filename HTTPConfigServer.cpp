@@ -36,9 +36,13 @@ void HTTPConfigServer::loop() {
 }
 
 void HTTPConfigServer::_setupRoutes() {
-  // OPTIONS handler for CORS preflight
-  _server->on("/api/state", HTTP_OPTIONS, [](AsyncWebServerRequest *request) {
-    request->send(200);
+  // OPTIONS handler for CORS preflight - catch all API routes
+  _server->onNotFound([](AsyncWebServerRequest *request) {
+    if (request->method() == HTTP_OPTIONS) {
+      request->send(200);
+    } else {
+      request->send(404, "text/plain", "Not Found");
+    }
   });
 
   // GET /api/state - Return all current values as JSON
@@ -118,11 +122,6 @@ void HTTPConfigServer::_setupRoutes() {
   });
 
   _server->addHandler(_events);
-
-  // Handle 404
-  _server->onNotFound([](AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Not Found");
-  });
 }
 
 void HTTPConfigServer::_handleGetState(AsyncWebServerRequest *request) {
