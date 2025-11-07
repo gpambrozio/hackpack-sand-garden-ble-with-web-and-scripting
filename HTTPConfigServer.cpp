@@ -6,6 +6,18 @@ static const uint32_t SCRIPT_TRANSFER_TIMEOUT_MS = 5000;
 
 HTTPConfigServer::HTTPConfigServer() {}
 
+HTTPConfigServer::~HTTPConfigServer() {
+  end();
+  if (_server) {
+    delete _server;
+    _server = nullptr;
+  }
+  if (_events) {
+    delete _events;
+    _events = nullptr;
+  }
+}
+
 void HTTPConfigServer::begin(ISGConfigListener *listener, uint16_t port) {
   _listener = listener;
   _server = new AsyncWebServer(port);
@@ -35,11 +47,35 @@ void HTTPConfigServer::loop() {
   }
 }
 
+void HTTPConfigServer::end() {
+  if (_events) {
+    _events->close();
+  }
+  if (_server) {
+    _server->end();
+  }
+  Serial.println("[HTTP] Server stopped");
+}
+
+void HTTPConfigServer::_sendError(AsyncWebServerRequest *request, int code, const String &error) {
+  StaticJsonDocument<128> doc;
+  doc["error"] = error;
+  String json;
+  serializeJson(doc, json);
+  request->send(code, "application/json", json);
+}
+
 void HTTPConfigServer::_setupRoutes() {
   // OPTIONS handler for CORS preflight - catch all API routes
   _server->onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS) {
-      request->send(200);
+      // Only handle OPTIONS for /api/* routes
+      String path = request->url();
+      if (path.startsWith("/api/")) {
+        request->send(200);
+      } else {
+        request->send(404, "text/plain", "Not Found");
+      }
     } else {
       request->send(404, "text/plain", "Not Found");
     }
@@ -83,7 +119,8 @@ void HTTPConfigServer::_setupRoutes() {
 
   _server->on("/api/script/chunk", HTTP_POST, [](AsyncWebServerRequest *request) {},
     NULL, [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-      if (index + len >= total) { this->_handleScriptChunk(request, data, len); }
+      // Process each chunk as it arrives
+      this->_handleScriptChunk(request, data, len);
     });
 
   _server->on("/api/script/end", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -321,16 +358,20 @@ void HTTPConfigServer::_handleLedEffect(AsyncWebServerRequest *request, uint8_t 
   StaticJsonDocument<128> doc;
   DeserializationError error = deserializeJson(doc, data, len);
   if (error) {
-    request->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+    _sendError(request, 400, "Invalid JSON");
     return;
   }
 
   if (!doc.containsKey("value")) {
-    request->send(400, "application/json", "{\"error\":\"Missing value field\"}");
+    _sendError(request, 400, "Missing value field");
     return;
   }
 
   uint8_t newValue = doc["value"];
+  if (newValue >= 10) {  // NUM_PATTERN_LED_EFFECTS = 10
+    _sendError(request, 400, "Invalid effect value (must be 0-9)");
+    return;
+  }
   setLedEffect(newValue);
   request->send(200, "application/json", "{\"status\":\"ok\"}");
 }
@@ -428,6 +469,11 @@ void HTTPConfigServer::setRunState(bool r) {
 }
 
 void HTTPConfigServer::setLedEffect(uint8_t e) {
+  // Validate range
+  if (e >= 10) {  // NUM_PATTERN_LED_EFFECTS = 10
+    Serial.printf("[HTTP] Invalid LED effect: %d (max 9)\n", e);
+    return;
+  }
   if (_ledEffect == e) return;
   _ledEffect = e;
 

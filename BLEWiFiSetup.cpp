@@ -108,6 +108,7 @@ void BLEWiFiSetup::_restartAdvertising() {
   if (now - _lastAdvAttemptMs < 2000) return;
   _lastAdvAttemptMs = now;
 
+  Serial.println("[BLE] Restarting advertising");
   adv->start();
 }
 

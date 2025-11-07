@@ -28,7 +28,9 @@ public:
 class HTTPConfigServer {
 public:
   HTTPConfigServer();
+  ~HTTPConfigServer();
   void begin(ISGConfigListener *listener = nullptr, uint16_t port = 80);
+  void end();
   void loop();
 
   // Accessors
@@ -48,6 +50,7 @@ public:
 
 private:
   void _setupRoutes();
+  void _sendError(AsyncWebServerRequest *request, int code, const String &error);
   void _handleGetState(AsyncWebServerRequest *request);
   void _handleSetSpeed(AsyncWebServerRequest *request, uint8_t *data, size_t len);
   void _handleSetPattern(AsyncWebServerRequest *request, uint8_t *data, size_t len);

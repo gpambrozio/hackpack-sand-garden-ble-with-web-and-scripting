@@ -168,6 +168,173 @@ After WiFi is configured, the device starts an HTTP server on port 80:
 - **Real-time updates**: Server-Sent Events at `/api/events`
 - **Web client**: Access the web interface by connecting to the device's IP or hostname
 
+### HTTP API Reference
+
+All POST endpoints accept JSON payloads and return JSON responses. The API supports CORS for web client access.
+
+#### State Management
+
+**GET /api/state** - Get all current device state
+```bash
+curl http://sand-garden.local/api/state
+```
+Response:
+```json
+{
+  "speedMultiplier": 1.0,
+  "pattern": 1,
+  "autoMode": true,
+  "running": false,
+  "ledEffect": 0,
+  "ledColorR": 255,
+  "ledColorG": 255,
+  "ledColorB": 255,
+  "ledBrightness": 100
+}
+```
+
+#### Pattern Control
+
+**POST /api/speed** - Set speed multiplier (0.01 - 5.0)
+```bash
+curl -X POST http://sand-garden.local/api/speed \
+  -H "Content-Type: application/json" \
+  -d '{"value": 1.5}'
+```
+
+**POST /api/pattern** - Set pattern (1-based index)
+```bash
+curl -X POST http://sand-garden.local/api/pattern \
+  -H "Content-Type: application/json" \
+  -d '{"value": 3}'
+```
+
+**POST /api/mode** - Set auto/manual mode
+```bash
+curl -X POST http://sand-garden.local/api/mode \
+  -H "Content-Type: application/json" \
+  -d '{"value": true}'  # true = auto, false = manual
+```
+
+**POST /api/run** - Start/stop pattern execution
+```bash
+curl -X POST http://sand-garden.local/api/run \
+  -H "Content-Type: application/json" \
+  -d '{"value": true}'  # true = running, false = stopped
+```
+
+#### LED Control
+
+**POST /api/led/effect** - Set LED effect (0-9)
+```bash
+curl -X POST http://sand-garden.local/api/led/effect \
+  -H "Content-Type: application/json" \
+  -d '{"value": 2}'
+```
+
+**POST /api/led/color** - Set LED RGB color (0-255)
+```bash
+curl -X POST http://sand-garden.local/api/led/color \
+  -H "Content-Type: application/json" \
+  -d '{"r": 255, "g": 0, "b": 128}'
+```
+
+**POST /api/led/brightness** - Set LED brightness (0-255)
+```bash
+curl -X POST http://sand-garden.local/api/led/brightness \
+  -H "Content-Type: application/json" \
+  -d '{"value": 150}'
+```
+
+#### Commands
+
+**POST /api/command** - Execute command
+```bash
+curl -X POST http://sand-garden.local/api/command \
+  -H "Content-Type: application/json" \
+  -d '{"command": "HOME"}'
+```
+
+#### SandScript Upload
+
+**POST /api/script/begin** - Start script upload
+```bash
+curl -X POST http://sand-garden.local/api/script/begin \
+  -H "Content-Type: application/json" \
+  -d '{"length": 45, "slot": 11}'
+```
+
+**POST /api/script/chunk** - Upload script data (can be sent as single request for small scripts)
+```bash
+curl -X POST http://sand-garden.local/api/script/chunk \
+  -H "Content-Type: text/plain" \
+  --data-binary @script.txt
+```
+
+**POST /api/script/end** - Finalize script upload
+```bash
+curl -X POST http://sand-garden.local/api/script/end
+```
+
+Complete SandScript upload example:
+```bash
+# Create a simple script
+cat > /tmp/script.txt << 'EOF'
+next_radius = clamp(radius + 0.2, 0, 10)
+next_angle = angle + 34
+EOF
+
+# Get script length
+SCRIPT_LEN=$(wc -c < /tmp/script.txt)
+
+# Upload script
+curl -X POST http://sand-garden.local/api/script/begin \
+  -H "Content-Type: application/json" \
+  -d "{\"length\": $SCRIPT_LEN, \"slot\": 11}"
+
+curl -X POST http://sand-garden.local/api/script/chunk \
+  -H "Content-Type: text/plain" \
+  --data-binary @/tmp/script.txt
+
+curl -X POST http://sand-garden.local/api/script/end
+
+# Switch to SandScript pattern (pattern 11)
+curl -X POST http://sand-garden.local/api/pattern \
+  -H "Content-Type: application/json" \
+  -d '{"value": 11}'
+```
+
+#### Real-time Updates (Server-Sent Events)
+
+**GET /api/events** - Subscribe to device events
+```bash
+curl -N http://sand-garden.local/api/events
+```
+
+Event types:
+- `state` - Initial state snapshot on connect
+- `speed` - Speed multiplier changed
+- `pattern` - Pattern changed
+- `mode` - Auto/manual mode changed
+- `run` - Run state changed
+- `ledEffect` - LED effect changed
+- `ledColor` - LED color changed
+- `ledBrightness` - LED brightness changed
+- `status` - Status messages
+- `telemetry` - Position and motion telemetry
+
+Example SSE stream:
+```
+event: state
+data: {"speed":1.0,"pattern":1,"mode":1,"run":0,"ledEffect":0,"ledBrightness":100}
+
+event: status
+data: [SCRIPT] BEGIN len=45 slot=11
+
+event: telemetry
+data: r=350 a=1234 fault=0
+```
+
 ## Code Architecture
 
 ### Motion Control System
