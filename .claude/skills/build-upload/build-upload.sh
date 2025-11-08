@@ -27,21 +27,32 @@ fi
 
 # Step 0: Check if WebClientHTML.h needs regeneration
 echo "Step 0: Checking web client HTML..."
-if [ -f "web-client.html" ] && [ -f "html_to_header.py" ]; then
-  if [ ! -f "WebClientHTML.h" ] || [ "web-client.html" -nt "WebClientHTML.h" ]; then
-    echo "  web-client.html has been modified, regenerating WebClientHTML.h..."
-    python3 html_to_header.py web-client.html WebClientHTML.h
-    if [ $? -eq 0 ]; then
-      echo "✓ WebClientHTML.h regenerated"
-    else
-      echo "✗ Failed to regenerate WebClientHTML.h"
-      exit 1
-    fi
+
+# Verify required files exist
+if [ ! -f "web-client.html" ]; then
+  echo "✗ web-client.html not found!"
+  echo "  This file is required to generate the embedded web client."
+  exit 1
+fi
+
+if [ ! -f "html_to_header.py" ]; then
+  echo "✗ html_to_header.py not found!"
+  echo "  This script is required to generate WebClientHTML.h."
+  exit 1
+fi
+
+# Regenerate if needed
+if [ ! -f "WebClientHTML.h" ] || [ "web-client.html" -nt "WebClientHTML.h" ]; then
+  echo "  web-client.html has been modified, regenerating WebClientHTML.h..."
+  python3 html_to_header.py web-client.html WebClientHTML.h
+  if [ $? -eq 0 ]; then
+    echo "✓ WebClientHTML.h regenerated"
   else
-    echo "✓ WebClientHTML.h is up to date"
+    echo "✗ Failed to regenerate WebClientHTML.h"
+    exit 1
   fi
 else
-  echo "  web-client.html or html_to_header.py not found, skipping"
+  echo "✓ WebClientHTML.h is up to date"
 fi
 echo ""
 
