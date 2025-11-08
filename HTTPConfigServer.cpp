@@ -1,5 +1,6 @@
 #include "HTTPConfigServer.h"
 #include "PatternScript.h"
+#include "WebClientHTML.h"
 #include <ArduinoJson.h>
 
 static const uint32_t SCRIPT_TRANSFER_TIMEOUT_MS = 5000;
@@ -66,6 +67,11 @@ void HTTPConfigServer::_sendError(AsyncWebServerRequest *request, int code, cons
 }
 
 void HTTPConfigServer::_setupRoutes() {
+  // Serve web client HTML at root path
+  _server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", WEB_CLIENT_HTML);
+  });
+
   // OPTIONS handler for CORS preflight - catch all API routes
   _server->onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS) {
