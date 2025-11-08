@@ -469,12 +469,42 @@ Single-file HTML application (`web-client.html`) with:
 
 The web client uses the same SandScript compiler (JavaScript port) as firmware, ensuring preview accuracy.
 
-**Connection setup**:
-1. Ensure device is connected to WiFi (use wifi-setup.html via BLE if needed)
-2. Open web-client.html in any browser
-3. Enter device hostname (`sand-garden.local`) or IP address
-4. Click Connect to establish HTTP connection
-5. SSE stream provides real-time status and telemetry updates
+**Access methods**:
+1. **Served from device** (recommended): Navigate to `http://sand-garden.local/` in any browser
+   - The device serves the web client directly from its HTTP server
+   - Automatically connects to the device API (same origin)
+   - Requires WiFi setup (see WiFi Setup section)
+
+2. **Local file**: Open `web-client.html` directly in a browser
+   - Useful for development or when device isn't accessible
+   - Requires manually entering device hostname/IP to connect
+
+**Updating the embedded web client**:
+
+The device serves `web-client.html` embedded in flash memory via `WebClientHTML.h`. When you modify `web-client.html`, regenerate the header file:
+
+```bash
+# Regenerate with HTML minification (default, recommended)
+python3 html_to_header.py web-client.html WebClientHTML.h
+
+# Regenerate without minification (for debugging)
+python3 html_to_header.py web-client.html WebClientHTML.h --no-minify
+```
+
+**HTML Minification**: The script automatically minifies the HTML to reduce firmware size (~23% reduction):
+- Removes HTML comments
+- Removes whitespace between tags
+- Collapses multiple spaces
+- Preserves `<script>` and `<style>` content formatting
+- Reduces firmware size by ~38KB
+
+The build-upload skill automatically detects changes to `web-client.html` and regenerates `WebClientHTML.h` before compilation.
+
+**Manual check** (if needed):
+```bash
+# Check if web-client.html is newer than WebClientHTML.h
+[ web-client.html -nt WebClientHTML.h ] && echo "Regeneration needed" || echo "Up to date"
+```
 
 ## Important Implementation Details
 
@@ -555,7 +585,9 @@ Edit constants in PatternScript.h (lines 26-31). Increase carefully—larger lim
 - **HTTPConfigServer.h/cpp**: HTTP REST API server with SSE
 - **BLEWiFiSetup.h/cpp**: Minimal BLE service for WiFi credential setup
 - **Positions.h**: Shared position struct
-- **web-client.html**: Browser-based controller and simulator (HTTP-based)
+- **web-client.html**: Browser-based controller and simulator (source file)
+- **WebClientHTML.h**: Embedded web client in flash memory (auto-generated from web-client.html)
+- **html_to_header.py**: Script to regenerate WebClientHTML.h from web-client.html
 - **wifi-setup.html**: WiFi credential configuration tool (BLE-based)
 - **Readme.md**: User-facing documentation and quick start
 - **DSL_IMPLEMENTATION_PLAN.md**: Technical specification for SandScript (grammar, opcodes, memory layout)
