@@ -10,6 +10,9 @@
 #include <vector>
 #include <algorithm>
 
+// LED effects configuration
+#define NUM_PATTERN_LED_EFFECTS 14  // Total number of LED effects available
+
 // Callback interface for host sketch to observe updates (same as BLE)
 class ISGConfigListener {
 public:

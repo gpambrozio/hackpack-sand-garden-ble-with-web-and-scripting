@@ -122,7 +122,7 @@ Useful values and limits for defining how the sand garden will behave. In most c
 #define PATTERN_LED_DATA_PIN 11 // The output for the pattern LED strip (rainbow effect).
 #define NUM_PATTERN_LEDS 39     // Number of LEDs in the pattern strip.
 #define MAX_PATTERN_BRIGHTNESS 100      // Default brightness for pattern strip (out of 255).
-#define NUM_PATTERN_LED_EFFECTS 10      // Total number of LED effects available
+// NUM_PATTERN_LED_EFFECTS is defined in HTTPConfigServer.h
 
 // Struct used for storing positions of the axes, as well as storing the values of the joystick.
 // Positions struct definition moved to Positions.h for sharing with PatternScript and future modules.
@@ -1083,26 +1083,30 @@ private:
 
   // Effect state variables
   uint8_t rainbowHue;                  // Rainbow effect hue offset
-  uint8_t heat[NUM_PATTERN_LEDS];      // Fire effect heat array
   uint8_t wavePhase;                   // Color wave phase
   uint16_t chasePosition;              // Theater chase position
   uint8_t cometPosition;               // Comet position
   uint8_t paletteIndex;                // Color palette index
-  CRGB solidColor;                     // Solid color for effect 8
+  CRGB solidColor;                     // Solid color for effect 12
+  // New effect state variables
+  uint8_t breathePhase;                // Breathing pulse phase
+  uint8_t wedgePosition;               // Rotating wedge position
+  uint8_t chase1Position;              // Bidirectional chase - first dot
+  uint8_t chase2Position;              // Bidirectional chase - second dot
+  uint8_t segmentRotation;             // Color segments rotation offset
 
 public:
   // Constructor - initializes the pattern LED strip
   PatternLedDisplay() : brightness(MAX_PATTERN_BRIGHTNESS), currentEffect(0),
                         rainbowHue(0), wavePhase(0), chasePosition(0),
-                        cometPosition(0), paletteIndex(0), solidColor(CRGB::White)
+                        cometPosition(0), paletteIndex(0), solidColor(CRGB::White),
+                        breathePhase(0), wedgePosition(0), chase1Position(0),
+                        chase2Position(NUM_PATTERN_LEDS/2), segmentRotation(0)
   {
     FastLED.addLeds<WS2812B, PATTERN_LED_DATA_PIN, GRB>(patternLeds, NUM_PATTERN_LEDS);
 
     // Initialize all LEDs to black
     fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
-
-    // Initialize heat array for fire effect
-    memset(heat, 0, sizeof(heat));
 
 #if SG_FASTLED_DIAG_BOOT
     // Diagnostic flash on boot - use green for pattern strip
@@ -1137,7 +1141,11 @@ public:
       chasePosition = 0;
       cometPosition = 0;
       paletteIndex = 0;
-      memset(heat, 0, sizeof(heat));
+      breathePhase = 0;
+      wedgePosition = 0;
+      chase1Position = 0;
+      chase2Position = NUM_PATTERN_LEDS / 2;
+      segmentRotation = 0;
       fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
     }
   }
@@ -1162,8 +1170,12 @@ public:
       case 5: updatePaletteCycle(); break;
       case 6: updateConfetti(); break;
       case 7: updateComet(); break;
-      case 8: updateSolidColor(); break;
-      case 9: updateOff(); break;
+      case 8: updateBreathingPulse(); break;
+      case 9: updateRotatingWedge(); break;
+      case 10: updateBidirectionalChase(); break;
+      case 11: updateColorSegments(); break;
+      case 12: updateSolidColor(); break;
+      case 13: updateOff(); break;
       default: updateRainbow(); break;
     }
   }
@@ -1183,47 +1195,14 @@ public:
   }
 
   /**
-   * @brief Effect 1: Fire/Flame effect
-   * Simulates flickering fire using heat array and warm color palette
+   * @brief Effect 1: Full-strip rainbow cycling
+   * All LEDs show the same color, cycling through the rainbow spectrum
    */
   void updateFire()
   {
-    // Cool down every cell a little
-    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
-      int cooling = random(0, ((55 * 10) / NUM_PATTERN_LEDS) + 2);
-      heat[i] = (heat[i] > cooling) ? (heat[i] - cooling) : 0;
-    }
-
-    // Heat from each cell drifts up and diffuses a little
-    for (int k = NUM_PATTERN_LEDS - 1; k >= 2; k--) {
-      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
-    }
-
-    // Randomly ignite new sparks near the bottom
-    if (random(255) < 120) {
-      int y = random(3);
-      int heating = heat[y] + random(160, 255);
-      heat[y] = (heating < 255) ? heating : 255;
-    }
-
-    // Convert heat to LED colors
-    for (int j = 0; j < NUM_PATTERN_LEDS; j++) {
-      // Scale heat value to 0-240 for heatmap
-      uint8_t t192 = scale8(heat[j], 240);
-      // Calculate color from palette
-      uint8_t heatramp = t192 & 0x3F; // 0..63
-      heatramp <<= 2; // scale up to 0..252
-
-      if (t192 > 0x80) { // Hottest
-        patternLeds[j] = CRGB(255, 255, heatramp);
-      } else if (t192 > 0x40) { // Medium
-        patternLeds[j] = CRGB(255, heatramp, 0);
-      } else { // Coolest
-        patternLeds[j] = CRGB(heatramp, 0, 0);
-      }
-
-      patternLeds[j].nscale8(brightness);
-    }
+    // Set all LEDs to the same hue, full saturation
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CHSV(rainbowHue, 255, brightness));
+    rainbowHue += 1; // Advance through rainbow colors (slower)
   }
 
   /**
@@ -1237,7 +1216,7 @@ public:
       uint8_t brightness_mod = sin8(i * 8 + wavePhase / 2);
       patternLeds[i] = CHSV(hue, 255, scale8(brightness, brightness_mod));
     }
-    wavePhase += 4;
+    wavePhase += 2; // Slower wave movement
   }
 
   /**
@@ -1263,6 +1242,8 @@ public:
    */
   void updateTheaterChase()
   {
+    static uint8_t frameCounter = 0;
+
     // Clear all LEDs
     fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
 
@@ -1272,7 +1253,13 @@ public:
       int pos = (i + (chasePosition % 3)) % NUM_PATTERN_LEDS;
       patternLeds[pos] = CHSV(hue, 255, brightness);
     }
-    chasePosition++;
+
+    // Update position every 2 frames for slower movement
+    frameCounter++;
+    if (frameCounter >= 2) {
+      chasePosition++;
+      frameCounter = 0;
+    }
   }
 
   /**
@@ -1336,7 +1323,161 @@ public:
   }
 
   /**
-   * @brief Effect 8: Solid color
+   * @brief Effect 8: Breathing Pulse
+   * All LEDs gently fade in and out with slowly changing hue
+   */
+  void updateBreathingPulse()
+  {
+    // Calculate breathing brightness using sine wave
+    uint8_t breatheBrightness = sin8(breathePhase);
+
+    // Scale the brightness to our max brightness
+    uint8_t scaledBrightness = scale8(brightness, breatheBrightness);
+
+    // Set all LEDs to same hue with breathing brightness
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CHSV(rainbowHue, 255, scaledBrightness));
+
+    // Advance phase for breathing effect (slower)
+    breathePhase += 2;
+
+    // Slowly change hue over time (every 4 frames for gradual color shift)
+    static uint8_t hueCounter = 0;
+    hueCounter++;
+    if (hueCounter >= 4) {
+      rainbowHue += 1;
+      hueCounter = 0;
+    }
+  }
+
+  /**
+   * @brief Effect 9: Rotating Wedge
+   * A colored wedge/pie slice rotates around the circular strip
+   */
+  void updateRotatingWedge()
+  {
+    // Clear all LEDs first
+    fill_solid(patternLeds, NUM_PATTERN_LEDS, CRGB::Black);
+
+    // Define wedge size (1/3 of the strip)
+    uint8_t wedgeSize = NUM_PATTERN_LEDS / 3;
+
+    // Draw the wedge with gradient
+    for (int i = 0; i < wedgeSize; i++) {
+      uint8_t pos = (wedgePosition + i) % NUM_PATTERN_LEDS;
+
+      // Create gradient from full brightness at center to dim at edges
+      uint8_t gradientBrightness;
+      if (i < wedgeSize / 2) {
+        // Fade in
+        gradientBrightness = map(i, 0, wedgeSize / 2, 0, brightness);
+      } else {
+        // Fade out
+        gradientBrightness = map(i, wedgeSize / 2, wedgeSize, brightness, 0);
+      }
+
+      patternLeds[pos] = CHSV(rainbowHue, 255, gradientBrightness);
+    }
+
+    // Advance wedge position
+    wedgePosition++;
+    if (wedgePosition >= NUM_PATTERN_LEDS) {
+      wedgePosition = 0;
+    }
+
+    // Slowly change color as it rotates
+    rainbowHue += 1;
+  }
+
+  /**
+   * @brief Effect 10: Bidirectional Chase
+   * Two colored dots travel in opposite directions around the circle
+   */
+  void updateBidirectionalChase()
+  {
+    // Fade all LEDs for comet trails
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      patternLeds[i].fadeToBlackBy(64);
+    }
+
+    // Draw first dot (clockwise) in one color
+    patternLeds[chase1Position] = CHSV(rainbowHue, 255, brightness);
+
+    // Draw trail for first dot
+    uint8_t trail1 = (chase1Position - 1 + NUM_PATTERN_LEDS) % NUM_PATTERN_LEDS;
+    patternLeds[trail1] = CHSV(rainbowHue, 255, brightness / 2);
+
+    // Draw second dot (counter-clockwise) in complementary color
+    uint8_t complementaryHue = rainbowHue + 128; // Opposite on color wheel
+    patternLeds[chase2Position] = CHSV(complementaryHue, 255, brightness);
+
+    // Draw trail for second dot
+    uint8_t trail2 = (chase2Position + 1) % NUM_PATTERN_LEDS;
+    patternLeds[trail2] = CHSV(complementaryHue, 255, brightness / 2);
+
+    // Move dots in opposite directions
+    chase1Position++;
+    if (chase1Position >= NUM_PATTERN_LEDS) {
+      chase1Position = 0;
+    }
+
+    if (chase2Position == 0) {
+      chase2Position = NUM_PATTERN_LEDS - 1;
+    } else {
+      chase2Position--;
+    }
+
+    // Slowly change color
+    rainbowHue += 1;
+  }
+
+  /**
+   * @brief Effect 11: Color Segments
+   * Divide circle into colored segments that rotate
+   */
+  void updateColorSegments()
+  {
+    // Number of segments
+    const uint8_t numSegments = 5;
+    uint8_t segmentSize = NUM_PATTERN_LEDS / numSegments;
+
+    for (int i = 0; i < NUM_PATTERN_LEDS; i++) {
+      // Calculate which segment this LED belongs to (with rotation offset)
+      uint8_t rotatedPos = (i + segmentRotation) % NUM_PATTERN_LEDS;
+      uint8_t segment = rotatedPos / segmentSize;
+
+      // Position within the segment (for gradient at edges)
+      uint8_t posInSegment = rotatedPos % segmentSize;
+
+      // Calculate hue for this segment
+      uint8_t hue = (segment * (255 / numSegments) + rainbowHue) % 256;
+
+      // Create smooth transitions at segment boundaries
+      uint8_t segmentBrightness = brightness;
+      if (posInSegment == 0 || posInSegment == segmentSize - 1) {
+        // Dim at boundaries for smooth transition
+        segmentBrightness = brightness / 2;
+      }
+
+      patternLeds[i] = CHSV(hue, 255, segmentBrightness);
+    }
+
+    // Rotate segments slowly
+    static uint8_t rotationCounter = 0;
+    rotationCounter++;
+    if (rotationCounter >= 3) { // Slow down rotation
+      segmentRotation++;
+      if (segmentRotation >= NUM_PATTERN_LEDS) {
+        segmentRotation = 0;
+      }
+      rotationCounter = 0;
+    }
+
+    // Slowly shift colors
+    rainbowHue += 1;
+  }
+
+  /**
+   * @brief Effect 12: Solid color
    * Displays a single solid color across all LEDs
    */
   void updateSolidColor()
@@ -1348,7 +1489,7 @@ public:
   }
 
   /**
-   * @brief Effect 9: Off
+   * @brief Effect 13: Off
    * Turns all LEDs off
    */
   void updateOff()
@@ -1357,7 +1498,7 @@ public:
   }
 
   /**
-   * @brief Set the solid color for effect 8
+   * @brief Set the solid color for effect 12
    * @param r Red value (0-255)
    * @param g Green value (0-255)
    * @param b Blue value (0-255)

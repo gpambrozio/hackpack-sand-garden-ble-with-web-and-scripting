@@ -759,8 +759,8 @@
         speedMultiplier: 1.0,
         pattern: 1,
         ledEffect: 1,
-        NUM_LED_EFFECTS: 10, // Total number of LED effects (max UI value)
-        SOLID_COLOR_EFFECT_ID: 9, // ID of the Solid Color effect (for showing color picker)
+        NUM_LED_EFFECTS: 14, // Total number of LED effects (max UI value)
+        SOLID_COLOR_EFFECT_ID: 13, // ID of the Solid Color effect (for showing color picker)
         // Trails always enabled now (formerly showTrails toggle removed)
         statusMessage: 'Idle',
         logs: [],
@@ -803,15 +803,19 @@
         ],
         ledEffectMeta: [
           { id: 1, name: 'Rainbow', description: 'Moving rainbow wave across the strip' },
-          { id: 2, name: 'Fire', description: 'Flickering fire/flame effect with warm colors' },
+          { id: 2, name: 'Full Rainbow', description: 'Whole strip cycles through rainbow colors' },
           { id: 3, name: 'Color Waves', description: 'Sine wave color patterns' },
           { id: 4, name: 'Twinkle', description: 'Random sparkling stars' },
           { id: 5, name: 'Theater Chase', description: 'Marquee-style chase effect' },
           { id: 6, name: 'Palette Cycle', description: 'Cycling through color palettes' },
           { id: 7, name: 'Confetti', description: 'Random colored dots' },
           { id: 8, name: 'Comet', description: 'Comet/meteor with fading tail' },
-          { id: 9, name: 'Solid Color', description: 'Single solid color across all LEDs' },
-          { id: 10, name: 'Off', description: 'Turn off all LEDs' }
+          { id: 9, name: 'Breathing Pulse', description: 'Calming breathing effect with color shift' },
+          { id: 10, name: 'Rotating Wedge', description: 'Colored wedge sweeps around the circle' },
+          { id: 11, name: 'Bidirectional Chase', description: 'Two dots chase in opposite directions' },
+          { id: 12, name: 'Color Segments', description: 'Rotating colored pie segments' },
+          { id: 13, name: 'Solid Color', description: 'Single solid color across all LEDs' },
+          { id: 14, name: 'Off', description: 'Turn off all LEDs' }
         ],
         ledColor: { r: 255, g: 255, b: 255 }, // Current solid color (white by default)
         ledBrightness: 100, // LED brightness (0-255, default 100)

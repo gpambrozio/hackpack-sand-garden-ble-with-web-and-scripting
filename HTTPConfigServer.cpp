@@ -368,8 +368,8 @@ void HTTPConfigServer::_handleLedEffect(AsyncWebServerRequest *request, uint8_t 
   }
 
   uint8_t newValue = doc["value"];
-  if (newValue >= 10) {  // NUM_PATTERN_LED_EFFECTS = 10
-    _sendError(request, 400, "Invalid effect value (must be 0-9)");
+  if (newValue >= NUM_PATTERN_LED_EFFECTS) {
+    _sendError(request, 400, "Invalid effect value");
     return;
   }
   setLedEffect(newValue);
@@ -470,8 +470,8 @@ void HTTPConfigServer::setRunState(bool r) {
 
 void HTTPConfigServer::setLedEffect(uint8_t e) {
   // Validate range
-  if (e >= 10) {  // NUM_PATTERN_LED_EFFECTS = 10
-    Serial.printf("[HTTP] Invalid LED effect: %d (max 9)\n", e);
+  if (e >= NUM_PATTERN_LED_EFFECTS) {
+    Serial.printf("[HTTP] Invalid LED effect: %d (max %d)\n", e, NUM_PATTERN_LED_EFFECTS - 1);
     return;
   }
   if (_ledEffect == e) return;
