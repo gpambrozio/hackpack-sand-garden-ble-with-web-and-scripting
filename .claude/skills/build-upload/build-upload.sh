@@ -25,6 +25,26 @@ if [ -z "$ESPOTA_SCRIPT" ]; then
   exit 1
 fi
 
+# Step 0: Check if WebClientHTML.h needs regeneration
+echo "Step 0: Checking web client HTML..."
+if [ -f "web-client.html" ] && [ -f "html_to_header.py" ]; then
+  if [ ! -f "WebClientHTML.h" ] || [ "web-client.html" -nt "WebClientHTML.h" ]; then
+    echo "  web-client.html has been modified, regenerating WebClientHTML.h..."
+    python3 html_to_header.py web-client.html WebClientHTML.h
+    if [ $? -eq 0 ]; then
+      echo "✓ WebClientHTML.h regenerated"
+    else
+      echo "✗ Failed to regenerate WebClientHTML.h"
+      exit 1
+    fi
+  else
+    echo "✓ WebClientHTML.h is up to date"
+  fi
+else
+  echo "  web-client.html or html_to_header.py not found, skipping"
+fi
+echo ""
+
 # Step 1: Clean build cache
 echo "Step 1: Cleaning build cache..."
 if [ "${CLEAR_CACHE:-0}" = "1" ]; then
