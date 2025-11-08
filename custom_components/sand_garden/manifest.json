@@ -1,0 +1,11 @@
+{
+  "domain": "sand_garden",
+  "name": "Sand Garden",
+  "codeowners": ["@sand-garden"],
+  "config_flow": true,
+  "documentation": "https://github.com/sand-garden/hackpack",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "1.0.0"
+}
