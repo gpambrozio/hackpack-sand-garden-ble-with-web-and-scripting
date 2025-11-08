@@ -1029,6 +1029,26 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           // Start dynamic favicon updater
           this.startFaviconUpdater();
           this.log('UI initialized');
+
+          // Auto-connect if page is served from device (not file://)
+          this.autoConnectIfServed();
+        },
+        autoConnectIfServed() {
+          // Check if page is served via HTTP (not opened as local file)
+          const isServedViaHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+          if (isServedViaHttp && window.location.hostname) {
+            // Page is served from a web server - auto-connect to this host
+            this.deviceHost = window.location.hostname;
+            this.log(`Auto-connecting to ${this.deviceHost} (served from device)`);
+
+            // Small delay to allow UI to fully initialize
+            setTimeout(() => {
+              this.connect();
+            }, 500);
+          } else {
+            this.log('Opened as local file - manual connection required');
+          }
         },
         startFaviconUpdater() {
           // Update favicon every 3 seconds with current canvas state
