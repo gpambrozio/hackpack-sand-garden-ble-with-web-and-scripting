@@ -484,8 +484,19 @@ The web client uses the same SandScript compiler (JavaScript port) as firmware, 
 The device serves `web-client.html` embedded in flash memory via `WebClientHTML.h`. When you modify `web-client.html`, regenerate the header file:
 
 ```bash
+# Regenerate with HTML minification (default, recommended)
 python3 html_to_header.py web-client.html WebClientHTML.h
+
+# Regenerate without minification (for debugging)
+python3 html_to_header.py web-client.html WebClientHTML.h --no-minify
 ```
+
+**HTML Minification**: The script automatically minifies the HTML to reduce firmware size (~23% reduction):
+- Removes HTML comments
+- Removes whitespace between tags
+- Collapses multiple spaces
+- Preserves `<script>` and `<style>` content formatting
+- Reduces firmware size by ~38KB
 
 The build-upload skill automatically detects changes to `web-client.html` and regenerates `WebClientHTML.h` before compilation.
 
