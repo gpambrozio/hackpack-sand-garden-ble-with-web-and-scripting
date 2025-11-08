@@ -1043,8 +1043,16 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             this.log(`Auto-connecting to ${this.deviceHost} (served from device)`);
 
             // Small delay to allow UI to fully initialize
-            setTimeout(() => {
-              this.connect();
+            setTimeout(async () => {
+              try {
+                await this.connect();
+                if (!this.connected) {
+                  this.log('Auto-connect failed - check device status and retry manually if needed');
+                }
+              } catch (err) {
+                this.log(`Auto-connect error: ${err.message}`);
+                this.setStatus('Auto-connect failed - please connect manually');
+              }
             }, 500);
           } else {
             this.log('Opened as local file - manual connection required');

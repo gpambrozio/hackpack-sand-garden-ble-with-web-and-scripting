@@ -25,8 +25,8 @@ if [ -z "$ESPOTA_SCRIPT" ]; then
   exit 1
 fi
 
-# Step 0: Check if WebClientHTML.h needs regeneration
-echo "Step 0: Checking web client HTML..."
+# Step 1: Check if WebClientHTML.h needs regeneration
+echo "Step 1: Checking web client HTML..."
 
 # Verify required files exist
 if [ ! -f "web-client.html" ]; then
@@ -56,8 +56,8 @@ else
 fi
 echo ""
 
-# Step 1: Clean build cache
-echo "Step 1: Cleaning build cache..."
+# Step 2: Clean build cache
+echo "Step 2: Cleaning build cache..."
 if [ "${CLEAR_CACHE:-0}" = "1" ]; then
   echo "  Clearing entire build cache (CLEAR_CACHE=1)..."
   rm -rf "$BUILD_CACHE"/*
@@ -69,8 +69,8 @@ else
 fi
 echo ""
 
-# Step 2: Compile firmware
-echo "Step 2: Compiling firmware..."
+# Step 3: Compile firmware
+echo "Step 3: Compiling firmware..."
 COMPILE_OUTPUT=$("$ARDUINO_CLI" compile \
   --fqbn "$FQBN" \
   --warnings default \
@@ -92,8 +92,8 @@ echo "$COMPILE_OUTPUT" | tail -5
 echo "✓ Compilation successful"
 echo ""
 
-# Step 3: Find the binary
-echo "Step 3: Locating binary..."
+# Step 4: Find the binary
+echo "Step 4: Locating binary..."
 BINARY_PATH=$(find "$BUILD_CACHE" -name "sand-garden.ino.bin" -type f 2>/dev/null | head -n 1)
 
 if [ -z "$BINARY_PATH" ]; then
@@ -110,8 +110,8 @@ echo "  Size: $BINARY_SIZE"
 echo "  Date: $BINARY_DATE"
 echo ""
 
-# Step 4: Pre-flight checks
-echo "Step 4: Pre-flight checks..."
+# Step 5: Pre-flight checks
+echo "Step 5: Pre-flight checks..."
 
 # Check if device is reachable
 echo "  Checking device connectivity to $DEVICE_HOST..."
@@ -124,8 +124,8 @@ else
 fi
 echo ""
 
-# Step 5: Upload via OTA
-echo "Step 5: Uploading via OTA to $DEVICE_HOST..."
+# Step 6: Upload via OTA
+echo "Step 6: Uploading via OTA to $DEVICE_HOST..."
 python3 "$ESPOTA_SCRIPT" \
   -i "$DEVICE_HOST" \
   -p "$OTA_PORT" \

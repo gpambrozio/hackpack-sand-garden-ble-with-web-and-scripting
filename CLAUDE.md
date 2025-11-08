@@ -67,7 +67,7 @@ Once WiFi credentials are configured (see WiFi Setup section below), firmware ca
 
 ```bash
 # Step 1: Clean build cache and compile fresh binary
-rm -rf /Users/gustavoambrozio/Library/Caches/arduino/sketches/* && \
+rm -rf $HOME/Library/Caches/arduino/sketches/* && \
 "/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli" compile \
   --fqbn arduino:esp32:nano_nora \
   --warnings default \
@@ -75,11 +75,11 @@ rm -rf /Users/gustavoambrozio/Library/Caches/arduino/sketches/* && \
   --export-binaries .
 
 # Step 2: Find the latest binary location (sketch hash changes after cache clear)
-BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f | head -n 1)
+BINARY_PATH=$(find $HOME/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f | head -n 1)
 echo "Binary location: $BINARY_PATH"
 
 # Step 3: Upload via OTA using espota.py
-python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
+python3 $HOME/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
   -i sand-garden.local \
   -p 3232 \
   -f "$BINARY_PATH"
@@ -89,10 +89,10 @@ python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3
 
 ```bash
 # Find the most recently modified binary
-BINARY_PATH=$(find /Users/gustavoambrozio/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f -exec ls -t {} + | head -n 1)
+BINARY_PATH=$(find $HOME/Library/Caches/arduino/sketches/ -name "sand-garden.ino.bin" -type f -exec ls -t {} + | head -n 1)
 
 # Upload via OTA
-python3 /Users/gustavoambrozio/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
+python3 $HOME/Library/Arduino15/packages/esp32/hardware/esp32/3.3.2/tools/espota.py \
   -i sand-garden.local \
   -p 3232 \
   -f "$BINARY_PATH"
