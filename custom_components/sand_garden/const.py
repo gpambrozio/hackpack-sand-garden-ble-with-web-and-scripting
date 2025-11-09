@@ -35,16 +35,20 @@ PATTERNS = {
 
 # LED Effects (0-based index as per device)
 LED_EFFECTS = {
-    0: "Solid Color",
-    1: "Rainbow Wave",
-    2: "Rainbow Cycle",
-    3: "Theater Chase",
-    4: "Twinkle",
-    5: "Fire",
-    6: "Ocean",
-    7: "Lava",
-    8: "Forest",
-    9: "Party",
+    0: "Rainbow",
+    1: "Full Rainbow",
+    2: "Color Waves",
+    3: "Twinkle",
+    4: "Theater Chase",
+    5: "Palette Cycle",
+    6: "Confetti",
+    7: "Comet",
+    8: "Breathing Pulse",
+    9: "Rotating Wedge",
+    10: "Bidirectional Chase",
+    11: "Color Segments",
+    12: "Solid Color",
+    13: "Off",
 }
 
 # Commands
