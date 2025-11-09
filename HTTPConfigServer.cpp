@@ -148,6 +148,10 @@ void HTTPConfigServer::_setupRoutes() {
       if (index == 0) { this->_handleLedBrightness(request, data, len); }
     });
 
+  _server->on("/api/reset", HTTP_POST, [this](AsyncWebServerRequest *request) {
+    this->_handleReset(request);
+  });
+
   // Server-Sent Events endpoint
   _events->onConnect([this](AsyncEventSourceClient *client) {
     Serial.printf("[HTTP] SSE client connected, ID: %u\n", client->lastId());
@@ -418,6 +422,16 @@ void HTTPConfigServer::_handleLedBrightness(AsyncWebServerRequest *request, uint
   uint8_t newValue = doc["value"];
   setLedBrightness(newValue);
   request->send(200, "application/json", "{\"status\":\"ok\"}");
+}
+
+void HTTPConfigServer::_handleReset(AsyncWebServerRequest *request) {
+  Serial.println("[HTTP] Reset requested - restarting device");
+  notifyStatus("[RESET] Device restarting...");
+  request->send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Device restarting\"}");
+
+  // Give time for response to be sent before restarting
+  delay(100);
+  ESP.restart();
 }
 
 void HTTPConfigServer::setSpeedMultiplier(float v) {

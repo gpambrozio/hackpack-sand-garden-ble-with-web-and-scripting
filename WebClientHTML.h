@@ -1,277 +1,886 @@
 // WebClientHTML.h - Embedded web client interface
-// Auto-generated from web-client.html
+// Auto-generated from web-client.html on 2025-11-09 00:36:09
 // DO NOT EDIT MANUALLY - regenerate using html_to_header.py
 
 #pragma once
 #include <Arduino.h>
 
 // Store HTML in flash memory (PROGMEM) to save RAM
-// Original size: 167583 bytes, minified: 129083 bytes
+// Original size: 169145 bytes, minified: 169145 bytes
 const char WEB_CLIENT_HTML[] PROGMEM = R"rawliteral(
-<!DOCTYPE html><html lang="en" class="h-full"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Sand Garden Controller</title><link rel="icon" type="image/x-icon" id="favicon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" /><script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script><script>
-// Tailwind config (runtime) – custom colors & fonts
-tailwind.config = {
-darkMode: 'class',
-theme: {
-extend: {
-colors: {
-sg: {
-bg: '#0d0d0f',
-panel: '#16171b',
-accent: '#ff7a00', // orange screw color
-accentAlt: '#ff9d3d',
-ring: '#ffffff'
-}
-},
-boxShadow: {
-'inner-glow': 'inset 0 0 8px rgba(255,122,0,0.4)',
-'sand': '0 0 0 2px #ffffff10, 0 0 12px 4px #ffffff08 inset'
-}
-}
-}
-}
-</script><script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script><style>
-/* Scrollbar theming */
-::-webkit-scrollbar {
-width: 10px;
-}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
 
-::-webkit-scrollbar-track {
-background: #111;
-}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sand Garden Controller</title>
+  <link rel="icon" type="image/x-icon" id="favicon"
+    href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" />
+  <!-- TailwindCSS v4 CDN (placeholder; update if hash changes) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    // Tailwind config (runtime) – custom colors & fonts
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            sg: {
+              bg: '#0d0d0f',
+              panel: '#16171b',
+              accent: '#ff7a00', // orange screw color
+              accentAlt: '#ff9d3d',
+              ring: '#ffffff'
+            }
+          },
+          boxShadow: {
+            'inner-glow': 'inset 0 0 8px rgba(255,122,0,0.4)',
+            'sand': '0 0 0 2px #ffffff10, 0 0 12px 4px #ffffff08 inset'
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Alpine.js for lightweight reactivity -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    /* Scrollbar theming */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
 
-::-webkit-scrollbar-thumb {
-background: #333;
-border-radius: 6px;
-}
+    ::-webkit-scrollbar-track {
+      background: #111;
+    }
 
-::-webkit-scrollbar-thumb:hover {
-background: #444;
-}
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 6px;
+    }
 
-
-.duration-1000 {
-transition-duration: 1s !important;
-}
-
-.duration-10000 {
-transition-duration: 10s !important;
-}
-
-/* 2 stage animation:
-- moves screw from off-screen to its position (up to 50% animation)
-- after, it rotates while reducing scale to 1 to indicate screwing
-*/
-@keyframes screwIn {
-0% {
-transform: translate(100vmax, 100vmax) scale(1.5) rotate(0deg);
-}
-
-50% {
-transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
-}
-
-100% {
-transform: translate(-50%, -50%) scale(1) rotate(360deg);
-}
-}
-
-@keyframes fadeIn {
-0% {
-opacity: 0;
-}
-
-100% {
-opacity: 1;
-}
-}
+    ::-webkit-scrollbar-thumb:hover {
+      background: #444;
+    }
 
 
-/* Screw indicators */
-.sg-screw {
-width: 18px;
-height: 18px;
-border: 2px solid #ff7a00;
-border-radius: 50%;
-position: absolute;
-box-shadow: 0 0 6px 2px rgba(255, 122, 0, 0.35), inset 0 0 4px rgba(255, 122, 0, 0.4);
-pointer-events: none;
-/* don't block interactions with the tray */
-z-index: 5;
-/* sit above tray overlay */
-animation: screwIn 0.8s ease both;
-animation-play-state: paused;
-}
+    .duration-1000 {
+      transition-duration: 1s !important;
+    }
 
-.sg-screw::after {
-content: '';
-position: absolute;
-top: 50%;
-left: 50%;
-width: 8px;
-height: 2px;
-background: #ff7a00;
-transform: translate(-50%, -50%) rotate(45deg);
-box-shadow: 0 0 4px 1px rgba(255, 122, 0, 0.6);
-}
+    .duration-10000 {
+      transition-duration: 10s !important;
+    }
 
-/* Circle (sand tray) */
-.sand-tray {
-aspect-ratio: 1/1;
-border: 4px solid #fff;
-border-radius: 50%;
-background: radial-gradient(circle at 50% 50%, #ffffff 0%, #d9d9d9 55%, #cfcfcf 70%, #bfbfbf 90%);
-position: relative;
-animation: fadeIn 0.5s 0.25s ease-out both;
-}
+    /* 2 stage animation: 
+    - moves screw from off-screen to its position (up to 50% animation)
+    - after, it rotates while reducing scale to 1 to indicate screwing 
+    */
+    @keyframes screwIn {
+      0% {
+        transform: translate(100vmax, 100vmax) scale(1.5) rotate(0deg);
+      }
 
-.tray-overlay {
-position: absolute;
-inset: 0;
-mix-blend-mode: multiply;
-pointer-events: none;
-z-index: 2;
-}
+      50% {
+        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+      }
 
-.pattern-canvas {
-width: 100%;
-height: 100%;
-border-radius: 50%;
-position: relative;
-display: block;
-z-index: 1;
-}
+      100% {
+        transform: translate(-50%, -50%) scale(1) rotate(360deg);
+      }
+    }
 
-.pattern-debug-canvas {
-position: absolute;
-inset: 0;
-width: 100%;
-height: 100%;
-border-radius: 50%;
-pointer-events: none;
-z-index: 3;
-}
-</style></head><body class="h-full bg-sg-bg text-gray-100 font-sans antialiased"><div class="min-h-full flex flex-col" x-data="sandGardenApp()" x-init="init()"><header class="px-6 py-4 border-b border-gray-700/40 flex items-center gap-6 bg-sg-panel/70 backdrop-blur-md"><div class="flex items-center gap-3"><div class="relative w-10 h-10"><div class="absolute inset-0 rounded-full bg-gradient-to-br from-sg-accent to-sg-accentAlt blur-sm opacity-70"></div><div class="relative inset-0 w-full h-full rounded-full flex items-center justify-center bg-sg-panel text-sg-accent font-bold tracking-wider"> SG</div></div><h1 class="text-xl font-semibold tracking-wide">Sand Garden<span class="text-sg-accent text-base font-medium">Controller</span></h1></div><div class="flex-1"></div><div class="flex items-center gap-4"><button @click="toggleRun()" :class="running ? 'bg-red-600 hover:bg-red-500' : 'bg-sg-accent hover:bg-sg-accent/80'" class="px-4 py-2 rounded-md font-medium transition shadow-inner-glow focus:outline-none focus:ring-2 focus:ring-sg-accent/60"><span x-text="running ? 'Stop' : 'Run'"></span></button><div class="relative"><button @mouseenter="heartbeatHover=true" @mouseleave="heartbeatHover=false" class="w-9 h-9 rounded-full flex items-center justify-center bg-white text-gray-800 transition-colors" :class="heartbeatActive ? 'bg-red-500 duration-1000' : 'bg-white duration-10000'" @click.prevent><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-current"><path fill="currentColor" d="M12 21s-6.716-4.35-9.2-7.173C-1.1 8.598 4.25 3 8.4 5.4 10.2 6.5 12 9 12 9s1.8-2.5 3.6-3.6C19.75 3 25.1 8.598 21.2 13.827 18.716 16.65 12 21 12 21z" /></svg></button><div x-show="heartbeatHover" x-text="formatClock(lastHeartbeat)" class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white rounded px-2 py-1 shadow"></div></div><input x-show="!connected" type="text" x-model="deviceHost" placeholder="sand-garden.local or IP" class="px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-sg-accent/60 w-48" @keyup.enter="connect()" /><button @click="connect()" class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60" :disabled="connecting || connected" :class="(connecting||connected) ? 'opacity-60 cursor-not-allowed' : ''"><span x-show="!connected && !connecting">Connect</span><span x-show="connecting">Connecting...</span><span x-show="connected">Connected</span></button><button x-show="connected" @click="disconnect()" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Disconnect</button></div></header><main class="flex-1 grid xl:grid-cols-3 gap-6 p-6"><section class="space-y-6"><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow"><h2 class="text-lg font-semibold mb-4">LED Effects</h2><ul class="grid sm:grid-cols-2 gap-3"><template x-for="effect in ledEffectMeta" :key="effect.id"><li><button @click="selectLedEffect(effect.id)" :class="ledEffect === effect.id ? 'ring-2 ring-sg-accent/70 bg-sg-accent/10' : 'hover:bg-gray-700/50'" class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/40 border border-gray-700/60 transition duration-150 focus:outline-none focus:ring-2 focus:ring-sg-accent/50"><div class="flex justify-between items-center gap-2"><div class="flex items-center gap-2 min-w-0"><span class="font-medium truncate" x-text="effect.id + '. ' + effect.name"></span></div></div></button></li></template></ul><div x-show="ledEffect === SOLID_COLOR_EFFECT_ID" class="mt-4 pt-4 border-t border-gray-700/50"><label class="block text-sm font-medium mb-2">Solid Color</label><div class="flex items-center gap-3"><input type="color" x-model="ledColorHex" @input="onLedColorChange()" class="w-16 h-10 rounded border border-gray-600 bg-gray-800 cursor-pointer" /><div class="flex-1 flex gap-2"><div class="flex-1"><label class="text-xs text-gray-400">R</label><input type="number" min="0" max="255" x-model.number="ledColor.r" @change="sendLedColor()" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div><div class="flex-1"><label class="text-xs text-gray-400">G</label><input type="number" min="0" max="255" x-model.number="ledColor.g" @change="sendLedColor()" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div><div class="flex-1"><label class="text-xs text-gray-400">B</label><input type="number" min="0" max="255" x-model.number="ledColor.b" @change="sendLedColor()" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div></div></div></div><div class="mt-4 pt-4 border-t border-gray-700/50"><label class="block text-sm font-medium mb-2">Brightness</label><div class="flex items-center gap-3"><input type="range" min="0" max="150" x-model.number="ledBrightness" @input="sendLedBrightness()" class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sg-accent" /><input type="number" min="0" max="150" x-model.number="ledBrightness" @change="sendLedBrightness()" class="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div></div></div><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow"><div class="flex items-center mb-4"><h2 class="text-lg font-semibold">Device Status</h2><span class="ml-auto inline-flex items-center text-sm" :class="connected ? 'text-green-400' : 'text-gray-400'"><span class="w-2.5 h-2.5 rounded-full mr-2" :class="connected ? 'bg-green-400 animate-pulse' : 'bg-gray-500'"></span><span x-text="connected ? 'Online' : 'Offline'"></span></span></div><dl class="text-sm grid grid-cols-2 gap-x-6 gap-y-2"><div><dt class="text-gray-400">Speed Multiplier</dt><dd class="font-mono" x-text="speedMultiplier.toFixed(2)"></dd></div><div><dt class="text-gray-400">Mode</dt><dd class="font-mono" x-text="autoMode ? 'Automatic' : 'Manual'"></dd></div><div><dt class="text-gray-400">Pattern</dt><dd class="font-mono"><span x-text="pattern + ' - ' + patternMeta[pattern-1].name"></span><span x-show="patternMeta[pattern-1].type==='builtin'" class="ml-1 align-middle text-[10px] leading-none px-1.5 py-0.5 rounded bg-gray-700/60 text-amber-300 uppercase tracking-wide">preview</span></dd></div><div><dt class="text-gray-400">Running</dt><dd class="font-mono" x-text="running ? 'Yes' : 'No'"></dd></div></dl><div class="mt-4 text-xs text-gray-400" x-text="statusMessage"></div></div><form @submit.prevent class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow space-y-5"><h2 class="text-lg font-semibold mb-1">Configuration</h2><div><label for="speedMultiplier" class="block text-sm font-medium mb-1">Speed Multiplier <span class="text-gray-500">(0.1 - 3.0)</span></label><div class="flex items-center gap-3"><input id="speedMultiplier" type="range" min="0.1" max="3" step="0.1" x-model.number="speedMultiplier" @input="debouncedSendSpeed()" class="w-full accent-sg-accent" /><input type="number" step="0.1" min="0.1" max="3" x-model.number="speedMultiplier" @change="sendSpeed()" class="w-20 bg-gray-800 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div></div><div><label for="simulationSpeed" class="block text-sm font-medium mb-1">Simulation Speed <span class="text-gray-500">(10 - 500 px/s)</span></label><div class="flex items-center gap-3"><input id="simulationSpeed" type="range" min="10" max="500" step="10" x-model.number="linearSpeed" class="w-full accent-sg-accent" /><input type="number" step="10" min="10" max="500" x-model.number="linearSpeed" class="w-24 bg-gray-800 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></div></div><div class="flex items-center gap-4 flex-wrap"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" x-model="autoMode" @change="sendMode()" class="rounded bg-gray-800 border-gray-600 text-sg-accent focus:ring-sg-accent/60" /><span class="text-sm">Automatic Mode</span></label><label class="inline-flex items-center gap-2 cursor-pointer select-none" :class="!connected ? 'opacity-50' : ''"><input type="checkbox" :checked="debugStepsEnabled" :disabled="!connected" @change="onDebugToggle($event)" class="rounded bg-gray-800 border-gray-600 text-sg-accent focus:ring-sg-accent/60" /><span class="text-sm">Device Debug Stream</span></label></div><div class="flex gap-3"><button type="button" @click="clearPattern()" class="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-medium">Clear Pattern</button></div></form><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow flex flex-col h-64"><h2 class="text-lg font-semibold mb-2">Event Log</h2><div class="flex-1 overflow-auto text-xs space-y-1 leading-relaxed font-mono" x-ref="log"><template x-for="(line, idx) in logs" :key="idx"><div class="text-gray-400" x-text="line"></div></template></div><div class="pt-2 flex justify-end"><button @click="logs=[]" class="text-xs text-sg-accent hover:underline">Clear</button></div></div></section><section class="space-y-6"><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow"><h2 class="text-lg font-semibold mb-4">Patterns</h2><ul class="grid sm:grid-cols-2 gap-3"><template x-for="p in patternMeta" :key="p.id"><li><button @click="selectPattern(p.id)" :class="pattern === p.id ? 'ring-2 ring-sg-accent/70 bg-sg-accent/10' : 'hover:bg-gray-700/50'" class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/40 border border-gray-700/60 transition duration-150 focus:outline-none focus:ring-2 focus:ring-sg-accent/50"><div class="flex justify-between items-center gap-2"><div class="flex items-center gap-2 min-w-0"><span class="font-medium truncate" x-text="p.id + '. ' + p.name"></span><span x-show="p.type==='builtin'" class="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/70 text-amber-300 uppercase tracking-wide">Preview</span></div><span class="text-xs text-gray-400 shrink-0" x-text="p.short"></span></div></button></li></template></ul></div><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow"><h2 class="text-lg font-semibold mb-3">Pattern Details</h2><div class="text-sm text-gray-300" x-text="patternMeta[pattern-1].description"></div><div class="mt-2 flex items-start gap-2" x-show="patternMeta[pattern-1].type==='builtin'"><span class="text-[11px] px-2 py-1 rounded bg-gray-700/60 text-amber-300 uppercase tracking-wide">Preview Only</span><span class="text-xs text-gray-500 leading-relaxed">Built-in firmware-style pattern simulation for visualization; not sent live.</span></div></div><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow flex flex-col gap-3"><div class="flex items-center gap-2"><h2 class="text-lg font-semibold">Sandscriptory</h2><span class="text-xs text-gray-500">Predefined and saved scripts</span></div><input type="search" x-model="scriptLibraryFilter" placeholder="Search sandscriptory..." class="w-full bg-gray-900/70 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /><div class="max-h-80 overflow-y-auto border border-gray-700/60 rounded-lg divide-y divide-gray-800/70 bg-gray-900/20"><template x-for="ex in filteredExampleScripts()" :key="ex.name"><button @click="loadExample(ex)" class="w-full text-left px-3 py-3 transition flex flex-col gap-1 bg-transparent hover:bg-gray-800/40 focus:outline-none focus:ring-2 focus:ring-sg-accent/40" :class="ex.name === activeScriptName ? 'bg-sg-accent/10 ring-1 ring-sg-accent/60' : ''"><div class="flex items-center justify-between gap-3"><span class="font-medium text-sm truncate" x-text="ex.name"></span><div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-800/70 border border-gray-700/60 text-gray-300" x-text="ex.final ? 'Finalized' : 'In Progress'"></span><span x-show="ex.name === activeScriptName" class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-sg-accent/15 border border-sg-accent/50 text-sg-accent">Active</span></div></div><p class="text-xs text-gray-400 leading-relaxed" x-text="ex.description || 'Custom pattern sandbox.'"></p></button></template><template x-if="!filteredExampleScripts().length"><div class="py-6 text-center text-sm text-gray-500">No scripts match the current search.</div></template></div></div><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow"><h2 class="text-lg font-semibold mb-3">Sandscript reference</h2><div class="grid gap-3 text-xs text-gray-300 md:grid-cols-2 xl:grid-cols-3"><div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-1"><h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Inputs</h3><ul class="space-y-1 text-gray-300"><li><code class="font-mono text-sg-accent">radius</code> – current position in cm (0-10).</li><li><code class="font-mono text-sg-accent">angle</code> – current angle in degrees (wrapped 0–360).</li><li><code class="font-mono text-sg-accent">start</code> – 1 on restart, else 0.</li><li><code class="font-mono text-sg-accent">rev</code> – continuous revolutions (unwrapped angle ÷ 360). </li><li><code class="font-mono text-sg-accent">steps</code> – evaluation counter (0-based).</li><li><code class="font-mono text-sg-accent">time</code> – milliseconds since script start.</li></ul></div><div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-1"><h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Outputs</h3><ul class="space-y-1 text-gray-300"><li><code class="font-mono text-sg-accent">next_radius</code> – absolute target radius (cm).</li><li><code class="font-mono text-sg-accent">next_angle</code> – absolute target angle (deg).</li><li><code class="font-mono text-sg-accent">delta_radius</code> – offset added to current radius.</li><li><code class="font-mono text-sg-accent">delta_angle</code> – offset added to current angle.</li><li class="text-gray-400">Absolute assignment wins over delta on each axis.</li></ul></div><div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2"><h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Operators</h3><div class="font-mono text-sg-accent/80">+ − × ÷ % ( )</div><ul class="space-y-1 text-gray-300"><li><code>%</code> returns the floating remainder. If the divisor is 0 the result becomes NaN and halts the script.</li><li>Parentheses control precedence; expressions are evaluated left-to-right per operator precedence. </li></ul></div><div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2 md:col-span-2 xl:col-span-1"><h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Functions</h3><div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-sg-accent/80"><span>abs(x)</span><span>clamp(x,a,b)</span><span>cos(x)</span><span>sin(x)</span><span>tan(x)</span><span>sign(x)</span><span>min(a,b)</span><span>max(a,b)</span><span>pow(a,b)</span><span>sqrt(x)</span><span>exp(x)</span><span>random()</span><span>floor(x)</span><span>ceil(x)</span><span>round(x)</span><span class="col-span-2">pingpong(value, max)</span></div><p class="text-gray-400">Trig inputs are degrees. <code class="font-mono text-sg-accent">pingpong</code> reflects between 0 and <code class="font-mono text-sg-accent">max</code>. <code class="font-mono text-sg-accent">random()</code> yields 0–1 and reseeds when <code class="font-mono text-sg-accent">start</code> is 1. <code class="font-mono text-sg-accent">floor</code>, <code class="font-mono text-sg-accent">ceil</code>, and <code class="font-mono text-sg-accent">round</code> operate on the final floating value.</p></div><div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2 md:col-span-2"><h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Syntax & Behaviour Notes </h3><ul class="space-y-1 text-gray-300"><li>All expressions run per evaluation; locals reset each run.</li><li>Radius is clamped to tray limits, angle wraps 0–360 after evaluation.</li><li>Any NaN or ±Inf in outputs stops the preview/device and reports a fault mask.</li><li><code class="font-mono text-sg-accent">tan</code> approaches ±∞ near odd multiples of 90°; consider <code class="font-mono text-sg-accent">clamp</code> if needed.</li><li>Continuous revolution tracking feeds <code class="font-mono text-sg-accent">rev</code>; combine with trig for long-form patterns.</li></ul></div></div></div></section><div class="space-y-6"><section class="space-y-6"><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow relative"><h2 class="text-lg font-semibold mb-3">Visualizer</h2><div class="relative"><div class="sg-screw" style="top:2%; left:50%;"></div><div class="sg-screw" style="top:8%; left:78%;"></div><div class="sg-screw" style="top:28%; left:94%;"></div><div class="sg-screw" style="top:50%; left:100%;"></div><div class="sg-screw" style="top:72%; left:94%;"></div><div class="sg-screw" style="top:92%; left:78%;"></div><div class="sg-screw" style="top:98%; left:50%;"></div><div class="sg-screw" style="top:92%; left:22%;"></div><div class="sg-screw" style="top:72%; left:6%;"></div><div class="sg-screw" style="top:50%; left:0%;"></div><div class="sg-screw" style="top:28%; left:6%;"></div><div class="sg-screw" style="top:8%; left:22%;"></div><div class="sand-tray shadow-sand" x-ref="tray"><canvas x-ref="canvas" class="pattern-canvas"></canvas><canvas x-ref="debugCanvas" class="pattern-debug-canvas"></canvas><div class="tray-overlay rounded-full pointer-events-none"></div></div></div><div class="mt-4 flex flex-wrap gap-3 text-xs"><button @click="regeneratePattern()" class="px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600">Regenerate</button><button @click="toggleSimulation()" :disabled="debugStepsEnabled" :class="'px-3 py-1.5 rounded ' + (debugStepsEnabled ? 'bg-gray-700/60 cursor-not-allowed opacity-50' : 'bg-gray-700 hover:bg-gray-600')" x-text="simulationRunning ? 'Pause' : 'Play'"></button><button @click="stepOnce()" :disabled="debugStepsEnabled || simulationRunning || points.length<2" :class="(debugStepsEnabled || simulationRunning || points.length<2)?'px-3 py-1.5 rounded bg-gray-700/60 text-white opacity-50 cursor-not-allowed':'px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600'">Step</button><button @click="exportImage()" :class="'px-3 py-1.5 rounded ' + (debugStepsEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-700 hover:bg-gray-600')">Export</button></div></div></section><section class="space-y-6 xl:col-span-2 xl:col-start-2"><div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow space-y-3"><div class="flex items-center gap-3"><h2 class="text-lg font-semibold">Sandscript</h2><span class="text-xs px-2 py-0.5 rounded bg-gray-700/60" x-text="compiledScript ? 'Compiled' : 'Not Compiled'"></span><button @click="showDSLDetails=!showDSLDetails" class="ml-auto text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600" x-text="showDSLDetails ? 'Hide Details' : 'Show Details'"></button></div><div class="text-xs text-gray-400 bg-gray-900/50 border border-gray-700/60 rounded px-3 py-2 flex items-center gap-2"><span class="font-medium text-sg-accent/80">Live Preview</span><span class="flex-1">Edits are compiled and emulated automatically. Browse the Sandscript Library below to load presets.</span></div><div class="flex gap-3 items-start"><textarea x-model="scriptSource" class="w-full h-56 font-mono text-sm bg-gray-900/70 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-sg-accent/50 resize-y" spellcheck="false"></textarea><div class="flex flex-col gap-2 w-52"><button @click="scheduleScriptProcess(true)" class="px-3 py-2 rounded bg-sg-accent hover:bg-sg-accent/80 text-sm font-medium">Refresh</button><button @click="simulateScript()" :disabled="!compiledScript || debugStepsEnabled" :class="(!compiledScript || debugStepsEnabled) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-600'" class="px-3 py-2 rounded bg-gray-700 text-sm font-medium">Simulate</button><button @click="uploadScriptToDevice()" :disabled="!compiledScript || !connected || scriptUploadInProgress" :class="(!compiledScript || !connected || scriptUploadInProgress) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-sg-accent/90'" class="px-3 py-2 rounded bg-sg-accent text-sm font-medium flex items-center justify-center gap-2"><span x-text="scriptUploadInProgress ? 'Uploading…' : 'Send to Device'"></span><span x-show="scriptUploadInProgress" class="text-xs" x-text="scriptUploadProgress + '%'"></span></button><label class="text-xs text-gray-300 flex flex-col gap-1"> Target slot (optional) <input type="number" min="1" step="1" x-model="scriptTargetSlot" placeholder="auto" class="bg-gray-900/70 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" /></label><div class="text-xs text-gray-400 min-h-[1.5rem]" x-show="scriptUploadStatus" x-text="scriptUploadStatus"></div></div></div><div class="flex items-center gap-4 text-xs flex-wrap"><span class="text-gray-500">Used outputs: <span class="text-sg-accent" x-text="compiledScript ? compiledScript.used.filter(u=>['next_radius','next_angle','delta_radius','delta_angle'].includes(u)).join(', ') : '-' "></span></span></div><template x-if="compileErrors.length"><div class="text-xs font-mono bg-red-900/40 border border-red-600/60 rounded p-2 space-y-1 overflow-auto max-h-40"><template x-for="(e,i) in compileErrors" :key="i"><div><span class="text-red-400" x-text="e.pos != null ? ('['+e.pos+']') : ''"></span><span x-text="e.message"></span></div></template></div></template><template x-if="!compileErrors.length && compiledScript"><div class="text-xs font-mono bg-emerald-900/30 border border-emerald-600/50 rounded p-2">OK</div></template><div x-show="showDSLDetails" x-collapse class="text-xs bg-gray-900/60 border border-gray-700 rounded p-3 space-y-3"><div class="grid sm:grid-cols-2 gap-4"><div><h4 class="font-semibold text-sg-accent mb-1">Last Inputs</h4><template x-if="lastDSLInputs"><ul class="space-y-0.5 font-mono"><li>radius: <span x-text="fmtNum(lastDSLInputs.radius)"></span></li><li>angle: <span x-text="fmtNum(lastDSLInputs.angle)"></span></li><li>steps: <span x-text="lastDSLInputs.steps"></span></li><li>time(ms): <span x-text="fmtNum(lastDSLInputs.time)"></span></li><li>rev: <span x-text="fmtNum(lastDSLInputs.rev)"></span></li><li>start: <span x-text="lastDSLInputs.start"></span></li></ul></template><template x-if="!lastDSLInputs"><p class="italic text-gray-500">(no eval yet)</p></template></div><div><h4 class="font-semibold text-sg-accent mb-1">Last Outputs</h4><template x-if="lastDSLOutputs"><ul class="space-y-0.5 font-mono"><li x-show="lastDSLOutputs.next_radius!==undefined">next_radius: <span x-text="fmtNum(lastDSLOutputs.next_radius)"></span></li><li x-show="lastDSLOutputs.delta_radius!==undefined">delta_radius: <span x-text="fmtNum(lastDSLOutputs.delta_radius)"></span></li><li x-show="lastDSLOutputs.next_angle!==undefined">next_angle: <span x-text="fmtNum(lastDSLOutputs.next_angle)"></span></li><li x-show="lastDSLOutputs.delta_angle!==undefined">delta_angle: <span x-text="fmtNum(lastDSLOutputs.delta_angle)"></span></li></ul></template><template x-if="!lastDSLOutputs"><p class="italic text-gray-500">(no eval yet)</p></template></div><div class="sm:col-span-2"><h4 class="font-semibold text-sg-accent mb-1">Last Locals</h4><template x-if="lastDSLLocals && Object.keys(lastDSLLocals).length"><ul class="space-y-0.5 font-mono columns-2 gap-6"><template x-for="(v,k) in lastDSLLocals" :key="k"><li><span class="text-gray-400" x-text="k"></span>: <span x-text="fmtNum(v)"></span></li></template></ul></template><template x-if="!lastDSLLocals || !Object.keys(lastDSLLocals).length"><p class="italic text-gray-500">(no locals)</p></template></div><div class="sm:col-span-2" x-show="dslFault"><div class="bg-red-900/30 border border-red-500/40 rounded p-3 space-y-2"><div class="font-semibold text-red-200 text-sm uppercase tracking-wide">Runtime fault</div><div class="text-xs text-red-100 font-mono" x-text="dslFault?.names?.length ? dslFault.names.join(', ') : 'unknown output'"></div><template x-if="dslFault?.values && Object.keys(dslFault.values).length"><ul class="text-xs font-mono space-y-0.5"><template x-for="(v,k) in dslFault.values" :key="k"><li><span class="text-gray-300" x-text="k"></span>: <span x-text="formatFaultValue(v)"></span></li></template></ul></template></div></div><div class="sm:col-span-2 border-t border-gray-800 pt-3"><div class="flex flex-wrap items-center gap-3 mb-2"><h4 class="font-semibold text-sg-accent">Device Step Telemetry</h4><span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-800/70 border border-gray-700/70" :class="debugStepsEnabled ? 'text-emerald-300 border-emerald-500/40' : 'text-gray-400'"> Stream: <span x-text="debugStepsEnabled ? 'On' : 'Off'"></span></span><span class="text-[10px] px-2 py-0.5 rounded bg-gray-800/70 text-gray-300 border border-gray-700/70"> Steps: <span x-text="debugPoints.length"></span></span></div><template x-if="lastDebugStep"><div class="grid sm:grid-cols-2 gap-3 font-mono text-[11px] leading-relaxed"><ul class="space-y-0.5"><li>Index: <span x-text="lastDebugStep.idx"></span></li><li>Current radius (mm): <span x-text="fmtNum(lastDebugStep.radiusMm)"></span></li><li>Current angle (°): <span x-text="fmtNum(lastDebugStep.angleDeg)"></span></li><li>XY (mm): <span x-text="fmtNum(lastDebugStep.xMm) + ', ' + fmtNum(lastDebugStep.yMm)"></span></li><li>Received: <span x-text="formatClock(lastDebugStep.receivedAt)"></span></li></ul><ul class="space-y-0.5"><li x-show="lastDebugStep.simulatedRadialSteps != null">Sim steps (r / a): <span x-text="lastDebugStep.simulatedRadialSteps + ' / ' + lastDebugStep.simulatedAngularSteps"></span></li><li x-show="lastDebugStep.plannedRadiusMm != null" :class="lastDebugStep.mismatchRadial ? 'text-red-400' : ''">Planned radius (mm): <span x-text="fmtNum(lastDebugStep.plannedRadiusMm)"></span></li><li x-show="lastDebugStep.simulatedRadiusMm != null">Sim radius (mm): <span x-text="fmtNum(lastDebugStep.simulatedRadiusMm)"></span></li><li x-show="lastDebugStep.plannedAngleDeg != null" :class="lastDebugStep.mismatchAngular ? 'text-red-400' : ''">Planned angle (°): <span x-text="fmtNum(lastDebugStep.plannedAngleDeg)"></span></li><li x-show="lastDebugStep.simulatedAngleDeg != null">Sim angle (°): <span x-text="fmtNum(lastDebugStep.simulatedAngleDeg)"></span></li><li x-show="lastDebugStep.simulationError" class="text-red-300">Sim error: <span x-text="lastDebugStep.simulationError"></span></li><li x-show="lastDebugStep.deltaRadiusMm != null">Δ radius (mm): <span x-text="fmtNum(lastDebugStep.deltaRadiusMm)"></span></li><li>Pattern / Mode / Run: <span x-text="(lastDebugStep.pattern != null ? lastDebugStep.pattern : '-') + ' • ' + (lastDebugStep.auto ? 'Auto' : 'Manual') + ' • ' + (lastDebugStep.running ? 'Running' : 'Stopped')"></span></li><li>Start: <span x-text="lastDebugStep.start ? 'Yes' : 'No'"></span><span x-show="lastDebugStep.tag" class="ml-2">Tag: <span x-text="lastDebugStep.tag"></span></span></li></ul></div></template><template x-if="!lastDebugStep"><p class="italic text-gray-500">No step telemetry yet. Enable Device Debug Stream to view live data.</p></template></div></div></div></section></div></main><footer class="px-6 py-3 text-xs text-gray-500 flex justify-between border-t border-gray-800 bg-sg-panel/60"><div>Sand Garden UI – Firmware integration TBD.</div><div>Colors: Device Black + Orange Screws + White Sand</div></footer></div><script>
-function sandGardenApp() {
-return {
-// State
-connected: false,
-connecting: false,
-running: false,
-autoMode: true,
-speedMultiplier: 1.0,
-pattern: 1,
-ledEffect: 1,
-NUM_LED_EFFECTS: 14, // Total number of LED effects (max UI value)
-SOLID_COLOR_EFFECT_ID: 13, // ID of the Solid Color effect (for showing color picker)
-// Trails always enabled now (formerly showTrails toggle removed)
-statusMessage: 'Idle',
-logs: [],
-deviceHost: 'sand-garden.local', // HTTP host
-baseUrl: '', // Will be set to http://deviceHost
-eventSource: null, // Server-Sent Events connection
-debugStepsEnabled: false,
-debugCanvas: null,
-debugCtx: null,
-debugPoints: [],
-debugMaxPoints: 8000,
-deviceSimToleranceSteps: 2,
-deviceStepsPerMm: 70,
-deviceStepsPerCm: 70 * 10,
-debugLastCanvasPoint: null,
-debugSimulationPoints: [],
-lastDebugStep: null,
-maxRadiusSteps: 7000,
-stepsPerARev: 2 * 2048,
-trayRadiusFactor: 0.48,
-// Telemetry state
-joy: { a: 0, r: 0, mag: 0 }, lastState: { pat: null, auto: null, run: null, brt: null }, heartbeatCount: 0,
-// Heartbeat UI state
-heartbeatActive: false,
-lastHeartbeat: null,
-heartbeatHover: false,
-patternMeta: [
-// Added pointsTarget to guide simulation length (approx, can tweak)
-{ id: 1, type: 'builtin', name: 'Simple Spiral', short: 'spiral', description: 'Outward then inward spiral path (firmware logic).', pointsTarget: 4500 },
-{ id: 2, type: 'builtin', name: 'Cardioids', short: 'cardioid', description: 'Petaled cardioid style looping figure.', pointsTarget: 1200 },
-{ id: 3, type: 'builtin', name: 'Wavy Spiral', short: 'wavy', description: 'Spiral with sinusoidal radial modulation.', pointsTarget: 4600 },
-{ id: 4, type: 'builtin', name: 'Rotating Squares', short: 'squares', description: 'Sequence of rotating square outlines.', pointsTarget: 2300 },
-{ id: 5, type: 'builtin', name: 'Pentagon Spiral', short: 'penta sp', description: 'Pentagon-based growing & shrinking spiral.', pointsTarget: 3200 },
-{ id: 6, type: 'builtin', name: 'Hexagon Vortex', short: 'hexa', description: 'Rotating, pulsing hexagon vortex.', pointsTarget: 3000 },
-{ id: 7, type: 'builtin', name: 'Pentagon Rainbow', short: 'penta rb', description: 'Off-center rotating/translated pentagon.', pointsTarget: 2500 },
-{ id: 8, type: 'builtin', name: 'Random Walk 1', short: 'rw arc', description: 'Random absolute targets (shortest angular path).', pointsTarget: 1800 },
-{ id: 9, type: 'builtin', name: 'Random Walk 2', short: 'rw line', description: 'Random straight-line interpolation between points.', pointsTarget: 1800 },
-{ id: 10, type: 'builtin', name: 'Accidental Butterfly', short: 'butterfly', description: 'Sinusoidally modulated spiral (butterfly).', pointsTarget: 4600 },
-{ id: 11, type: 'sandscript', name: 'Sandscript', short: 'script', description: 'Your custom Sandscript.' }
-],
-ledEffectMeta: [
-{ id: 1, name: 'Rainbow', description: 'Moving rainbow wave across the strip' },
-{ id: 2, name: 'Full Rainbow', description: 'Whole strip cycles through rainbow colors' },
-{ id: 3, name: 'Color Waves', description: 'Sine wave color patterns' },
-{ id: 4, name: 'Twinkle', description: 'Random sparkling stars' },
-{ id: 5, name: 'Theater Chase', description: 'Marquee-style chase effect' },
-{ id: 6, name: 'Palette Cycle', description: 'Cycling through color palettes' },
-{ id: 7, name: 'Confetti', description: 'Random colored dots' },
-{ id: 8, name: 'Comet', description: 'Comet/meteor with fading tail' },
-{ id: 9, name: 'Breathing Pulse', description: 'Calming breathing effect with color shift' },
-{ id: 10, name: 'Rotating Wedge', description: 'Colored wedge sweeps around the circle' },
-{ id: 11, name: 'Bidirectional Chase', description: 'Two dots chase in opposite directions' },
-{ id: 12, name: 'Color Segments', description: 'Rotating colored pie segments' },
-{ id: 13, name: 'Solid Color', description: 'Single solid color across all LEDs' },
-{ id: 14, name: 'Off', description: 'Turn off all LEDs' }
-],
-ledColor: { r: 255, g: 255, b: 255 }, // Current solid color (white by default)
-ledBrightness: 100, // LED brightness (0-255, default 100)
-get ledColorHex() {
-// Compute hex color from RGB
-const toHex = (v) => {
-const hex = Math.round(v).toString(16).padStart(2, '0');
-return hex;
-};
-return '#' + toHex(this.ledColor.r) + toHex(this.ledColor.g) + toHex(this.ledColor.b);
-},
-set ledColorHex(value) {
-// Parse hex color and update RGB values
-if (value && value.length === 7 && value.startsWith('#')) {
-const r = parseInt(value.substr(1, 2), 16);
-const g = parseInt(value.substr(3, 2), 16);
-const b = parseInt(value.substr(5, 2), 16);
-if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-this.ledColor = { r, g, b };
-this.sendLedColor();
-}
-}
-},
-scriptPatternId: 11,
-// Sandscript state (internal variables still prefixed dsl for now)
-scriptSource: `# simple back and forth with the ball
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+
+    /* Screw indicators */
+    .sg-screw {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ff7a00;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 6px 2px rgba(255, 122, 0, 0.35), inset 0 0 4px rgba(255, 122, 0, 0.4);
+      pointer-events: none;
+      /* don't block interactions with the tray */
+      z-index: 5;
+      /* sit above tray overlay */
+      animation: screwIn 0.8s ease both;
+      animation-play-state: paused;
+    }
+
+    .sg-screw::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 2px;
+      background: #ff7a00;
+      transform: translate(-50%, -50%) rotate(45deg);
+      box-shadow: 0 0 4px 1px rgba(255, 122, 0, 0.6);
+    }
+
+    /* Circle (sand tray) */
+    .sand-tray {
+      aspect-ratio: 1/1;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #d9d9d9 55%, #cfcfcf 70%, #bfbfbf 90%);
+      position: relative;
+      animation: fadeIn 0.5s 0.25s ease-out both;
+    }
+
+    .tray-overlay {
+      position: absolute;
+      inset: 0;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .pattern-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      display: block;
+      z-index: 1;
+    }
+
+    .pattern-debug-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-sg-bg text-gray-100 font-sans antialiased">
+  <div class="min-h-full flex flex-col" x-data="sandGardenApp()" x-init="init()">
+    <!-- Header -->
+    <header class="px-6 py-4 border-b border-gray-700/40 flex items-center gap-6 bg-sg-panel/70 backdrop-blur-md">
+      <div class="flex items-center gap-3">
+        <div class="relative w-10 h-10">
+          <div
+            class="absolute inset-0 rounded-full bg-gradient-to-br from-sg-accent to-sg-accentAlt blur-sm opacity-70">
+          </div>
+          <div
+            class="relative inset-0 w-full h-full rounded-full flex items-center justify-center bg-sg-panel text-sg-accent font-bold tracking-wider">
+            SG</div>
+        </div>
+        <h1 class="text-xl font-semibold tracking-wide">Sand Garden<span
+            class="text-sg-accent text-base font-medium">Controller</span></h1>
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-4">
+        <button @click="toggleRun()"
+          :class="running ? 'bg-red-600 hover:bg-red-500' : 'bg-sg-accent hover:bg-sg-accent/80'"
+          class="px-4 py-2 rounded-md font-medium transition shadow-inner-glow focus:outline-none focus:ring-2 focus:ring-sg-accent/60">
+          <span x-text="running ? 'Stop' : 'Run'"></span> </button>
+        <!-- Heartbeat indicator -->
+        <div class="relative">
+          <button @mouseenter="heartbeatHover=true" @mouseleave="heartbeatHover=false"
+            class="w-9 h-9 rounded-full flex items-center justify-center bg-white text-gray-800 transition-colors"
+            :class="heartbeatActive ? 'bg-red-500 duration-1000' : 'bg-white duration-10000'" @click.prevent>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 text-current">
+              <path fill="currentColor"
+                d="M12 21s-6.716-4.35-9.2-7.173C-1.1 8.598 4.25 3 8.4 5.4 10.2 6.5 12 9 12 9s1.8-2.5 3.6-3.6C19.75 3 25.1 8.598 21.2 13.827 18.716 16.65 12 21 12 21z" />
+            </svg>
+          </button>
+          <div x-show="heartbeatHover" x-text="formatClock(lastHeartbeat)"
+            class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white rounded px-2 py-1 shadow">
+          </div>
+        </div>
+        <input x-show="!connected" type="text" x-model="deviceHost" placeholder="sand-garden.local or IP"
+          class="px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-sg-accent/60 w-48"
+          @keyup.enter="connect()" />
+        <button @click="connect()"
+          class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60"
+          :disabled="connecting || connected" :class="(connecting||connected) ? 'opacity-60 cursor-not-allowed' : ''">
+          <span x-show="!connected && !connecting">Connect</span>
+          <span x-show="connecting">Connecting...</span>
+          <span x-show="connected">Connected</span>
+        </button>
+        <button x-show="connected" @click="disconnect()"
+          class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Disconnect</button>
+        <button x-show="connected" @click="sendReset()"
+          class="px-4 py-2 rounded-md bg-orange-600 hover:bg-orange-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Reset Device</button>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="flex-1 grid xl:grid-cols-3 gap-6 p-6">
+      <!-- Left Column: Status, Config, Logs -->
+      <section class="space-y-6">
+        <!-- LED Effects -->
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <h2 class="text-lg font-semibold mb-4">LED Effects</h2>
+          <ul class="grid sm:grid-cols-2 gap-3">
+            <template x-for="effect in ledEffectMeta" :key="effect.id">
+              <li>
+                <button @click="selectLedEffect(effect.id)"
+                  :class="ledEffect === effect.id ? 'ring-2 ring-sg-accent/70 bg-sg-accent/10' : 'hover:bg-gray-700/50'"
+                  class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/40 border border-gray-700/60 transition duration-150 focus:outline-none focus:ring-2 focus:ring-sg-accent/50">
+                  <div class="flex justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-medium truncate" x-text="effect.id + '. ' + effect.name"></span>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            </template>
+          </ul>
+          <!-- Color Picker (only visible when Solid Color effect is selected) -->
+          <div x-show="ledEffect === SOLID_COLOR_EFFECT_ID" class="mt-4 pt-4 border-t border-gray-700/50">
+            <label class="block text-sm font-medium mb-2">Solid Color</label>
+            <div class="flex items-center gap-3">
+              <input type="color" x-model="ledColorHex" @input="onLedColorChange()"
+                class="w-16 h-10 rounded border border-gray-600 bg-gray-800 cursor-pointer" />
+              <div class="flex-1 flex gap-2">
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">R</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.r" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">G</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.g" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+                <div class="flex-1">
+                  <label class="text-xs text-gray-400">B</label>
+                  <input type="number" min="0" max="255" x-model.number="ledColor.b" @change="sendLedColor()"
+                    class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Brightness Slider -->
+          <div class="mt-4 pt-4 border-t border-gray-700/50">
+            <label class="block text-sm font-medium mb-2">Brightness</label>
+            <div class="flex items-center gap-3">
+              <input type="range" min="0" max="150" x-model.number="ledBrightness" @input="sendLedBrightness()"
+                class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sg-accent" />
+              <input type="number" min="0" max="150" x-model.number="ledBrightness" @change="sendLedBrightness()"
+                class="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Device Status -->
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <div class="flex items-center mb-4">
+            <h2 class="text-lg font-semibold">Device Status</h2>
+            <span class="ml-auto inline-flex items-center text-sm"
+              :class="connected ? 'text-green-400' : 'text-gray-400'">
+              <span class="w-2.5 h-2.5 rounded-full mr-2"
+                :class="connected ? 'bg-green-400 animate-pulse' : 'bg-gray-500'"></span>
+              <span x-text="connected ? 'Online' : 'Offline'"></span>
+            </span>
+          </div>
+          <dl class="text-sm grid grid-cols-2 gap-x-6 gap-y-2">
+            <div>
+              <dt class="text-gray-400">Speed Multiplier</dt>
+              <dd class="font-mono" x-text="speedMultiplier.toFixed(2)"></dd>
+            </div>
+            <div>
+              <dt class="text-gray-400">Mode</dt>
+              <dd class="font-mono" x-text="autoMode ? 'Automatic' : 'Manual'"></dd>
+            </div>
+            <div>
+              <dt class="text-gray-400">Pattern</dt>
+              <dd class="font-mono">
+                <span x-text="pattern + ' - ' + patternMeta[pattern-1].name"></span>
+                <span x-show="patternMeta[pattern-1].type==='builtin'"
+                  class="ml-1 align-middle text-[10px] leading-none px-1.5 py-0.5 rounded bg-gray-700/60 text-amber-300 uppercase tracking-wide">preview</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-gray-400">Running</dt>
+              <dd class="font-mono" x-text="running ? 'Yes' : 'No'"></dd>
+            </div>
+          </dl>
+          <div class="mt-4 text-xs text-gray-400" x-text="statusMessage"></div>
+        </div>
+
+        <!-- Configuration -->
+        <form @submit.prevent
+          class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow space-y-5">
+          <h2 class="text-lg font-semibold mb-1">Configuration</h2>
+          <div>
+            <label for="speedMultiplier" class="block text-sm font-medium mb-1">Speed Multiplier <span
+                class="text-gray-500">(0.1 - 3.0)</span></label>
+            <div class="flex items-center gap-3">
+              <input id="speedMultiplier" type="range" min="0.1" max="3" step="0.1" x-model.number="speedMultiplier"
+                @input="debouncedSendSpeed()" class="w-full accent-sg-accent" />
+              <input type="number" step="0.1" min="0.1" max="3" x-model.number="speedMultiplier" @change="sendSpeed()"
+                class="w-20 bg-gray-800 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+            </div>
+          </div>
+          <div>
+            <label for="simulationSpeed" class="block text-sm font-medium mb-1">Simulation Speed <span
+                class="text-gray-500">(10 - 500 px/s)</span></label>
+            <div class="flex items-center gap-3">
+              <input id="simulationSpeed" type="range" min="10" max="500" step="10" x-model.number="linearSpeed"
+                class="w-full accent-sg-accent" />
+              <input type="number" step="10" min="10" max="500" x-model.number="linearSpeed"
+                class="w-24 bg-gray-800 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+            </div>
+          </div>
+          <div class="flex items-center gap-4 flex-wrap">
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="autoMode" @change="sendMode()"
+                class="rounded bg-gray-800 border-gray-600 text-sg-accent focus:ring-sg-accent/60" />
+              <span class="text-sm">Automatic Mode</span>
+            </label>
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none"
+              :class="!connected ? 'opacity-50' : ''">
+              <input type="checkbox" :checked="debugStepsEnabled" :disabled="!connected" @change="onDebugToggle($event)"
+                class="rounded bg-gray-800 border-gray-600 text-sg-accent focus:ring-sg-accent/60" />
+              <span class="text-sm">Device Debug Stream</span>
+            </label>
+            <!-- Show Trails option removed (always on) -->
+          </div>
+          <div class="flex gap-3">
+            <button type="button" @click="clearPattern()"
+              class="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-medium">Clear Pattern</button>
+          </div>
+        </form>
+
+        <!-- Logs -->
+        <div
+          class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow flex flex-col h-64">
+          <h2 class="text-lg font-semibold mb-2">Event Log</h2>
+          <div class="flex-1 overflow-auto text-xs space-y-1 leading-relaxed font-mono" x-ref="log">
+            <template x-for="(line, idx) in logs" :key="idx">
+              <div class="text-gray-400" x-text="line"></div>
+            </template>
+          </div>
+          <div class="pt-2 flex justify-end">
+            <button @click="logs=[]" class="text-xs text-sg-accent hover:underline">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Middle: Pattern Selection -->
+      <section class="space-y-6">
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <h2 class="text-lg font-semibold mb-4">Patterns</h2>
+          <ul class="grid sm:grid-cols-2 gap-3">
+            <template x-for="p in patternMeta" :key="p.id">
+              <li>
+                <button @click="selectPattern(p.id)"
+                  :class="pattern === p.id ? 'ring-2 ring-sg-accent/70 bg-sg-accent/10' : 'hover:bg-gray-700/50'"
+                  class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/40 border border-gray-700/60 transition duration-150 focus:outline-none focus:ring-2 focus:ring-sg-accent/50">
+                  <div class="flex justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-medium truncate" x-text="p.id + '. ' + p.name"></span>
+                      <span x-show="p.type==='builtin'"
+                        class="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/70 text-amber-300 uppercase tracking-wide">Preview</span>
+                    </div>
+                    <span class="text-xs text-gray-400 shrink-0" x-text="p.short"></span>
+                  </div>
+                </button>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <h2 class="text-lg font-semibold mb-3">Pattern Details</h2>
+          <div class="text-sm text-gray-300" x-text="patternMeta[pattern-1].description"></div>
+          <div class="mt-2 flex items-start gap-2" x-show="patternMeta[pattern-1].type==='builtin'">
+            <span class="text-[11px] px-2 py-1 rounded bg-gray-700/60 text-amber-300 uppercase tracking-wide">Preview
+              Only</span>
+            <span class="text-xs text-gray-500 leading-relaxed">Built-in firmware-style pattern simulation for
+              visualization; not sent live.</span>
+          </div>
+        </div>
+
+        <div
+          class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <h2 class="text-lg font-semibold">Sandscriptory</h2>
+            <span class="text-xs text-gray-500">Predefined and saved scripts</span>
+          </div>
+          <input type="search" x-model="scriptLibraryFilter" placeholder="Search sandscriptory..."
+            class="w-full bg-gray-900/70 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+          <div
+            class="max-h-80 overflow-y-auto border border-gray-700/60 rounded-lg divide-y divide-gray-800/70 bg-gray-900/20">
+            <template x-for="ex in filteredExampleScripts()" :key="ex.name">
+              <button @click="loadExample(ex)"
+                class="w-full text-left px-3 py-3 transition flex flex-col gap-1 bg-transparent hover:bg-gray-800/40 focus:outline-none focus:ring-2 focus:ring-sg-accent/40"
+                :class="ex.name === activeScriptName ? 'bg-sg-accent/10 ring-1 ring-sg-accent/60' : ''">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="font-medium text-sm truncate" x-text="ex.name"></span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-800/70 border border-gray-700/60 text-gray-300"
+                      x-text="ex.final ? 'Finalized' : 'In Progress'"></span>
+                    <span x-show="ex.name === activeScriptName"
+                      class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-sg-accent/15 border border-sg-accent/50 text-sg-accent">Active</span>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed" x-text="ex.description || 'Custom pattern sandbox.'">
+                </p>
+              </button>
+            </template>
+            <template x-if="!filteredExampleScripts().length">
+              <div class="py-6 text-center text-sm text-gray-500">No scripts match the current search.</div>
+            </template>
+          </div>
+        </div>
+
+        <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow">
+          <h2 class="text-lg font-semibold mb-3">Sandscript reference</h2>
+
+          <div class="grid gap-3 text-xs text-gray-300 md:grid-cols-2 xl:grid-cols-3">
+            <div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-1">
+              <h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Inputs</h3>
+              <ul class="space-y-1 text-gray-300">
+                <li><code class="font-mono text-sg-accent">radius</code> – current position in cm (0-10).</li>
+                <li><code class="font-mono text-sg-accent">angle</code> – current angle in degrees (wrapped 0–360).</li>
+                <li><code class="font-mono text-sg-accent">start</code> – 1 on restart, else 0.</li>
+                <li><code class="font-mono text-sg-accent">rev</code> – continuous revolutions (unwrapped angle ÷ 360).
+                </li>
+                <li><code class="font-mono text-sg-accent">steps</code> – evaluation counter (0-based).</li>
+                <li><code class="font-mono text-sg-accent">time</code> – milliseconds since script start.</li>
+              </ul>
+            </div>
+            <div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-1">
+              <h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Outputs</h3>
+              <ul class="space-y-1 text-gray-300">
+                <li><code class="font-mono text-sg-accent">next_radius</code> – absolute target radius (cm).</li>
+                <li><code class="font-mono text-sg-accent">next_angle</code> – absolute target angle (deg).</li>
+                <li><code class="font-mono text-sg-accent">delta_radius</code> – offset added to current radius.</li>
+                <li><code class="font-mono text-sg-accent">delta_angle</code> – offset added to current angle.</li>
+                <li class="text-gray-400">Absolute assignment wins over delta on each axis.</li>
+              </ul>
+            </div>
+            <div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2">
+              <h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Operators</h3>
+              <div class="font-mono text-sg-accent/80">+ − × ÷ % ( )</div>
+              <ul class="space-y-1 text-gray-300">
+                <li><code>%</code> returns the floating remainder. If the divisor is 0 the result becomes NaN and halts
+                  the script.</li>
+                <li>Parentheses control precedence; expressions are evaluated left-to-right per operator precedence.
+                </li>
+              </ul>
+            </div>
+            <div
+              class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2 md:col-span-2 xl:col-span-1">
+              <h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Functions</h3>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-sg-accent/80">
+                <span>abs(x)</span>
+                <span>clamp(x,a,b)</span>
+                <span>cos(x)</span>
+                <span>sin(x)</span>
+                <span>tan(x)</span>
+                <span>sign(x)</span>
+                <span>min(a,b)</span>
+                <span>max(a,b)</span>
+                <span>pow(a,b)</span>
+                <span>sqrt(x)</span>
+                <span>exp(x)</span>
+                <span>random()</span>
+                <span>floor(x)</span>
+                <span>ceil(x)</span>
+                <span>round(x)</span>
+                <span class="col-span-2">pingpong(value, max)</span>
+              </div>
+              <p class="text-gray-400">Trig inputs are degrees. <code class="font-mono text-sg-accent">pingpong</code>
+                reflects between 0 and <code class="font-mono text-sg-accent">max</code>. <code
+                  class="font-mono text-sg-accent">random()</code> yields 0–1 and reseeds when <code
+                  class="font-mono text-sg-accent">start</code> is 1. <code class="font-mono text-sg-accent">floor</code>,
+                <code class="font-mono text-sg-accent">ceil</code>, and <code class="font-mono text-sg-accent">round</code>
+                operate on the final floating value.</p>
+            </div>
+            <div class="bg-gray-900/45 border border-gray-700/60 rounded px-3 py-3 space-y-2 md:col-span-2">
+              <h3 class="text-[11px] uppercase tracking-wide font-semibold text-sg-accent/80">Syntax & Behaviour Notes
+              </h3>
+              <ul class="space-y-1 text-gray-300">
+                <li>All expressions run per evaluation; locals reset each run.</li>
+                <li>Radius is clamped to tray limits, angle wraps 0–360 after evaluation.</li>
+                <li>Any NaN or ±Inf in outputs stops the preview/device and reports a fault mask.</li>
+                <li><code class="font-mono text-sg-accent">tan</code> approaches ±∞ near odd multiples of 90°; consider
+                  <code class="font-mono text-sg-accent">clamp</code> if needed.</li>
+                <li>Continuous revolution tracking feeds <code class="font-mono text-sg-accent">rev</code>; combine with
+                  trig for long-form patterns.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="space-y-6">
+        <!-- Right: Visualizer -->
+        <section class="space-y-6">
+          <div class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow relative">
+            <h2 class="text-lg font-semibold mb-3">Visualizer</h2>
+            <div class="relative">
+              <!-- Screws around tray (12) - positioned with percentages for responsiveness -->
+              <div class="sg-screw" style="top:2%; left:50%;"></div>
+              <div class="sg-screw" style="top:8%; left:78%;"></div>
+              <div class="sg-screw" style="top:28%; left:94%;"></div>
+              <div class="sg-screw" style="top:50%; left:100%;"></div>
+              <div class="sg-screw" style="top:72%; left:94%;"></div>
+              <div class="sg-screw" style="top:92%; left:78%;"></div>
+              <div class="sg-screw" style="top:98%; left:50%;"></div>
+              <div class="sg-screw" style="top:92%; left:22%;"></div>
+              <div class="sg-screw" style="top:72%; left:6%;"></div>
+              <div class="sg-screw" style="top:50%; left:0%;"></div>
+              <div class="sg-screw" style="top:28%; left:6%;"></div>
+              <div class="sg-screw" style="top:8%; left:22%;"></div>
+              <div class="sand-tray shadow-sand" x-ref="tray">
+                <canvas x-ref="canvas" class="pattern-canvas"></canvas>
+                <canvas x-ref="debugCanvas" class="pattern-debug-canvas"></canvas>
+                <div class="tray-overlay rounded-full pointer-events-none"></div>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-3 text-xs">
+              <button @click="regeneratePattern()"
+                class="px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600">Regenerate</button>
+              <button @click="toggleSimulation()" :disabled="debugStepsEnabled"
+                :class="'px-3 py-1.5 rounded ' + (debugStepsEnabled ? 'bg-gray-700/60 cursor-not-allowed opacity-50' : 'bg-gray-700 hover:bg-gray-600')"
+                x-text="simulationRunning ? 'Pause' : 'Play'"></button>
+              <button @click="stepOnce()" :disabled="debugStepsEnabled || simulationRunning || points.length<2"
+                :class="(debugStepsEnabled || simulationRunning || points.length<2)?'px-3 py-1.5 rounded bg-gray-700/60 text-white opacity-50 cursor-not-allowed':'px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600'">Step</button>
+              <button @click="exportImage()"
+                :class="'px-3 py-1.5 rounded ' + (debugStepsEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-700 hover:bg-gray-600')">Export</button>
+              <!-- Show Trails checkbox removed: trails now always enabled -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Sandscript Panel (formerly DSL) -->
+        <section class="space-y-6 xl:col-span-2 xl:col-start-2">
+          <div
+            class="bg-sg-panel/60 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-inner-glow space-y-3">
+            <div class="flex items-center gap-3">
+              <h2 class="text-lg font-semibold">Sandscript</h2>
+              <span class="text-xs px-2 py-0.5 rounded bg-gray-700/60"
+                x-text="compiledScript ? 'Compiled' : 'Not Compiled'"></span>
+              <button @click="showDSLDetails=!showDSLDetails"
+                class="ml-auto text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+                x-text="showDSLDetails ? 'Hide Details' : 'Show Details'"></button>
+            </div>
+
+            <div
+              class="text-xs text-gray-400 bg-gray-900/50 border border-gray-700/60 rounded px-3 py-2 flex items-center gap-2">
+              <span class="font-medium text-sg-accent/80">Live Preview</span>
+              <span class="flex-1">Edits are compiled and emulated automatically. Browse the Sandscript Library below to
+                load
+                presets.</span>
+            </div>
+            <div class="flex gap-3 items-start">
+              <textarea x-model="scriptSource"
+                class="w-full h-56 font-mono text-sm bg-gray-900/70 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-sg-accent/50 resize-y"
+                spellcheck="false"></textarea>
+              <div class="flex flex-col gap-2 w-52">
+                <button @click="scheduleScriptProcess(true)"
+                  class="px-3 py-2 rounded bg-sg-accent hover:bg-sg-accent/80 text-sm font-medium">Refresh</button>
+                <button @click="simulateScript()" :disabled="!compiledScript || debugStepsEnabled"
+                  :class="(!compiledScript || debugStepsEnabled) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-600'"
+                  class="px-3 py-2 rounded bg-gray-700 text-sm font-medium">Simulate</button>
+                <button @click="uploadScriptToDevice()"
+                  :disabled="!compiledScript || !connected || scriptUploadInProgress"
+                  :class="(!compiledScript || !connected || scriptUploadInProgress) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-sg-accent/90'"
+                  class="px-3 py-2 rounded bg-sg-accent text-sm font-medium flex items-center justify-center gap-2">
+                  <span x-text="scriptUploadInProgress ? 'Uploading…' : 'Send to Device'"></span>
+                  <span x-show="scriptUploadInProgress" class="text-xs" x-text="scriptUploadProgress + '%'"></span>
+                </button>
+                <label class="text-xs text-gray-300 flex flex-col gap-1">
+                  Target slot (optional)
+                  <input type="number" min="1" step="1" x-model="scriptTargetSlot" placeholder="auto"
+                    class="bg-gray-900/70 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sg-accent/50" />
+                </label>
+                <div class="text-xs text-gray-400 min-h-[1.5rem]" x-show="scriptUploadStatus"
+                  x-text="scriptUploadStatus"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs flex-wrap">
+              <span class="text-gray-500">Used outputs: <span class="text-sg-accent"
+                  x-text="compiledScript ? compiledScript.used.filter(u=>['next_radius','next_angle','delta_radius','delta_angle'].includes(u)).join(', ') : '-' "></span></span>
+            </div>
+            <template x-if="compileErrors.length">
+              <div
+                class="text-xs font-mono bg-red-900/40 border border-red-600/60 rounded p-2 space-y-1 overflow-auto max-h-40">
+                <template x-for="(e,i) in compileErrors" :key="i">
+                  <div><span class="text-red-400" x-text="e.pos != null ? ('['+e.pos+']') : ''"></span> <span
+                      x-text="e.message"></span></div>
+                </template>
+              </div>
+            </template>
+            <template x-if="!compileErrors.length && compiledScript">
+              <div class="text-xs font-mono bg-emerald-900/30 border border-emerald-600/50 rounded p-2">OK</div>
+            </template>
+            <div x-show="showDSLDetails" x-collapse
+              class="text-xs bg-gray-900/60 border border-gray-700 rounded p-3 space-y-3">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <h4 class="font-semibold text-sg-accent mb-1">Last Inputs</h4>
+                  <template x-if="lastDSLInputs">
+                    <ul class="space-y-0.5 font-mono">
+                      <li>radius: <span x-text="fmtNum(lastDSLInputs.radius)"></span></li>
+                      <li>angle: <span x-text="fmtNum(lastDSLInputs.angle)"></span></li>
+                      <li>steps: <span x-text="lastDSLInputs.steps"></span></li>
+                      <li>time(ms): <span x-text="fmtNum(lastDSLInputs.time)"></span></li>
+                      <li>rev: <span x-text="fmtNum(lastDSLInputs.rev)"></span></li>
+                      <li>start: <span x-text="lastDSLInputs.start"></span></li>
+                    </ul>
+                  </template>
+                  <template x-if="!lastDSLInputs">
+                    <p class="italic text-gray-500">(no eval yet)</p>
+                  </template>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-sg-accent mb-1">Last Outputs</h4>
+                  <template x-if="lastDSLOutputs">
+                    <ul class="space-y-0.5 font-mono">
+                      <li x-show="lastDSLOutputs.next_radius!==undefined">next_radius: <span
+                          x-text="fmtNum(lastDSLOutputs.next_radius)"></span></li>
+                      <li x-show="lastDSLOutputs.delta_radius!==undefined">delta_radius: <span
+                          x-text="fmtNum(lastDSLOutputs.delta_radius)"></span></li>
+                      <li x-show="lastDSLOutputs.next_angle!==undefined">next_angle: <span
+                          x-text="fmtNum(lastDSLOutputs.next_angle)"></span></li>
+                      <li x-show="lastDSLOutputs.delta_angle!==undefined">delta_angle: <span
+                          x-text="fmtNum(lastDSLOutputs.delta_angle)"></span></li>
+                    </ul>
+                  </template>
+                  <template x-if="!lastDSLOutputs">
+                    <p class="italic text-gray-500">(no eval yet)</p>
+                  </template>
+                </div>
+                <div class="sm:col-span-2">
+                  <h4 class="font-semibold text-sg-accent mb-1">Last Locals</h4>
+                  <template x-if="lastDSLLocals && Object.keys(lastDSLLocals).length">
+                    <ul class="space-y-0.5 font-mono columns-2 gap-6">
+                      <template x-for="(v,k) in lastDSLLocals" :key="k">
+                        <li><span class="text-gray-400" x-text="k"></span>: <span x-text="fmtNum(v)"></span></li>
+                      </template>
+                    </ul>
+                  </template>
+                  <template x-if="!lastDSLLocals || !Object.keys(lastDSLLocals).length">
+                    <p class="italic text-gray-500">(no locals)</p>
+                  </template>
+                </div>
+                <div class="sm:col-span-2" x-show="dslFault">
+                  <div class="bg-red-900/30 border border-red-500/40 rounded p-3 space-y-2">
+                    <div class="font-semibold text-red-200 text-sm uppercase tracking-wide">Runtime fault</div>
+                    <div class="text-xs text-red-100 font-mono"
+                      x-text="dslFault?.names?.length ? dslFault.names.join(', ') : 'unknown output'"></div>
+                    <template x-if="dslFault?.values && Object.keys(dslFault.values).length">
+                      <ul class="text-xs font-mono space-y-0.5">
+                        <template x-for="(v,k) in dslFault.values" :key="k">
+                          <li><span class="text-gray-300" x-text="k"></span>: <span x-text="formatFaultValue(v)"></span>
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                  </div>
+                </div>
+                <div class="sm:col-span-2 border-t border-gray-800 pt-3">
+                  <div class="flex flex-wrap items-center gap-3 mb-2">
+                    <h4 class="font-semibold text-sg-accent">Device Step Telemetry</h4>
+                    <span
+                      class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-800/70 border border-gray-700/70"
+                      :class="debugStepsEnabled ? 'text-emerald-300 border-emerald-500/40' : 'text-gray-400'">
+                      Stream: <span x-text="debugStepsEnabled ? 'On' : 'Off'"></span>
+                    </span>
+                    <span
+                      class="text-[10px] px-2 py-0.5 rounded bg-gray-800/70 text-gray-300 border border-gray-700/70">
+                      Steps: <span x-text="debugPoints.length"></span>
+                    </span>
+                  </div>
+                  <template x-if="lastDebugStep">
+                    <div class="grid sm:grid-cols-2 gap-3 font-mono text-[11px] leading-relaxed">
+                      <ul class="space-y-0.5">
+                        <li>Index: <span x-text="lastDebugStep.idx"></span></li>
+                        <li>Current radius (mm): <span x-text="fmtNum(lastDebugStep.radiusMm)"></span></li>
+                        <li>Current angle (°): <span x-text="fmtNum(lastDebugStep.angleDeg)"></span></li>
+                        <li>XY (mm): <span x-text="fmtNum(lastDebugStep.xMm) + ', ' + fmtNum(lastDebugStep.yMm)"></span>
+                        </li>
+                        <li>Received: <span x-text="formatClock(lastDebugStep.receivedAt)"></span></li>
+                      </ul>
+                      <ul class="space-y-0.5">
+                        <li x-show="lastDebugStep.simulatedRadialSteps != null">Sim steps (r / a): <span
+                            x-text="lastDebugStep.simulatedRadialSteps + ' / ' + lastDebugStep.simulatedAngularSteps"></span>
+                        </li>
+                        <li x-show="lastDebugStep.plannedRadiusMm != null"
+                          :class="lastDebugStep.mismatchRadial ? 'text-red-400' : ''">Planned radius (mm): <span
+                            x-text="fmtNum(lastDebugStep.plannedRadiusMm)"></span></li>
+                        <li x-show="lastDebugStep.simulatedRadiusMm != null">Sim radius (mm): <span
+                            x-text="fmtNum(lastDebugStep.simulatedRadiusMm)"></span></li>
+                        <li x-show="lastDebugStep.plannedAngleDeg != null"
+                          :class="lastDebugStep.mismatchAngular ? 'text-red-400' : ''">Planned angle (°): <span
+                            x-text="fmtNum(lastDebugStep.plannedAngleDeg)"></span></li>
+                        <li x-show="lastDebugStep.simulatedAngleDeg != null">Sim angle (°): <span
+                            x-text="fmtNum(lastDebugStep.simulatedAngleDeg)"></span></li>
+                        <li x-show="lastDebugStep.simulationError" class="text-red-300">Sim error: <span
+                            x-text="lastDebugStep.simulationError"></span></li>
+                        <li x-show="lastDebugStep.deltaRadiusMm != null">Δ radius (mm): <span
+                            x-text="fmtNum(lastDebugStep.deltaRadiusMm)"></span></li>
+                        <li>Pattern / Mode / Run: <span
+                            x-text="(lastDebugStep.pattern != null ? lastDebugStep.pattern : '-') + ' • ' + (lastDebugStep.auto ? 'Auto' : 'Manual') + ' • ' + (lastDebugStep.running ? 'Running' : 'Stopped')"></span>
+                        </li>
+                        <li>Start: <span x-text="lastDebugStep.start ? 'Yes' : 'No'"></span><span
+                            x-show="lastDebugStep.tag" class="ml-2">Tag: <span x-text="lastDebugStep.tag"></span></span>
+                        </li>
+                      </ul>
+                    </div>
+                  </template>
+                  <template x-if="!lastDebugStep">
+                    <p class="italic text-gray-500">No step telemetry yet. Enable Device Debug Stream to view
+                      live data.</p>
+                  </template>
+                </div>
+              </div>
+            </div>
+        </section>
+      </div>
+
+    </main>
+
+    <footer class="px-6 py-3 text-xs text-gray-500 flex justify-between border-t border-gray-800 bg-sg-panel/60">
+      <div>Sand Garden UI – Firmware integration TBD.</div>
+      <div>Colors: Device Black + Orange Screws + White Sand</div>
+    </footer>
+  </div>
+
+  <script>
+    function sandGardenApp() {
+      return {
+        // State
+        connected: false,
+        connecting: false,
+        running: false,
+        autoMode: true,
+        speedMultiplier: 1.0,
+        pattern: 1,
+        ledEffect: 1,
+        NUM_LED_EFFECTS: 14, // Total number of LED effects (max UI value)
+        SOLID_COLOR_EFFECT_ID: 13, // ID of the Solid Color effect (for showing color picker)
+        // Trails always enabled now (formerly showTrails toggle removed)
+        statusMessage: 'Idle',
+        logs: [],
+        deviceHost: 'sand-garden.local', // HTTP host
+        baseUrl: '', // Will be set to http://deviceHost
+        eventSource: null, // Server-Sent Events connection
+        debugStepsEnabled: false,
+        debugCanvas: null,
+        debugCtx: null,
+        debugPoints: [],
+        debugMaxPoints: 8000,
+        deviceSimToleranceSteps: 2,
+        deviceStepsPerMm: 70,
+        deviceStepsPerCm: 70 * 10,
+        debugLastCanvasPoint: null,
+        debugSimulationPoints: [],
+        lastDebugStep: null,
+        maxRadiusSteps: 7000,
+        stepsPerARev: 2 * 2048,
+        trayRadiusFactor: 0.48,
+        // Telemetry state
+        joy: { a: 0, r: 0, mag: 0 }, lastState: { pat: null, auto: null, run: null, brt: null }, heartbeatCount: 0,
+        // Heartbeat UI state
+        heartbeatActive: false,
+        lastHeartbeat: null,
+        heartbeatHover: false,
+        patternMeta: [
+          // Added pointsTarget to guide simulation length (approx, can tweak)
+          { id: 1, type: 'builtin', name: 'Simple Spiral', short: 'spiral', description: 'Outward then inward spiral path (firmware logic).', pointsTarget: 4500 },
+          { id: 2, type: 'builtin', name: 'Cardioids', short: 'cardioid', description: 'Petaled cardioid style looping figure.', pointsTarget: 1200 },
+          { id: 3, type: 'builtin', name: 'Wavy Spiral', short: 'wavy', description: 'Spiral with sinusoidal radial modulation.', pointsTarget: 4600 },
+          { id: 4, type: 'builtin', name: 'Rotating Squares', short: 'squares', description: 'Sequence of rotating square outlines.', pointsTarget: 2300 },
+          { id: 5, type: 'builtin', name: 'Pentagon Spiral', short: 'penta sp', description: 'Pentagon-based growing & shrinking spiral.', pointsTarget: 3200 },
+          { id: 6, type: 'builtin', name: 'Hexagon Vortex', short: 'hexa', description: 'Rotating, pulsing hexagon vortex.', pointsTarget: 3000 },
+          { id: 7, type: 'builtin', name: 'Pentagon Rainbow', short: 'penta rb', description: 'Off-center rotating/translated pentagon.', pointsTarget: 2500 },
+          { id: 8, type: 'builtin', name: 'Random Walk 1', short: 'rw arc', description: 'Random absolute targets (shortest angular path).', pointsTarget: 1800 },
+          { id: 9, type: 'builtin', name: 'Random Walk 2', short: 'rw line', description: 'Random straight-line interpolation between points.', pointsTarget: 1800 },
+          { id: 10, type: 'builtin', name: 'Accidental Butterfly', short: 'butterfly', description: 'Sinusoidally modulated spiral (butterfly).', pointsTarget: 4600 },
+          { id: 11, type: 'sandscript', name: 'Sandscript', short: 'script', description: 'Your custom Sandscript.' }
+        ],
+        ledEffectMeta: [
+          { id: 1, name: 'Rainbow', description: 'Moving rainbow wave across the strip' },
+          { id: 2, name: 'Full Rainbow', description: 'Whole strip cycles through rainbow colors' },
+          { id: 3, name: 'Color Waves', description: 'Sine wave color patterns' },
+          { id: 4, name: 'Twinkle', description: 'Random sparkling stars' },
+          { id: 5, name: 'Theater Chase', description: 'Marquee-style chase effect' },
+          { id: 6, name: 'Palette Cycle', description: 'Cycling through color palettes' },
+          { id: 7, name: 'Confetti', description: 'Random colored dots' },
+          { id: 8, name: 'Comet', description: 'Comet/meteor with fading tail' },
+          { id: 9, name: 'Breathing Pulse', description: 'Calming breathing effect with color shift' },
+          { id: 10, name: 'Rotating Wedge', description: 'Colored wedge sweeps around the circle' },
+          { id: 11, name: 'Bidirectional Chase', description: 'Two dots chase in opposite directions' },
+          { id: 12, name: 'Color Segments', description: 'Rotating colored pie segments' },
+          { id: 13, name: 'Solid Color', description: 'Single solid color across all LEDs' },
+          { id: 14, name: 'Off', description: 'Turn off all LEDs' }
+        ],
+        ledColor: { r: 255, g: 255, b: 255 }, // Current solid color (white by default)
+        ledBrightness: 100, // LED brightness (0-255, default 100)
+        get ledColorHex() {
+          // Compute hex color from RGB
+          const toHex = (v) => {
+            const hex = Math.round(v).toString(16).padStart(2, '0');
+            return hex;
+          };
+          return '#' + toHex(this.ledColor.r) + toHex(this.ledColor.g) + toHex(this.ledColor.b);
+        },
+        set ledColorHex(value) {
+          // Parse hex color and update RGB values
+          if (value && value.length === 7 && value.startsWith('#')) {
+            const r = parseInt(value.substr(1, 2), 16);
+            const g = parseInt(value.substr(3, 2), 16);
+            const b = parseInt(value.substr(5, 2), 16);
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+              this.ledColor = { r, g, b };
+              this.sendLedColor();
+            }
+          }
+        },
+        scriptPatternId: 11,
+        // Sandscript state (internal variables still prefixed dsl for now)
+        scriptSource: `# simple back and forth with the ball 
 # with sinusoidal easing
 
 # change direction every 15 steps
-dir = sin(steps * 180 / 15)
+dir = sin(steps * 180 / 15) 
 
 delta_angle = 5
 next_radius = dir * 5 + 5`,
-compileErrors: [],
-compiledScript: null,
-// Continuous revolution tracking for DSL (rev variable)
-revPrevAngleDeg: null,
-revUnwrappedAngleDeg: 0,
-// scriptSteps removed (infinite logical simulation); max radius computed from device geometry (cm)
-scriptMaxRadius: null,
-// showBytecode removed
-scriptLibraryFilter: '',
-activeScriptName: null,
-lastLoadedScriptCode: null,
-scriptProcessTimer: null,
-scriptProcessDelay: 320,
-skipNextScriptProcess: false,
-exampleScripts: [
-{
-final: true,
-name: 'PingPongSharpPetals',
-description: 'Sharp directional petals with snappy reversals.',
-code: `# simple back and forth with the ball,
+        compileErrors: [],
+        compiledScript: null,
+        // Continuous revolution tracking for DSL (rev variable)
+        revPrevAngleDeg: null,
+        revUnwrappedAngleDeg: 0,
+        // scriptSteps removed (infinite logical simulation); max radius computed from device geometry (cm)
+        scriptMaxRadius: null,
+        // showBytecode removed
+        scriptLibraryFilter: '',
+        activeScriptName: null,
+        lastLoadedScriptCode: null,
+        scriptProcessTimer: null,
+        scriptProcessDelay: 320,
+        skipNextScriptProcess: false,
+        exampleScripts: [
+          {
+            final: true,
+            name: 'PingPongSharpPetals',
+            description: 'Sharp directional petals with snappy reversals.',
+            code: `# simple back and forth with the ball,
 # no easing at the edge
 
 # sign(-10...10)
@@ -279,37 +888,37 @@ r = pingpong(steps/10, 9)
 
 delta_angle = 0.3
 next_radius = 1 + r`
-},
-{
-final: true,
-name: 'Rose',
-description: 'Rose-like pattern.',
-code: `# Rose?
+          },
+          {
+            final: true,
+            name: 'Rose',
+            description: 'Rose-like pattern.',
+            code: `# Rose?
 
 tri = 0.5 * (1 - cos(rev*180 / 8))
 target = tri * 9 + 1 + sin(steps * 5) / 2
 
-next_radius = clamp(radius + (target - radius)*0.18, 0, 10)
+next_radius = clamp(radius + (target - radius)*0.18, 0, 10) 
 delta_angle = 1.0 / radius`
-},
-{
-final: true,
-name: 'PingPongSoftPetals',
-description: 'Softly eased petals using sinusoidal direction changes.',
-code: `# simple back and forth with the ball
+          },
+          {
+            final: true,
+            name: 'PingPongSoftPetals',
+            description: 'Softly eased petals using sinusoidal direction changes.',
+            code: `# simple back and forth with the ball 
 # with sinusoidal easing
 
 # change direction every 15 steps
-dir = sin(steps * 180 / 15)
+dir = sin(steps * 180 / 15) 
 
 delta_angle = 5
 next_radius = dir * 5 + 5`
-},
-{
-final: true,
-name: 'MirrorSpiral',
-description: 'Mirrored spiral with gentle easing toward a moving target.',
-code: `# Simple outward/inward spiral mimic (no % operator)
+          },
+          {
+            final: true,
+            name: 'MirrorSpiral',
+            description: 'Mirrored spiral with gentle easing toward a moving target.',
+            code: `# Simple outward/inward spiral mimic (no % operator)
 # Triangle wave using cosine (period = 2 revs)
 # tri = 0.5 * (1 - cos(rev*180)) gives 0->1 (rev 0-1), 1->0 (rev 1-2)
 tri = 0.5 * (1 - cos(rev*180 / 8))
@@ -319,2564 +928,2596 @@ target = tri * 10
 next_radius = clamp(radius + (target - radius)*0.18, 0, 10)
 # Constant angular increment (adjust for density)
 next_angle = angle + 15.0`
-},
-{
-final: true,
-name: 'A Cat',
-description: 'Cat rotating in the sand.',
-code: `a1 = (angle + rev * 5) % 360
+          },
+          {
+            final: true,
+            name: 'A Cat',
+            description: 'Cat rotating in the sand.',
+            code: `a1 = (angle + rev * 5) % 360
 ear_angle = pingpong(a1 - 90, 180)
 
 ears = clamp(1 - abs(ear_angle - 30) / 15, 0, 1)
 next_radius = 5 + sin(a1) * 2 + ears *2
 
 delta_angle = 1`
-},
-{
-final: true,
-name: 'Butterfly',
-description: 'Fluttering butterfly motif driven by layered sine waves.',
-code: `# Nice butterfly effect
+          },
+          {
+            final: true,
+            name: 'Butterfly',
+            description: 'Fluttering butterfly motif driven by layered sine waves.',
+            code: `# Nice butterfly effect
 phase = sin(rev*90)*10
 ring = sin(angle*4 + phase)*0.40 + sin(angle*7 - phase*0.5)*0.18
 next_radius = clamp(5 + ring*5.0, 0, 10)
 next_angle = angle + 4.5 + sin(angle*6)*0.9`
-},
-{
-name: 'BounceWeave',
-description: 'Layered radial weave with alternating lobe density.',
-code: `# Fine-step radial bounce
+          },
+          {
+            name: 'BounceWeave',
+            description: 'Layered radial weave with alternating lobe density.',
+            code: `# Fine-step radial bounce
 weave = abs(sin(angle*3))/2 + abs(sin(angle*4.5))/6
 next_radius = clamp(4 + weave*6.0, 0, 10)
 next_angle = angle + 5.8 + sin(angle*5)*1.3`
-},
-{
-final: true,
-name: 'StarPing',
-description: 'Dynamic starburst that flips direction with rhythmic accents.',
-code: `# Fine-step star points with directional and radial flips via steps
+          },
+          {
+            final: true,
+            name: 'StarPing',
+            description: 'Dynamic starburst that flips direction with rhythmic accents.',
+            code: `# Fine-step star points with directional and radial flips via steps
 # Use lower frequency for broader lobes
 radius_oscilation = sin(steps/8) * 3
 dir = sign(cos(steps*0.30))
 arm = abs(sin(angle*2.5))*0.75 + abs(sin(angle*5))*0.28
-next_radius = clamp(1 + arm * 5, 0, 15) + radius_oscilation
+next_radius = clamp(1 + arm * 5, 0, 15) + radius_oscilation 
 next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
-}
-],
-mirrorMode: false, // new mirror mode toggle (UI control can set this)
-showDSLDetails: false,
-lastDSLInputs: null,
-lastDSLOutputs: null,
-dslFault: null,
-dslFaultActive: false,
-lastFaultMessage: null,
-lastDSLLocals: null,
-// DSL temporal counters
-dslStepCounter: 0, // increments per DSL evaluation (pattern 11)
-dslStartTimestamp: null, // performance.now() when DSL pattern generation started
-// Sequences for per-step DSL inputs/outputs (pattern 11 only)
-dslInputsSeq: [],
-dslOutputsSeq: [],
-dslLocalsSeq: [],
-scriptUploadInProgress: false,
-scriptUploadProgress: 0,
-scriptUploadStatus: '',
-scriptTargetSlot: '',
-maxScriptBytes: 768,
-preferredScriptChunkSize: null,
-scriptWriteModePreference: 'withResponse',
-fmtNum(n) { if (n == null || !isFinite(n)) return '-'; return (Math.abs(n) < 0.001 ? n.toExponential(2) : n.toFixed(3)).replace(/\.0+$/, '').replace(/(\.[0-9]*?)0+$/, '$1'); },
-formatClock(ts) {
-if (!ts) return '-';
-try {
-return new Date(ts).toLocaleTimeString();
-} catch (_) {
-return '-';
-}
-},
-// Drawing
-canvas: null, ctx: null, traySize: 0, points: [],
-// Ball & trench visualization (direct stamping; no offscreen accumulation)
-ballRadiusPx: 6, trenchDepth: 1.0, trenchSoftness: 8,
-lastHeadX: null, lastHeadY: null, trenchStampSpacingFactor: 0.55, // spacing = ballRadiusPx * factor
-lastTrenchX: null, lastTrenchY: null, // last position where we drew trench TO
-trailInitialized: false, ballPrevImage: null, ballPrevBox: null,
-// simulation timing (step based - on-the-fly generation)
-simulationRunning: false, linearSpeed: 300, lastTs: 0,
-wasSimulationRunningBeforeHide: false, // track pre-visibility state for auto-resume
-// Pattern generator state (produces one step at a time)
-patternStepFn: null, // current pattern's step generator function
-currentPolarState: { radial: 0, angular: 0 }, // current position in steps
-targetPolarState: { radial: 0, angular: 0 }, // next target position in steps
-animationProgress: 0, // 0-1 progress from current to target
-isRestarting: true, // flag for pattern restart
-lastRenderedProgress: 0, // track last rendered progress to draw trenches incrementally
-accumulatedTrenchDistance: 0, // accumulated distance since last trench stamp
-// path accumulation
-pathCanvas: null, pathCtx: null, lastDrawnSegmentIndex: 0,
-init() {
-this.canvas = this.$refs.canvas;
-this.ctx = this.canvas.getContext('2d');
-this.debugCanvas = this.$refs.debugCanvas || null;
-if (this.debugCanvas) {
-this.debugCtx = this.debugCanvas.getContext('2d');
-}
-this.scriptMaxRadius = this.maxRadiusSteps / this.deviceStepsPerCm;
-this.resizeCanvas();
-window.addEventListener('resize', () => this.resizeCanvas());
-// Auto-pause when tab hidden (will implement logic in onVisibilityChange)
-document.addEventListener('visibilitychange', () => this.onVisibilityChange());
-this.regeneratePattern();
-this.setupScriptProcessing();
-this.scheduleScriptProcess(true);
-// Start dynamic favicon updater
-this.startFaviconUpdater();
-this.log('UI initialized');
-
-// Auto-connect if page is served from device (not file://)
-this.autoConnectIfServed();
-},
-autoConnectIfServed() {
-// Check if page is served via HTTP (not opened as local file)
-const isServedViaHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
-
-if (isServedViaHttp && window.location.hostname) {
-// Page is served from a web server - auto-connect to this host
-this.deviceHost = window.location.hostname;
-this.log(`Auto-connecting to ${this.deviceHost} (served from device)`);
-
-// Small delay to allow UI to fully initialize
-setTimeout(() => {
-this.connect();
-}, 500);
-} else {
-this.log('Opened as local file - manual connection required');
-}
-},
-startFaviconUpdater() {
-// Update favicon every 3 seconds with current canvas state
-this.faviconUpdateInterval = setInterval(() => {
-this.updateFavicon();
-}, 3000);
-// Initial update after a brief delay to ensure canvas is rendered
-setTimeout(() => this.updateFavicon(), 500);
-},
-updateFavicon() {
-if (!this.canvas) return;
-
-try {
-// Create a temporary canvas for the favicon
-const faviconSize = 64; // Standard favicon size
-const tempCanvas = document.createElement('canvas');
-tempCanvas.width = faviconSize;
-tempCanvas.height = faviconSize;
-const tempCtx = tempCanvas.getContext('2d');
-tempCtx.filter = 'brightness(60%) contrast(7)';
-
-// Draw the main canvas scaled down to favicon size
-tempCtx.drawImage(this.canvas, 0, 0, faviconSize, faviconSize);
-
-// Convert to data URL (use JPEG for smaller size, with good quality)
-const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.85);
-
-// Update the favicon link element
-let favicon = document.getElementById('favicon');
-if (!favicon) {
-favicon = document.createElement('link');
-favicon.id = 'favicon';
-favicon.rel = 'icon';
-favicon.type = 'image/jpeg';
-document.head.appendChild(favicon);
-}
-favicon.href = dataUrl;
-} catch (err) {
-// Silent fail - canvas might not be ready or have cross-origin issues
-console.warn('Favicon update failed:', err);
-}
-},
-onVisibilityChange() {
-// Auto-pause simulation when tab becomes hidden to avoid large time deltas on return
-if (document.hidden) {
-if (this.simulationRunning) {
-this.wasSimulationRunningBeforeHide = true;
-this.simulationRunning = false;
-// Reset timestamp so resume does not accumulate background dt
-this.lastTs = 0;
-}
-} else {
-if (this.wasSimulationRunningBeforeHide) {
-this.wasSimulationRunningBeforeHide = false;
-this.lastTs = 0; // ensure fresh timing
-this.simulationRunning = true;
-requestAnimationFrame(this.animateStep.bind(this));
-}
-}
-},
-resizeCanvas() {
-const rect = this.$refs.tray.getBoundingClientRect();
-const size = Math.min(rect.width, rect.height);
-this.canvas.width = size; this.canvas.height = size; this.traySize = size;
-if (this.debugCanvas) {
-this.debugCanvas.width = size;
-this.debugCanvas.height = size;
-}
-this.ensurePathBuffer();
-this.clearPath();
-this.renderFrame();
-// Reposition screws so they stay outside the circular tray
-try { this.positionScrews(); } catch (_) { }
-if (this.debugCtx) {
-if (this.debugPoints.length) {
-this.redrawDebugTrail();
-} else {
-this.debugCtx.clearRect(0, 0, size, size);
-}
-}
-},
-
-// Position screw elements (.sg-screw) around the tray so they don't overlap the circular
-// visualization. Uses the tray bounding box and places screws at trayRadius + gap.
-positionScrews() {
-try {
-const tray = this.$refs.tray;
-if (!tray) return;
-const parent = tray.parentElement; // wrapper with position:relative
-if (!parent) return;
-const screws = parent.querySelectorAll('.sg-screw');
-if (!screws || !screws.length) return;
-const trayRect = tray.getBoundingClientRect();
-const parentRect = parent.getBoundingClientRect();
-// center relative to parent (px)
-const cx = (trayRect.left - parentRect.left) + trayRect.width / 2;
-const cy = (trayRect.top - parentRect.top) + trayRect.height / 2;
-// tray visual radius in px (uses same factor as canvas drawing)
-const trayRadiusPx = Math.min(trayRect.width, trayRect.height) * this.trayRadiusFactor;
-// gap to ensure screws sit outside the circular tray; scales with tray size
-const gap = Math.max(12, Math.round(Math.min(trayRect.width, trayRect.height) * 0.06));
-const placeR = trayRadiusPx + gap;
-const count = screws.length;
-for (let i = 0; i < count; i++) {
-const angleDeg = -90 + (360 * i / count); // start at top and go clockwise
-const a = angleDeg * Math.PI / 180;
-const x = Math.round(cx + placeR * Math.cos(a));
-const y = Math.round(cy + placeR * Math.sin(a));
-const el = screws[i];
-// set pixel positions relative to parent; keep translate(-50%,-50%) for centering
-el.style.left = x + 'px';
-el.style.top = y + 'px';
-el.style.animationDelay = (i * 50) + 'ms'; // staggered fade-in
-el.style.animationPlayState = 'running';
-}
-} catch (err) {
-// non-fatal
-console.warn('positionScrews error', err);
-}
-},
-log(msg) {
-const t = new Date().toLocaleTimeString();
-this.logs.push(`[${t}] ${msg}`);
-this.$nextTick(() => {
-const el = this.$refs.log; el.scrollTop = el.scrollHeight;
-});
-},
-setStatus(s) { this.statusMessage = s; this.log(s); },
-faultMaskToNames(mask) {
-if (!mask) return [];
-const names = [];
-for (const [name, bit] of Object.entries(DSG_OUTPUT_MASK)) {
-if ((mask & bit) !== 0) names.push(name);
-}
-return names;
-},
-formatFaultValue(v) {
-if (typeof v !== 'number') return '-';
-if (Number.isNaN(v)) return 'NaN';
-if (v === Infinity) return 'Infinity';
-if (v === -Infinity) return '-Infinity';
-if (!Number.isFinite(v)) return '-';
-return this.fmtNum(v);
-},
-handleDslFault(result) {
-if (!result) return;
-const mask = result.faultMask >>> 0;
-const names = this.faultMaskToNames(mask);
-const faultValues = {};
-if (result.faultValues) {
-for (const [key, value] of Object.entries(result.faultValues)) {
-faultValues[key] = value;
-}
-}
-for (const name of names) {
-if (!(name in faultValues) && result.outputs && Object.prototype.hasOwnProperty.call(result.outputs, name)) {
-faultValues[name] = result.outputs[name];
-}
-}
-this.dslFault = {
-mask,
-names,
-values: faultValues,
-outputs: { ...(result.outputs || {}) }
-};
-this.dslFaultActive = true;
-if (this.simulationRunning) {
-this.simulationRunning = false;
-}
-this.isRestarting = true;
-if (this.compiledScript && this.compiledScript.runtime) {
-this.compiledScript.runtime.faultMask = mask;
-this.compiledScript.runtime.faultValues = { ...faultValues };
-}
-const summary = names.length ? names.join(', ') : 'unknown output';
-if (!this.lastFaultMessage || this.lastFaultMessage.mask !== mask) {
-this.setStatus('Sandscript fault (' + summary + ')');
-this.lastFaultMessage = { mask, summary };
-}
-},
-clearDslFault() {
-if (!this.dslFaultActive && !this.dslFault) return;
-this.dslFaultActive = false;
-this.dslFault = null;
-this.lastFaultMessage = null;
-if (this.compiledScript && this.compiledScript.runtime) {
-this.compiledScript.runtime.faultMask = 0;
-this.compiledScript.runtime.faultValues = {};
-}
-},
-normalizeScript(code) {
-if (code == null) return '';
-return code.replace(/\r\n?/g, '\n').trim();
-},
-findExampleByCode(code) {
-const normalized = this.normalizeScript(code);
-if (!normalized) return null;
-if (!Array.isArray(this.exampleScripts)) return null;
-return this.exampleScripts.find(ex => this.normalizeScript(ex.code) === normalized) || null;
-},
-setupScriptProcessing() {
-this.lastLoadedScriptCode = this.normalizeScript(this.scriptSource);
-const match = this.findExampleByCode(this.scriptSource);
-this.activeScriptName = match ? match.name : null;
-this.$watch('scriptSource', (value) => {
-if (this.skipNextScriptProcess) {
-this.skipNextScriptProcess = false;
-return;
-}
-const normalized = this.normalizeScript(value);
-if (this.lastLoadedScriptCode) {
-if (normalized === this.lastLoadedScriptCode) {
-const matchAgain = this.findExampleByCode(value);
-if (matchAgain) {
-this.activeScriptName = matchAgain.name;
-}
-} else {
-this.activeScriptName = null;
-}
-}
-this.scheduleScriptProcess();
-});
-},
-scheduleScriptProcess(immediate = false) {
-if (this.scriptProcessTimer) {
-clearTimeout(this.scriptProcessTimer);
-this.scriptProcessTimer = null;
-}
-if (immediate) {
-this.runScriptProcess();
-} else {
-const delay = Number.isFinite(this.scriptProcessDelay) ? this.scriptProcessDelay : 300;
-this.scriptProcessTimer = setTimeout(() => {
-this.scriptProcessTimer = null;
-this.runScriptProcess();
-}, delay);
-}
-},
-runScriptProcess() {
-const ok = this.compileScript();
-if (ok) {
-this.simulateScript({ silent: true, force: true });
-}
-},
-filteredExampleScripts() {
-const list = Array.isArray(this.exampleScripts) ? this.exampleScripts : [];
-if (!list.length) return [];
-const term = (this.scriptLibraryFilter || '').trim().toLowerCase();
-const working = term
-? list.filter(ex => {
-const name = (ex.name || '').toLowerCase();
-const desc = (ex.description || '').toLowerCase();
-return name.includes(term) || desc.includes(term);
-})
-: list.slice();
-return working.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-},
-async connect() {
-if (this.connected || this.connecting) return;
-if (!this.deviceHost || this.deviceHost.trim() === '') {
-this.setStatus('Please enter device hostname or IP');
-return;
-}
-
-this.connecting = true;
-this.baseUrl = `http://${this.deviceHost}`;
-this.setStatus('Connecting to ' + this.baseUrl + '...');
-
-try {
-// Test connection and get initial state
-const response = await fetch(`${this.baseUrl}/api/state`);
-if (!response.ok) {
-throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-}
-
-const state = await response.json();
-this.log('Initial state received: ' + JSON.stringify(state));
-
-// Update state from server
-if (state.speedMultiplier !== undefined) this.speedMultiplier = state.speedMultiplier;
-if (state.pattern !== undefined) this.pattern = state.pattern;
-if (state.autoMode !== undefined) this.autoMode = state.autoMode;
-if (state.running !== undefined) this.running = state.running;
-if (state.ledEffect !== undefined) this.ledEffect = state.ledEffect + 1; // Convert 0-based to 1-based
-if (state.ledColorR !== undefined && state.ledColorG !== undefined && state.ledColorB !== undefined) {
-this.ledColor = { r: state.ledColorR, g: state.ledColorG, b: state.ledColorB };
-}
-if (state.ledBrightness !== undefined) this.ledBrightness = state.ledBrightness;
-
-// Setup Server-Sent Events for real-time updates
-this.setupSSE();
-
-this.debugStepsEnabled = false;
-this.clearDebugTrail();
-this.lastDebugStep = null;
-this.connected = true;
-this.setStatus('Connected to ' + this.deviceHost);
-this.log('HTTP connection established');
-} catch (err) {
-this.setStatus('Connection failed: ' + err.message);
-this.log('Error: ' + err.message);
-this.baseUrl = '';
-} finally {
-this.connecting = false;
-}
-},
-setupSSE() {
-// Close existing connection if any
-if (this.eventSource) {
-this.eventSource.close();
-}
-
-// Create new EventSource for Server-Sent Events
-this.eventSource = new EventSource(`${this.baseUrl}/api/events`);
-
-this.eventSource.addEventListener('speed', (e) => {
-const data = JSON.parse(e.data);
-if (data.speed !== undefined) {
-this.speedMultiplier = data.speed;
-this.log('Speed->' + data.speed.toFixed(3));
-}
-});
-
-this.eventSource.addEventListener('pattern', (e) => {
-const data = JSON.parse(e.data);
-if (data.pattern !== undefined) {
-this.pattern = data.pattern;
-this.regeneratePattern();
-this.log('Pattern->' + data.pattern);
-}
-});
-
-this.eventSource.addEventListener('mode', (e) => {
-const data = JSON.parse(e.data);
-if (data.mode !== undefined) {
-this.autoMode = data.mode === 1;
-this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual'));
-}
-});
-
-this.eventSource.addEventListener('run', (e) => {
-const data = JSON.parse(e.data);
-if (data.run !== undefined) {
-this.running = data.run === 1;
-this.log('Run->' + (this.running ? 'Running' : 'Stopped'));
-}
-});
-
-this.eventSource.addEventListener('ledEffect', (e) => {
-const data = JSON.parse(e.data);
-if (data.ledEffect !== undefined) {
-this.ledEffect = data.ledEffect + 1; // Convert 0-based to 1-based
-this.log('LED Effect->' + this.ledEffect + ' (' + this.ledEffectMeta[data.ledEffect].name + ')');
-}
-});
-
-this.eventSource.addEventListener('ledColor', (e) => {
-const data = JSON.parse(e.data);
-if (data.r !== undefined && data.g !== undefined && data.b !== undefined) {
-this.ledColor = { r: data.r, g: data.g, b: data.b };
-this.log('LED Color->RGB(' + data.r + ',' + data.g + ',' + data.b + ')');
-}
-});
-
-this.eventSource.addEventListener('ledBrightness', (e) => {
-const data = JSON.parse(e.data);
-if (data.ledBrightness !== undefined) {
-this.ledBrightness = data.ledBrightness;
-this.log('LED Brightness->' + data.ledBrightness);
-}
-});
-
-this.eventSource.addEventListener('status', (e) => {
-const txt = e.data;
-if (txt.startsWith('[DEBUG] STEPS')) {
-if (!txt.includes('ERR')) {
-const modeMatch = txt.match(/\b(ON|OFF)\b/i);
-if (modeMatch) {
-const enable = modeMatch[1].toUpperCase() === 'ON';
-if (enable && !this.debugStepsEnabled) {
-this.clearDebugTrail();
-}
-this.debugStepsEnabled = enable;
-}
-} else {
-this.debugStepsEnabled = false;
-}
-}
-this.setStatus(txt);
-});
-
-this.eventSource.addEventListener('telemetry', (e) => {
-const txt = e.data;
-// Handle telemetry messages (same logic as before)
-if (txt.startsWith('JOY ')) {
-const parts = Object.fromEntries(txt.substring(4).split(/\s+/).map(kv => kv.split('=')));
-const a = parseInt(parts.a) || 0; const r = parseInt(parts.r) || 0; const mag = parseInt(parts.mag) || Math.max(Math.abs(a), Math.abs(r));
-this.joy = { a, r, mag };
-this.log(`JOY a=${a} r=${r} mag=${mag}`);
-} else if (txt.startsWith('STATE ')) {
-const parts = Object.fromEntries(txt.substring(6).split(/\s+/).map(kv => kv.split('=')));
-const pat = parseInt(parts.pat); const auto = parts.auto === '1'; const run = parts.run === '1'; const brt = parseInt(parts.brt);
-if (!isNaN(pat) && this.lastState.pat !== pat) { this.lastState.pat = pat; }
-if (auto !== undefined && this.lastState.auto !== auto) { this.lastState.auto = auto; }
-if (run !== undefined && this.lastState.run !== run) { this.lastState.run = run; }
-if (!isNaN(brt) && this.lastState.brt !== brt) { this.lastState.brt = brt; }
-this.log(txt);
-} else if (txt.startsWith('STEP ')) {
-this.handleStepTelemetry(txt);
-} else if (txt === 'HB') {
-this.heartbeatCount++;
-this.lastHeartbeat = Date.now();
-this.heartbeatActive = true;
-setTimeout(() => { this.heartbeatActive = false; }, 800);
-}
-});
-
-this.eventSource.addEventListener('state', (e) => {
-// Handle initial state broadcast to new clients
-const data = JSON.parse(e.data);
-if (data.speed !== undefined) this.speedMultiplier = data.speed;
-if (data.pattern !== undefined) this.pattern = data.pattern;
-if (data.mode !== undefined) this.autoMode = data.mode === 1;
-if (data.run !== undefined) this.running = data.run === 1;
-if (data.ledEffect !== undefined) this.ledEffect = data.ledEffect + 1;
-if (data.ledBrightness !== undefined) this.ledBrightness = data.ledBrightness;
-});
-
-this.eventSource.onerror = (err) => {
-this.log('SSE error: Connection lost');
-if (this.connected) {
-this.onDisconnect();
-}
-};
-},
-disconnect() {
-if (this.eventSource) {
-this.eventSource.close();
-this.eventSource = null;
-}
-this.connected = false;
-this.baseUrl = '';
-this.setStatus('Disconnected');
-this.log('Disconnected from device');
-},
-handleStepTelemetry(line) {
-const payload = line.length > 5 ? line.substring(5) : '';
-const kv = this.parseTelemetryKV(payload);
-const toInt = v => {
-if (v == null) return null;
-const n = Number.parseInt(v, 10);
-return Number.isFinite(n) ? n : null;
-};
-const toFloat = v => {
-if (v == null) return null;
-const n = Number.parseFloat(v);
-return Number.isFinite(n) ? n : null;
-};
-
-const actualR = toInt(kv.cr ?? kv.r ?? kv.radial ?? kv.rs);
-const actualA = toInt(kv.ca ?? kv.a ?? kv.angular ?? kv.as);
-if (actualR == null || actualA == null) {
-return;
-}
-
-const plannedR = toInt(kv.tr ?? kv.pr ?? kv.planR);
-const plannedA = toInt(kv.ta ?? kv.pa ?? kv.planA);
-const idxRaw = toInt(kv.idx);
-const idx = idxRaw != null ? idxRaw : (this.debugPoints.length ? this.debugPoints[this.debugPoints.length - 1].idx + 1 : 1);
-const restartFlag = kv.start === '1' || kv.start === 'true' || kv.start === 'yes';
-const patternId = toInt(kv.pat);
-const autoFlag = kv.auto == null ? null : (kv.auto === '1' || kv.auto.toLowerCase?.() === 'true');
-const runFlag = kv.run == null ? null : (kv.run === '1' || kv.run.toLowerCase?.() === 'true');
-
-if (restartFlag && this.debugPoints.length) {
-this.clearDebugTrail();
-}
-
-const mmPerStep = this.deviceStepsPerMm > 0 ? (1 / this.deviceStepsPerMm) : 0;
-let radiusMm = toFloat(kv.mm ?? kv.rm);
-if (radiusMm == null) {
-radiusMm = mmPerStep ? actualR * mmPerStep : null;
-}
-let angleDeg = toFloat(kv.deg ?? kv.ad);
-if (angleDeg == null) {
-angleDeg = (this.stepsPerARev > 0) ? (actualA / this.stepsPerARev) * 360 : null;
-}
-let xMm = toFloat(kv.x);
-let yMm = toFloat(kv.y);
-if ((xMm == null || yMm == null) && radiusMm != null && angleDeg != null) {
-const thetaRad = angleDeg * Math.PI / 180;
-xMm = radiusMm * Math.cos(thetaRad);
-yMm = radiusMm * Math.sin(thetaRad);
-}
-
-const plannedRadiusMm = (plannedR != null && mmPerStep) ? plannedR * mmPerStep : null;
-const plannedAngleDeg = (plannedA != null && this.stepsPerARev > 0) ? (plannedA / this.stepsPerARev) * 360 : null;
-const deltaRadialSteps = (plannedR != null) ? actualR - plannedR : null;
-const deltaAngularSteps = (plannedA != null) ? actualA - plannedA : null;
-const deltaRadiusMm = (deltaRadialSteps != null && mmPerStep) ? deltaRadialSteps * mmPerStep : null;
-
-const dslRadiusCm = toFloat(kv.dslrcm);
-const dslAngleDeg = toFloat(kv.dsladeg);
-const dslRev = toFloat(kv.dslrev);
-const dslSteps = toInt(kv.dslsteps);
-const dslTime = toInt(kv.dsltime);
-let dslStartFlag = null;
-if (kv.dslstart != null) {
-const raw = String(kv.dslstart).toLowerCase();
-dslStartFlag = (raw === '1' || raw === 'true' || raw === 'yes');
-}
-
-const entry = {
-idx,
-radialSteps: actualR,
-angularSteps: actualA,
-plannedRadial: plannedR,
-plannedAngular: plannedA,
-radiusMm,
-angleDeg,
-xMm,
-yMm,
-start: restartFlag,
-pattern: patternId,
-auto: autoFlag,
-running: runFlag,
-tag: kv.tag || null,
-timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
-receivedAt: Date.now(),
-plannedRadiusMm,
-plannedAngleDeg,
-deltaRadialSteps,
-deltaAngularSteps,
-deltaRadiusMm,
-mmPerStep,
-displayRadialSteps: plannedR != null ? plannedR : actualR,
-displayAngularSteps: plannedA != null ? plannedA : actualA,
-dslInputs: (dslRadiusCm != null || dslAngleDeg != null || dslRev != null || dslSteps != null || dslTime != null || dslStartFlag != null) ? {
-radiusCm: dslRadiusCm,
-angleDeg: dslAngleDeg,
-rev: dslRev,
-steps: dslSteps,
-timeMs: dslTime,
-start: dslStartFlag
-} : null
-};
-
-if (!this.debugStepsEnabled) {
-this.debugStepsEnabled = true;
-}
-
-this.processDeviceScriptDebug(entry);
-this.pushDebugPoint(entry);
-this.lastDebugStep = entry;
-
-if (patternId != null && !Number.isNaN(patternId) && patternId !== this.pattern) {
-this.pattern = patternId;
-}
-if (autoFlag != null && autoFlag !== this.autoMode) {
-this.autoMode = autoFlag;
-}
-if (runFlag != null && runFlag !== this.running) {
-this.running = runFlag;
-}
-this.lastState = {
-pat: patternId != null ? patternId : (this.lastState?.pat ?? null),
-auto: autoFlag != null ? autoFlag : (this.lastState?.auto ?? null),
-run: runFlag != null ? runFlag : (this.lastState?.run ?? null),
-brt: this.lastState?.brt ?? null
-};
-},
-parseTelemetryKV(payload) {
-if (!payload || typeof payload !== 'string') return {};
-const out = {};
-const tokens = payload.trim().split(/\s+/);
-for (const token of tokens) {
-if (!token) continue;
-const eq = token.indexOf('=');
-if (eq === -1) {
-out[token] = true;
-} else {
-const key = token.substring(0, eq);
-const value = token.substring(eq + 1);
-out[key] = value;
-}
-}
-return out;
-},
-pushDebugPoint(entry) {
-this.debugPoints.push(entry);
-if (this.debugPoints.length > this.debugMaxPoints) {
-const excess = this.debugPoints.length - this.debugMaxPoints;
-this.debugPoints.splice(0, excess);
-}
-if (this.debugCtx && this.debugCanvas) {
-this.redrawDebugTrail();
-}
-},
-redrawDebugTrail() {
-if (!this.debugCtx || !this.debugCanvas) return;
-const ctx = this.debugCtx;
-const width = this.debugCanvas.width;
-const height = this.debugCanvas.height;
-ctx.clearRect(0, 0, width, height);
-this.debugLastCanvasPoint = null;
-
-if (!this.debugPoints.length) {
-return;
-}
-
-if (this.debugPoints.length) {
-ctx.save();
-ctx.lineJoin = 'round';
-ctx.lineCap = 'round';
-ctx.strokeStyle = 'rgba(255, 122, 0, 0.85)';
-ctx.lineWidth = 1.6;
-ctx.beginPath();
-let segmentOpen = false;
-for (const entry of this.debugPoints) {
-const radialSteps = Number.isFinite(entry.displayRadialSteps) ? entry.displayRadialSteps : entry.radialSteps;
-const angularSteps = Number.isFinite(entry.displayAngularSteps) ? entry.displayAngularSteps : entry.angularSteps;
-const pt = this.stepsToCanvas(radialSteps, angularSteps);
-if (!pt) continue;
-if (entry.start || !segmentOpen) {
-ctx.moveTo(pt.x, pt.y);
-segmentOpen = true;
-} else {
-ctx.lineTo(pt.x, pt.y);
-}
-this.debugLastCanvasPoint = pt;
-}
-ctx.stroke();
-ctx.restore();
-
-// mark restarts
-ctx.save();
-ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-for (const entry of this.debugPoints) {
-if (!entry.start) continue;
-const radialSteps = Number.isFinite(entry.displayRadialSteps) ? entry.displayRadialSteps : entry.radialSteps;
-const angularSteps = Number.isFinite(entry.displayAngularSteps) ? entry.displayAngularSteps : entry.angularSteps;
-const pt = this.stepsToCanvas(radialSteps, angularSteps);
-if (!pt) continue;
-ctx.beginPath();
-ctx.arc(pt.x, pt.y, 2.1, 0, Math.PI * 2);
-ctx.fill();
-}
-ctx.restore();
-
-// highlight latest point
-const last = this.debugPoints[this.debugPoints.length - 1];
-if (last) {
-const radialSteps = Number.isFinite(last.displayRadialSteps) ? last.displayRadialSteps : last.radialSteps;
-const angularSteps = Number.isFinite(last.displayAngularSteps) ? last.displayAngularSteps : last.angularSteps;
-const head = this.stepsToCanvas(radialSteps, angularSteps);
-if (head) {
-ctx.save();
-const color = last.mismatchRadial || last.mismatchAngular ? 'rgba(255, 80, 80, 0.95)' : 'rgba(255, 255, 255, 0.92)';
-ctx.fillStyle = color;
-ctx.shadowColor = 'rgba(255, 255, 255, 0.55)';
-ctx.shadowBlur = 6;
-ctx.beginPath();
-ctx.arc(head.x, head.y, 3.2, 0, Math.PI * 2);
-ctx.fill();
-ctx.restore();
-this.debugLastCanvasPoint = head;
-}
-}
-}
-},
-processDeviceScriptDebug(entry) {
-if (!this.debugStepsEnabled) return;
-if (!entry || entry.pattern !== this.scriptPatternId) return;
-if (!entry.dslInputs || !this.compiledScript) return;
-
-const inputs = entry.dslInputs;
-const hasFinite = v => v != null && isFinite(v);
-if (!hasFinite(inputs.radiusCm) || !hasFinite(inputs.angleDeg)) {
-return;
-}
-
-const vars = {
-radius: inputs.radiusCm,
-angle: inputs.angleDeg,
-start: inputs.start === true ? 1 : 0,
-rev: hasFinite(inputs.rev) ? inputs.rev : 0,
-steps: hasFinite(inputs.steps) ? inputs.steps : 0,
-time: hasFinite(inputs.timeMs) ? inputs.timeMs : 0
-};
-
-let evalResult;
-try {
-evalResult = evalDSLCompiled(this.compiledScript, vars, true);
-} catch (err) {
-entry.simulationError = err && err.message ? err.message : String(err);
-return;
-}
-
-const outputs = evalResult?.outputs || {};
-const locals = evalResult?.locals || {};
-this.lastDSLInputs = { ...vars };
-this.lastDSLOutputs = { ...outputs };
-this.lastDSLLocals = { ...locals };
-if (Array.isArray(this.dslInputsSeq)) {
-this.dslInputsSeq.push({ ...vars });
-if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
-}
-if (Array.isArray(this.dslOutputsSeq)) {
-this.dslOutputsSeq.push({ ...outputs });
-if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
-}
-if (Array.isArray(this.dslLocalsSeq)) {
-this.dslLocalsSeq.push({ ...locals });
-if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
-}
-
-if (evalResult?.faultMask) {
-const names = this.faultMaskToNames(evalResult.faultMask);
-entry.simulationError = 'Fault: ' + (names.length ? names.join(', ') : evalResult.faultMask);
-this.handleDslFault(evalResult);
-return;
-}
-this.clearDslFault();
-
-const stepsPerCm = this.deviceStepsPerCm;
-const stepsPerRev = this.stepsPerARev;
-const maxRadiusCm = this.maxRadiusSteps / stepsPerCm;
-const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-
-let outRadiusCm = vars.radius;
-if (hasFinite(outputs.next_radius)) outRadiusCm = outputs.next_radius;
-else if (hasFinite(outputs.delta_radius)) outRadiusCm = vars.radius + outputs.delta_radius;
-
-let outAngleDeg = vars.angle;
-if (hasFinite(outputs.next_angle)) outAngleDeg = outputs.next_angle;
-else if (hasFinite(outputs.delta_angle)) outAngleDeg = vars.angle + outputs.delta_angle;
-
-outRadiusCm = clamp(outRadiusCm, 0, maxRadiusCm);
-outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
-
-const radialSteps = Math.round(outRadiusCm * stepsPerCm);
-let angularSteps = Math.round((outAngleDeg / 360) * stepsPerRev);
-if (stepsPerRev > 0) {
-angularSteps = ((angularSteps % stepsPerRev) + stepsPerRev) % stepsPerRev;
-}
-
-const mmPerStepDevice = this.deviceStepsPerMm > 0 ? (1 / this.deviceStepsPerMm) : 0;
-const simulatedRadiusMm = mmPerStepDevice ? radialSteps * mmPerStepDevice : null;
-
-entry.simulatedRadialSteps = radialSteps;
-entry.simulatedAngularSteps = angularSteps;
-entry.simulatedRadiusMm = simulatedRadiusMm;
-entry.simulatedAngleDeg = outAngleDeg;
-entry.simulationError = null;
-
-const tolerance = this.deviceSimToleranceSteps;
-if (hasFinite(entry.plannedRadial)) {
-const diffR = Math.abs(radialSteps - entry.plannedRadial);
-entry.mismatchRadial = diffR > tolerance;
-} else {
-entry.mismatchRadial = false;
-}
-if (hasFinite(entry.plannedAngular)) {
-let diffA = Math.abs(angularSteps - entry.plannedAngular);
-if (stepsPerRev > 0) {
-diffA = diffA % stepsPerRev;
-diffA = Math.min(diffA, stepsPerRev - diffA);
-}
-entry.mismatchAngular = diffA > tolerance;
-} else {
-entry.mismatchAngular = false;
-}
-this.appendDebugSimulationPoint(entry);
-},
-stepsToCanvas(rSteps, aSteps) {
-if (!this.canvas || !Number.isFinite(rSteps) || !Number.isFinite(aSteps)) return null;
-const radiusLimit = this.maxRadiusSteps > 0 ? this.maxRadiusSteps : 1;
-const trayRadius = this.canvas.width * this.trayRadiusFactor;
-const clampedR = Math.max(0, Math.min(radiusLimit, rSteps));
-const norm = clampedR / radiusLimit;
-const radiusPx = norm * trayRadius;
-const theta = -(aSteps / this.stepsPerARev) * Math.PI * 2;
-const cx = this.canvas.width / 2;
-const cy = this.canvas.height / 2;
-return { x: cx + radiusPx * Math.cos(theta), y: cy + radiusPx * Math.sin(theta) };
-},
-drawTrenchStamp(x, y) {
-if (!this.ctx) return;
-const ctx = this.ctx;
-const innerR = this.ballRadiusPx * 0.2;
-const outerR = this.ballRadiusPx + this.trenchSoftness;
-const g = ctx.createRadialGradient(x, y, innerR, x, y, outerR);
-g.addColorStop(0.0, 'rgba(255,255,255,0.55)');
-g.addColorStop(0.28, 'rgba(245,245,245,0.38)');
-g.addColorStop(0.55, 'rgba(230,230,230,0.22)');
-g.addColorStop(0.75, 'rgba(200,200,200,0.15)');
-g.addColorStop(0.90, 'rgba(180,180,180,0.10)');
-g.addColorStop(1.0, 'rgba(150,150,150,0)');
-ctx.globalCompositeOperation = 'source-over';
-ctx.fillStyle = g;
-ctx.beginPath();
-ctx.arc(x, y, outerR, 0, Math.PI * 2);
-ctx.fill();
-},
-drawTrenchSegment(x0, y0, x1, y1) {
-if (!this.ctx) return;
-if (!Number.isFinite(x0) || !Number.isFinite(y0)) {
-this.drawTrenchStamp(x1, y1);
-return;
-}
-const spacing = this.ballRadiusPx * this.trenchStampSpacingFactor;
-const dx = x1 - x0;
-const dy = y1 - y0;
-const dist = Math.hypot(dx, dy);
-if (dist === 0) {
-this.drawTrenchStamp(x1, y1);
-return;
-}
-const steps = Math.max(1, Math.floor(dist / spacing));
-for (let i = 0; i <= steps; i++) {
-const f = i / steps;
-const sx = x0 + dx * f;
-const sy = y0 + dy * f;
-this.drawTrenchStamp(sx, sy);
-}
-},
-drawBallAt(x, y) {
-if (!this.ctx) return;
-const ctx = this.ctx;
-const ballR = this.ballRadiusPx;
-// Soft glow under ball
-const glow = ctx.createRadialGradient(x, y, ballR * 0.2, x, y, ballR * 1.3);
-glow.addColorStop(0, 'rgba(255,255,255,0.55)');
-glow.addColorStop(1, 'rgba(255,255,255,0)');
-ctx.save();
-ctx.globalCompositeOperation = 'lighter';
-ctx.fillStyle = glow;
-ctx.beginPath();
-ctx.arc(x, y, ballR * 1.3, 0, Math.PI * 2);
-ctx.fill();
-ctx.restore();
-
-const grad = ctx.createRadialGradient(x - ballR * 0.4, y - ballR * 0.4, ballR * 0.2, x, y, ballR);
-grad.addColorStop(0, '#eeeeee');
-grad.addColorStop(0.45, '#d9d9d9');
-grad.addColorStop(1, '#b5b5b5');
-ctx.fillStyle = grad;
-ctx.beginPath();
-ctx.arc(x, y, ballR, 0, Math.PI * 2);
-ctx.fill();
-
-ctx.fillStyle = 'rgba(255,255,255,0.75)';
-ctx.beginPath();
-ctx.arc(x - ballR * 0.35, y - ballR * 0.35, ballR * 0.3, 0, Math.PI * 2);
-ctx.fill();
-
-const pad = Math.ceil(ballR * 1.4);
-const bx = Math.max(0, x - pad);
-const by = Math.max(0, y - pad);
-const bw = Math.min(this.canvas.width - bx, pad * 2);
-const bh = Math.min(this.canvas.height - by, pad * 2);
-try {
-this.ballPrevImage = ctx.getImageData(bx, by, bw, bh);
-this.ballPrevBox = { x: bx, y: by };
-} catch (_) {
-this.ballPrevImage = null;
-this.ballPrevBox = null;
-}
-},
-appendDebugSimulationPoint(entry) {
-if (!this.ctx || !entry || !this.debugStepsEnabled || !this.compiledScript) return;
-if (!Number.isFinite(entry.simulatedRadialSteps) || !Number.isFinite(entry.simulatedAngularSteps)) {
-return;
-}
-if (entry.start || !this.debugSimulationPoints.length) {
-this.debugSimulationPoints = [];
-}
-const pt = this.stepsToCanvas(entry.simulatedRadialSteps, entry.simulatedAngularSteps);
-if (!pt) return;
-this.debugSimulationPoints.push(pt);
-this.drawDebugSimulationPath();
-},
-drawDebugSimulationPath() {
-if (!this.ctx) return;
-this.trailInitialized = true;
-this.drawBackground();
-this.lastHeadX = null;
-this.lastHeadY = null;
-this.ballPrevImage = null;
-this.ballPrevBox = null;
-const pts = this.debugSimulationPoints;
-if (!pts || !pts.length) {
-return;
-}
-this.points = pts.map(p => ({ x: p.x, y: p.y }));
-for (let i = 0; i < pts.length; i++) {
-const current = pts[i];
-if (i === 0) {
-this.drawTrenchStamp(current.x, current.y);
-} else {
-const prev = pts[i - 1];
-this.drawTrenchSegment(prev.x, prev.y, current.x, current.y);
-}
-}
-const head = pts[pts.length - 1];
-this.drawBallAt(head.x, head.y);
-this.lastHeadX = head.x;
-this.lastHeadY = head.y;
-},
-textFromDV(dv) { let str = ''; for (let i = 0; i < dv.byteLength; i++) { const c = dv.getUint8(i); if (c === 0) break; str += String.fromCharCode(c); } return str.trim(); },
-toggleRun() { this.running = !this.running; this.sendRun(); },
-debouncedSendSpeed: debounce(function () { this.sendSpeed(); }, 400),
-async sendSpeed() {
-if (!this.connected) return;
-this.setStatus('Speed multiplier -> ' + this.speedMultiplier.toFixed(2));
-try {
-const response = await fetch(`${this.baseUrl}/api/speed`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: parseFloat(this.speedMultiplier.toFixed(3)) })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('Speed write err: ' + e.message);
-}
-},
-async sendMode() {
-if (!this.connected) return;
-this.setStatus('Mode -> ' + (this.autoMode ? 'Automatic' : 'Manual'));
-try {
-const response = await fetch(`${this.baseUrl}/api/mode`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: this.autoMode })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('Mode write err: ' + e.message);
-}
-},
-async sendRun() {
-if (!this.connected) return;
-this.setStatus(this.running ? 'Pattern running' : 'Pattern stopped');
-try {
-const response = await fetch(`${this.baseUrl}/api/run`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: this.running })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('Run write err: ' + e.message);
-}
-},
-async sendCommand(cmd) {
-if (!this.connected) throw new Error('Not connected to device');
-try {
-const response = await fetch(`${this.baseUrl}/api/command`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ command: cmd })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-this.log('CMD ' + cmd);
-} catch (e) {
-this.log('Command err: ' + e.message);
-throw e;
-}
-},
-async onDebugToggle(evt) {
-const desired = evt.target.checked;
-try {
-await this.setDeviceDebug(desired);
-} catch (err) {
-evt.target.checked = !desired;
-const msg = 'Debug stream toggle failed: ' + (err && err.message ? err.message : err);
-this.setStatus(msg);
-}
-},
-async setDeviceDebug(enable) {
-if (!this.connected || !this.chars.command) {
-throw new Error('Device not connected');
-}
-const verb = enable ? 'ON' : 'OFF';
-this.setStatus('Requesting debug stream ' + verb);
-try {
-await this.sendCommand(`DEBUG_STEPS ${verb}`);
-if (enable) {
-this.clearDebugTrail();
-this.lastDebugStep = null;
-this.simulationRunning = false;
-this.points = [];
-this.drawBackground();
-} else {
-this.debugSimulationPoints = [];
-this.simulationRunning = false;
-this.regeneratePattern();
-}
-this.debugStepsEnabled = enable;
-} catch (err) {
-throw err;
-}
-},
-async uploadScriptToDevice() {
-if (this.scriptUploadInProgress) return;
-if (!this.connected) {
-this.setStatus('Connect to the device before uploading');
-return;
-}
-
-if (!this.compiledScript) {
-this.compileScript();
-if (!this.compiledScript) {
-this.setStatus('Fix compile errors before uploading');
-return;
-}
-}
-
-const encoder = new TextEncoder();
-const normalized = this.scriptSource.replace(/\r\n?/g, '\n');
-const scriptBytes = encoder.encode(normalized);
-
-if (scriptBytes.length === 0) {
-this.setStatus('Script is empty');
-return;
-}
-if (scriptBytes.length > this.maxScriptBytes) {
-this.setStatus(`Script exceeds ${this.maxScriptBytes} byte limit (${scriptBytes.length})`);
-return;
-}
-
-let slotNum = -1;
-if (this.scriptTargetSlot) {
-slotNum = parseInt(this.scriptTargetSlot, 10);
-if (!Number.isFinite(slotNum) || slotNum <= 0) {
-this.setStatus('Slot must be a positive integer');
-return;
-}
-}
-
-this.scriptUploadInProgress = true;
-this.scriptUploadProgress = 0;
-this.scriptUploadStatus = 'Preparing upload...';
-this.log(`[SCRIPT] Upload start len=${scriptBytes.length}`);
-
-try {
-// Step 1: Begin script upload
-const beginPayload = { length: scriptBytes.length };
-if (slotNum > 0) beginPayload.slot = slotNum;
-
-let response = await fetch(`${this.baseUrl}/api/script/begin`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify(beginPayload)
-});
-if (!response.ok) throw new Error(`Begin failed: HTTP ${response.status}`);
-
-this.scriptUploadStatus = 'Uploading script data...';
-this.scriptUploadProgress = 25;
-
-// Step 2: Send script data
-response = await fetch(`${this.baseUrl}/api/script/chunk`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/octet-stream' },
-body: scriptBytes
-});
-if (!response.ok) throw new Error(`Chunk failed: HTTP ${response.status}`);
-
-this.scriptUploadProgress = 75;
-
-// Step 3: Finalize upload
-response = await fetch(`${this.baseUrl}/api/script/end`, {
-method: 'POST'
-});
-if (!response.ok) throw new Error(`End failed: HTTP ${response.status}`);
-
-this.scriptUploadStatus = `Uploaded ${scriptBytes.length} bytes`;
-this.scriptUploadProgress = 100;
-this.setStatus(`[SCRIPT] Uploaded ${scriptBytes.length} bytes`);
-this.log('[SCRIPT] Upload successful');
-
-// Switch to pattern 11 if not already there
-if (this.pattern !== 11) {
-await this.selectPattern(11);
-}
-} catch (err) {
-this.scriptUploadStatus = 'Upload failed: ' + (err.message || err);
-this.setStatus('Script upload failed: ' + (err.message || err));
-this.log('[SCRIPT] Upload error: ' + (err.message || err));
-} finally {
-this.scriptUploadInProgress = false;
-if (this.scriptUploadProgress !== 100) {
-this.scriptUploadProgress = 0;
-}
-}
-},
-
-scriptChunkCandidates() {
-const smallFirst = [20, 32, 40, 60, 80, 100, 128, 160, 180];
-const sizes = [];
-const preferred = this.preferredScriptChunkSize;
-if (preferred && !sizes.includes(preferred)) sizes.push(preferred);
-const hint = this.estimateScriptChunkHint();
-if (hint && !sizes.includes(hint)) sizes.push(hint);
-for (const preset of smallFirst) {
-if (!sizes.includes(preset)) sizes.push(preset);
-}
-const unique = [];
-for (const raw of sizes) {
-const size = Math.max(1, Math.floor(raw));
-if (!unique.includes(size)) unique.push(size);
-}
-// Always prioritize the safest minimum chunk size to avoid MTU violations.
-unique.sort((a, b) => a - b);
-return unique;
-},
-
-estimateScriptChunkHint() {
-const hints = [];
-const device = this.device;
-if (device) {
-if (typeof device.maxWriteValueLength === 'number') hints.push(device.maxWriteValueLength);
-if (typeof device.maxWriteValueLengthWithoutResponse === 'number') hints.push(device.maxWriteValueLengthWithoutResponse);
-}
-const server = this.server;
-if (server) {
-if (typeof server.maxWriteValueLength === 'number') hints.push(server.maxWriteValueLength);
-if (typeof server.maxWriteValueLengthWithoutResponse === 'number') hints.push(server.maxWriteValueLengthWithoutResponse);
-}
-const scriptChar = this.chars.script;
-if (scriptChar) {
-const svc = scriptChar.service;
-if (svc && svc.device) {
-const dev = svc.device;
-if (typeof dev.maxWriteValueLength === 'number') hints.push(dev.maxWriteValueLength);
-if (typeof dev.maxWriteValueLengthWithoutResponse === 'number') hints.push(dev.maxWriteValueLengthWithoutResponse);
-}
-}
-const valid = hints.filter(v => Number.isFinite(v) && v > 0);
-if (!valid.length) return null;
-const attSafe = Math.max(...valid) - 3; // subtract ATT header for payload safety
-const clamped = Math.max(1, Math.min(120, Math.floor(attSafe)));
-return clamped;
-},
-
-async transmitScriptChunks(scriptBytes, chunkSize) {
-const scriptChar = this.chars.script;
-if (!scriptChar) throw new Error('Script characteristic missing');
-const hasNoResponse = typeof scriptChar.writeValueWithoutResponse === 'function';
-let mode = this.scriptWriteModePreference || 'withResponse';
-if (mode === 'withoutResponse' && !hasNoResponse) mode = 'withResponse';
-let useNoResponse = mode === 'withoutResponse';
-let writer;
-if (useNoResponse) {
-writer = scriptChar.writeValueWithoutResponse.bind(scriptChar);
-}
-if (!writer || typeof writer !== 'function') {
-writer = scriptChar.writeValue.bind(scriptChar);
-useNoResponse = false;
-mode = 'withResponse';
-}
-if (typeof writer !== 'function') throw new Error('Script characteristic not writable');
-const safeChunk = Math.max(1, Math.floor(chunkSize));
-const total = scriptBytes.length;
-for (let offset = 0; offset < total; offset += safeChunk) {
-const end = Math.min(offset + safeChunk, total);
-const slice = scriptBytes.subarray(offset, end);
-try {
-await writer(slice);
-} catch (err) {
-if (useNoResponse && hasNoResponse) {
-this.log('[SCRIPT] write-without-response failed; switching to acknowledged writes');
-this.scriptWriteModePreference = 'withResponse';
-}
-err.chunkOffset = offset;
-err.chunkSize = slice.length;
-throw err;
-}
-this.scriptUploadProgress = Math.round((end / total) * 100);
-if (useNoResponse) {
-const pause = Math.min(150, Math.max(25, slice.length * 6));
-await this.sleep(pause);
-} else {
-const pause = Math.min(120, Math.max(30, slice.length * 8));
-await this.sleep(pause);
-}
-}
-this.scriptWriteModePreference = useNoResponse ? 'withoutResponse' : 'withResponse';
-},
-sleep(ms) { return new Promise(res => setTimeout(res, ms)); },
-// Removed direct LED color helpers (unsupported)
-async disconnectDevice() {
-if (this.device && this.device.gatt && this.device.gatt.connected) {
-try { this.device.gatt.disconnect(); } catch (e) { this.log('Disconnect err: ' + e.message); }
-}
-this.onDisconnect();
-},
-onDisconnect() {
-this.connected = false;
-this.connecting = false;
-this.server = null;
-this.chars = { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null };
-this.debugStepsEnabled = false;
-this.clearDebugTrail();
-this.lastDebugStep = null;
-this.setStatus('Device disconnected');
-},
-async selectPattern(id) {
-this.pattern = id;
-this.setStatus('Selected pattern ' + id);
-this.initializePattern();
-if (this.debugPoints.length) {
-this.clearDebugTrail();
-}
-if (this.connected) {
-try {
-const response = await fetch(`${this.baseUrl}/api/pattern`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: id })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('Pattern write err: ' + e.message);
-}
-}
-},
-async selectLedEffect(id) {
-if (id < 1 || id > this.NUM_LED_EFFECTS) return;
-this.ledEffect = id;
-const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
-this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
-if (this.connected) {
-try {
-const response = await fetch(`${this.baseUrl}/api/led/effect`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: effectIndex })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('LED effect write err: ' + e.message);
-}
-}
-},
-async sendLedColor() {
-const colorStr = this.ledColor.r + ',' + this.ledColor.g + ',' + this.ledColor.b;
-this.setStatus('LED color -> RGB(' + colorStr + ')');
-if (this.connected) {
-try {
-const response = await fetch(`${this.baseUrl}/api/led/color`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ r: this.ledColor.r, g: this.ledColor.g, b: this.ledColor.b })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('LED color write err: ' + e.message);
-}
-}
-},
-async sendLedBrightness() {
-this.setStatus('LED brightness -> ' + this.ledBrightness);
-if (this.connected) {
-try {
-const response = await fetch(`${this.baseUrl}/api/led/brightness`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ value: this.ledBrightness })
-});
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-} catch (e) {
-this.log('LED brightness write err: ' + e.message);
-}
-}
-},
-onLedColorChange() {
-// Convert hex color to RGB
-const hex = this.ledColorHex;
-const r = parseInt(hex.substr(1, 2), 16);
-const g = parseInt(hex.substr(3, 2), 16);
-const b = parseInt(hex.substr(5, 2), 16);
-this.ledColor = { r, g, b };
-this.sendLedColor();
-},
-initializePattern() {
-// Initialize the pattern generator for on-the-fly step generation
-this.patternStepFn = this.createPatternStepFunction(this.pattern);
-this.currentPolarState = { radial: 0, angular: 0 };
-this.targetPolarState = { radial: 0, angular: 0 };
-this.animationProgress = 1; // start at target (will generate first step immediately)
-this.isRestarting = true;
-this.points = []; // clear old points array (not used in new system)
-this.resetTrail();
-this.clearDslFault();
-
-if (this.pattern !== 11) {
-this.dslInputsSeq = [];
-this.dslOutputsSeq = [];
-this.lastDSLInputs = null;
-this.lastDSLOutputs = null;
-this.dslStepCounter = 0;
-this.dslStartTimestamp = null;
-}
-else {
-this.updateDSLDetails();
-}
-if (this.pattern !== 11) {
-this.dslLocalsSeq = [];
-this.lastDSLLocals = null;
-}
-this.drawBackground();
-this.renderFrame();
-},
-regeneratePattern() {
-// Alias for compatibility - now just re-initializes the pattern
-this.initializePattern();
-},
-clearPattern() {
-this.patternStepFn = null;
-this.currentPolarState = { radial: 0, angular: 0 };
-this.targetPolarState = { radial: 0, angular: 0 };
-this.animationProgress = 1;
-this.points = [];
-this.resetTrail();
-this.clearDebugTrail();
-this.drawBackground();
-this.renderFrame();
-},
-resetTrail() {
-this.lastHeadX = null;
-this.lastHeadY = null;
-this.lastTrenchX = null;
-this.lastTrenchY = null;
-this.trailInitialized = false;
-this.ballPrevImage = null;
-this.ballPrevBox = null;
-this.accumulatedTrenchDistance = 0;
-this.lastRenderedProgress = 0;
-},
-clearDebugTrail() {
-this.debugPoints = [];
-this.debugSimulationPoints = [];
-this.debugLastCanvasPoint = null;
-if (this.debugCtx && this.debugCanvas) {
-this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
-}
-},
-toggleSimulation() {
-if (this.debugStepsEnabled) {
-this.simulationRunning = false;
-return;
-}
-this.simulationRunning = !this.simulationRunning;
-if (this.simulationRunning) {
-this.lastTs = 0;
-requestAnimationFrame(this.animateStep.bind(this));
-}
-},
-stepOnce() {
-if (this.debugStepsEnabled) return;
-if (this.simulationRunning) return; // disabled while running
-if (!this.patternStepFn) return;
-
-// If we're at the target, generate next step
-if (this.animationProgress >= 1) {
-this.generateNextStep();
-}
-
-// Move to the end of current animation
-this.animationProgress = 1;
-this.updateDSLDetails();
-this.renderFrame();
-},
-animateStep(ts) {
-if (!this.simulationRunning) return;
-if (!this.lastTs) this.lastTs = ts;
-const dt = (ts - this.lastTs) / 1000;
-this.lastTs = ts;
-
-if (!this.patternStepFn) {
-this.simulationRunning = false;
-return;
-}
-
-// If we've reached the target, generate the next step
-if (this.animationProgress >= 1) {
-this.generateNextStep();
-}
-
-// Calculate distance for this frame
-const segmentDistance = this.calculateSegmentDistance();
-if (segmentDistance > 0) {
-const distanceDelta = this.linearSpeed * dt;
-const progressDelta = distanceDelta / segmentDistance;
-this.animationProgress = Math.min(1, this.animationProgress + progressDelta);
-} else {
-// Zero distance segment, skip immediately
-this.animationProgress = 1;
-}
-
-this.updateDSLDetails();
-this.renderFrame();
-requestAnimationFrame(this.animateStep.bind(this));
-},
-generateNextStep() {
-if (!this.patternStepFn) return;
-
-// Current becomes previous target
-this.currentPolarState = { ...this.targetPolarState };
-
-// Generate next target
-const nextTarget = this.patternStepFn(this.currentPolarState, this.isRestarting);
-this.isRestarting = false;
-
-if (!nextTarget) {
-// Pattern exhausted, restart
-this.isRestarting = true;
-this.currentPolarState = { radial: 0, angular: 0 };
-this.targetPolarState = { radial: 0, angular: 0 };
-this.resetTrail();
-this.drawBackground();
-return;
-}
-
-this.targetPolarState = nextTarget;
-this.animationProgress = 0;
-this.lastRenderedProgress = 0; // Reset for new segment
-// Don't reset accumulatedTrenchDistance - it should carry over for continuous spacing
-},
-calculateSegmentDistance() {
-// Calculate polar distance from current to target
-const MAX_R_STEPS = 7000;
-const STEPS_PER_A_AXIS_REV = 2 * 2048;
-
-const r0 = this.currentPolarState.radial;
-const r1 = this.targetPolarState.radial;
-const a0 = this.currentPolarState.angular;
-const a1 = this.targetPolarState.angular;
-
-// Compute angular difference (shortest path) - FIX: proper wrapping
-let dθSteps = a1 - a0;
-const halfRev = STEPS_PER_A_AXIS_REV / 2;
-while (dθSteps > halfRev) dθSteps -= STEPS_PER_A_AXIS_REV;
-while (dθSteps < -halfRev) dθSteps += STEPS_PER_A_AXIS_REV;
-
-const dr = r1 - r0;
-
-// Convert angular steps to canvas pixels for distance calculation
-// Use average radius for arc length
-const avgRadius = (r0 + r1) / 2;
-const trayRadiusPx = this.canvas ? this.canvas.width * this.trayRadiusFactor : 400;
-const avgRadiusPx = (avgRadius / MAX_R_STEPS) * trayRadiusPx;
-
-// Arc distance in pixels
-const angleRad = (dθSteps / STEPS_PER_A_AXIS_REV) * 2 * Math.PI;
-const arcDistPx = avgRadiusPx * Math.abs(angleRad);
-
-// Radial distance in pixels
-const radialDistPx = (Math.abs(dr) / MAX_R_STEPS) * trayRadiusPx;
-
-// Combined distance (Pythagorean)
-return Math.hypot(radialDistPx, arcDistPx);
-},
-drawBackground() {
-if (!this.ctx) return; const ctx = this.ctx; const w = this.canvas.width; const h = this.canvas.height; ctx.clearRect(0, 0, w, h);
-const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.05, w / 2, h / 2, w * 0.5);
-grad.addColorStop(0, '#ffffff'); grad.addColorStop(1, '#cfcfcf');
-ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(w / 2, h / 2, w / 2 - 2, 0, Math.PI * 2); ctx.fill();
-},
-ensurePathBuffer() { /* offscreen path buffer removed */ },
-clearPath() { /* not needed in on-the-fly system */ },
-updateDSLDetails() {
-if (this.pattern !== 11) return; // only for DSL pattern
-// In on-the-fly system, we update DSL details based on current position
-// The details were already set during step generation
-},
-renderFrame() {
-const ctx = this.ctx;
-if (!this.trailInitialized) {
-this.drawBackground();
-this.trailInitialized = true;
-}
-
-if (!this.patternStepFn) return;
-
-// Calculate interpolated position between current and target
-const t = this.animationProgress >= 1 ? 1 : this.animationProgress;
-
-// Interpolate in polar coordinates
-const r0 = this.currentPolarState.radial;
-const r1 = this.targetPolarState.radial;
-const a0 = this.currentPolarState.angular;
-const a1 = this.targetPolarState.angular;
-
-const STEPS_PER_A_AXIS_REV = 2 * 2048;
-
-// Angular interpolation (shortest path)
-let dθSteps = a1 - a0;
-const halfRev = STEPS_PER_A_AXIS_REV / 2;
-while (dθSteps > halfRev) dθSteps -= STEPS_PER_A_AXIS_REV;
-while (dθSteps < -halfRev) dθSteps += STEPS_PER_A_AXIS_REV;
-
-// Previous position (where we last drew)
-const prevR = r0 + (r1 - r0) * this.lastRenderedProgress;
-const prevA = a0 + dθSteps * this.lastRenderedProgress;
-const prevPt = this.polarToCanvas(prevR, prevA);
-
-// Current position
-const currentR = r0 + (r1 - r0) * t;
-const currentA = a0 + dθSteps * t;
-const pt = this.polarToCanvas(currentR, currentA);
-
-if (!pt) return;
-
-const hx = pt.x;
-const hy = pt.y;
-
-// Draw trench: only when we've moved a sufficient distance from last trench position
-const trenchStampSpacing = this.ballRadiusPx * this.trenchStampSpacingFactor;
-
-if (this.lastTrenchX == null || this.lastTrenchY == null) {
-// Very first stamp
-this.drawTrenchStamp(hx, hy);
-this.lastTrenchX = hx;
-this.lastTrenchY = hy;
-} else {
-// Check distance from last trench position
-const dx = hx - this.lastTrenchX;
-const dy = hy - this.lastTrenchY;
-const distanceSinceLastTrench = Math.hypot(dx, dy);
-
-// Draw trench segment if we've moved enough distance
-if (distanceSinceLastTrench >= trenchStampSpacing * 0.8) {
-this.drawTrenchSegment(this.lastTrenchX, this.lastTrenchY, hx, hy);
-this.lastTrenchX = hx;
-this.lastTrenchY = hy;
-}
-}
-
-// Update tracking variables for ball position
-this.lastRenderedProgress = t;
-this.lastHeadX = hx;
-this.lastHeadY = hy;
-
-// Always restore previous ball and draw new ball position (for smooth animation)
-const ballR = this.ballRadiusPx;
-if (this.ballPrevImage && this.ballPrevBox) {
-try { ctx.putImageData(this.ballPrevImage, this.ballPrevBox.x, this.ballPrevBox.y); } catch (_) { }
-}
-this.drawBallAt(hx, hy);
-},
-polarToCanvas(rSteps, aSteps) {
-if (!this.canvas) return null;
-const MAX_R_STEPS = 7000;
-const STEPS_PER_A_AXIS_REV = 2 * 2048;
-const size = this.canvas.width;
-const cx = size / 2;
-const cy = size / 2;
-const trayR = size * this.trayRadiusFactor;
-
-const clampedR = Math.max(0, Math.min(MAX_R_STEPS, rSteps));
-const rNorm = clampedR / MAX_R_STEPS;
-const rPx = rNorm * trayR;
-const theta = -(aSteps / STEPS_PER_A_AXIS_REV) * (Math.PI * 2);
-
-return {
-x: cx + rPx * Math.cos(theta),
-y: cy + rPx * Math.sin(theta)
-};
-},
-exportImage() {
-// Ensure frame is up to date
-this.renderFrame();
-let sourceCanvas = this.canvas;
-if (this.debugCanvas && this.debugPoints.length) {
-const composite = document.createElement('canvas');
-composite.width = this.canvas.width;
-composite.height = this.canvas.height;
-const cctx = composite.getContext('2d');
-cctx.drawImage(this.canvas, 0, 0);
-cctx.drawImage(this.debugCanvas, 0, 0);
-sourceCanvas = composite;
-}
-const link = document.createElement('a');
-link.download = 'sand-pattern-' + this.pattern + '.png';
-link.href = sourceCanvas.toDataURL('image/png');
-link.click();
-},
-// Pattern generator factories (return step functions for on-the-fly generation)
-createPatternStepFunction(id) {
-const MAX_R_STEPS = 7000;
-const STEPS_PER_MOTOR_REV = 2048;
-const STEPS_PER_A_AXIS_REV = 2 * STEPS_PER_MOTOR_REV;
-
-// --- Math helpers mirroring firmware ---
-const fmap = (n, in_min, in_max, out_min, out_max) => (n - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-const convertDegreesToSteps = deg => Math.round(fmap(deg, 0, 360, 0, 2 * STEPS_PER_MOTOR_REV));
-const convertStepsToRadians = steps => fmap(steps, 0, 2 * STEPS_PER_MOTOR_REV, 0, 2 * Math.PI);
-const modulus = (x, y) => x < 0 ? ((x + 1) % y) + y - 1 : x % y;
-
-// --- drawLine replication (stateful iterator per line) ---
-function createLineIterator(point0, point1, resolution = 100) {
-// replicate core algorithm (cartesian interpolation & polar reconversion)
-const numPoints = Math.max(0, Math.min(100, resolution));
-let p0 = { ...point0 }; let p1 = { ...point1 };
-const points = [];
-// Vertical line detection ±0.5 deg window (convertDegreesToSteps(0.5))
-const halfDegSteps = convertDegreesToSteps(0.5);
-const comparisonA = STEPS_PER_A_AXIS_REV - Math.max(p0.angular, p1.angular);
-const comparisonB = Math.min(p0.angular, p1.angular);
-let rotated = false;
-if (comparisonA - comparisonB <= halfDegSteps && comparisonA - comparisonB >= -halfDegSteps) {
-rotated = true; p0.angular += convertDegreesToSteps(90); p1.angular += convertDegreesToSteps(90);
-}
-// Cartesian coords
-const x0 = p0.radial * Math.cos(convertStepsToRadians(p0.angular));
-const y0 = p0.radial * Math.sin(convertStepsToRadians(p0.angular));
-const x1 = p1.radial * Math.cos(convertStepsToRadians(p1.angular));
-const y1 = p1.radial * Math.sin(convertStepsToRadians(p1.angular));
-const denom = x1 - x0; const m = (y1 - y0) / denom; const b = y0 - m * x0;
-let useNumPoints = numPoints;
-if (b < 100 && b > -100) useNumPoints = 100; // origin proximity boost
-const stepover = (x1 - x0) / useNumPoints;
-for (let i = 0; i < useNumPoints; i++) {
-if (i === 0) {
-points.push({ radial: p0.radial, angular: p0.angular });
-} else if (i === useNumPoints - 1) {
-points.push({ radial: p1.radial, angular: p1.angular });
-} else {
-const xtemp = x0 + (i) * stepover; // (i) because first already added
-const ytemp = m * xtemp + b;
-let theta = Math.atan2(ytemp, xtemp); if (theta < 0) theta = 2 * Math.PI + theta;
-const radial = Math.sqrt(xtemp * xtemp + ytemp * ytemp);
-points.push({ radial: Math.round(radial), angular: Math.round(fmap(theta, 0, 2 * Math.PI, 0, 2 * STEPS_PER_MOTOR_REV)) });
-}
-}
-if (rotated) {
-const shift = convertDegreesToSteps(90);
-for (const p of points) p.angular -= shift;
-}
-let idx = 0;
-return () => {
-if (idx >= points.length) return null; return points[idx++];
-};
-}
-
-// Polygon generator + translate (subset of firmware)
-function nGonGenerator(numPoints, radius, rotationDeg = 0) {
-const angleStep = STEPS_PER_A_AXIS_REV / numPoints; const rotSteps = convertDegreesToSteps(rotationDeg);
-const arr = []; for (let i = 0; i < numPoints; i++) arr.push({ radial: radius, angular: i * angleStep + rotSteps }); return arr;
-}
-function translatePoints(pointArray, centerPoint) {
-if (!centerPoint.radial) return pointArray; // origin
-const cx = centerPoint.radial * Math.cos(convertStepsToRadians(centerPoint.angular));
-const cy = centerPoint.radial * Math.sin(convertStepsToRadians(centerPoint.angular));
-return pointArray.map(p => {
-const x = p.radial * Math.cos(convertStepsToRadians(p.angular)) + cx;
-const y = p.radial * Math.sin(convertStepsToRadians(p.angular)) + cy;
-let theta = Math.atan2(y, x); if (theta < 0) theta += 2 * Math.PI;
-const r = Math.sqrt(x * x + y * y);
-return { radial: Math.round(r), angular: Math.round(fmap(theta, 0, 2 * Math.PI, 0, 2 * STEPS_PER_MOTOR_REV)) };
-});
-}
-
-// --- Pattern function factories (mirror firmware static vars via closure) ---
-const patternFactories = {
-1: () => { // Simple Spiral
-const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
-const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
-return (current, restart) => {
-if (restart) { radialStep = Math.trunc(MAX_R_STEPS / radialDivisions); }
-let target = { angular: current.angular + angleStep, radial: current.radial + radialStep };
-if (target.radial > MAX_R_STEPS || target.radial < 0) { radialStep *= -1; target.radial += 2 * radialStep; }
-return target;
-};
-},
-2: () => { // Cardioids
-const radialStep = Math.trunc(MAX_R_STEPS / 8); let direction = 1; let firstRun = true;
-return (current, restart) => {
-if (firstRun || restart) { firstRun = false; return { angular: 0, radial: 0 }; }
-const ang = current.angular + convertDegreesToSteps(43);
-let nextRad = current.radial + direction * radialStep; if (nextRad > MAX_R_STEPS || nextRad < 0) { direction *= -1; nextRad = current.radial + direction * radialStep; }
-return { angular: ang, radial: nextRad };
-};
-},
-3: () => { // Wavy Spiral
-const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
-const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
-const amplitude = 200; const period = 8;
-return (current, restart) => {
-if (restart) radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
-let baseRad = current.radial + radialStep; let ang = current.angular + angleStep;
-if (baseRad > MAX_R_STEPS || baseRad < 0) { radialStep *= -1; baseRad += 2 * radialStep; }
-const wave = amplitude * Math.sin(period * convertStepsToRadians(ang));
-return { angular: ang, radial: Math.round(baseRad + wave) };
-};
-},
-4: () => { // Rotating Squares
-const segments = 20; const angleShift = convertDegreesToSteps(10);
-let p1, p2, p3, p4; let step = 0; let firstRun = true; let lineIter = null;
-const makeLine = (a, b) => (lineIter = createLineIterator(a, b, segments));
-return (current, restart) => {
-if (firstRun || restart) {
-p1 = { angular: 0, radial: 7000 }; p2 = { angular: convertDegreesToSteps(90), radial: 7000 };
-p3 = { angular: convertDegreesToSteps(180), radial: 7000 }; p4 = { angular: convertDegreesToSteps(270), radial: 7000 };
-step = 0; firstRun = false; lineIter = createLineIterator(p1, p2, segments);
-}
-let point = lineIter && lineIter();
-if (!point) { // finished edge
-step++;
-switch (step) {
-case 1: makeLine(p2, p3); break;
-case 2: makeLine(p3, p4); break;
-case 3: makeLine(p4, p1); break;
-default:
-// rotate and restart
-step = 0; p1.angular += angleShift; p2.angular += angleShift; p3.angular += angleShift; p4.angular += angleShift; makeLine(p1, p2); break;
-}
-point = lineIter();
-}
-return point;
-};
-},
-5: () => { // Pentagon Spiral
-const vertices = 5; let vertexList = []; let start = 0, end = 1; let firstRun = true; let radialStepover = 500; let lineIter = null;
-const rebuildLine = () => { lineIter = createLineIterator(vertexList[start], vertexList[end], 100); };
-return (current, restart) => {
-if (firstRun || restart) { vertexList = nGonGenerator(vertices, 1000, 0); firstRun = false; start = 0; end = 1; radialStepover = 500; rebuildLine(); }
-let point = lineIter();
-if (!point) { // edge complete
-start = (start + 1) % vertices; end = (end + 1) % vertices;
-if (start === 0 && end === 1) { // completed polygon, adjust radii
-for (let i = 0; i < vertices; i++) {
-let newR = vertexList[i].radial + radialStepover; if (newR > MAX_R_STEPS || newR < 0) { radialStepover *= -1; newR += 2 * radialStepover; }
-vertexList[i].radial = newR;
-}
-}
-rebuildLine(); point = lineIter();
-}
-return point;
-};
-},
-6: () => { // Hexagon Vortex
-const vertices = 6; let step = 0; let segments = 100; let firstRun = true; let radialStepover = 350; let radius = 1000; const angleShift = convertDegreesToSteps(5);
-let points = []; let lineIter = null; let idxEdge = 0;
-const rebuildHex = () => { points = nGonGenerator(vertices, radius, 0); };
-const startEdge = () => { const a = points[idxEdge]; const b = points[(idxEdge + 1) % vertices]; lineIter = createLineIterator(a, b, segments); };
-return (current, restart) => {
-if (firstRun || restart) { firstRun = false; step = 0; radius = 1000; radialStepover = 350; idxEdge = 0; rebuildHex(); startEdge(); }
-let pt = lineIter();
-if (!pt) { // move to next edge or rotate/resize
-idxEdge++;
-if (idxEdge >= vertices) { // hex complete
-idxEdge = 0; // rotate
-for (const p of points) p.angular += angleShift;
-if ((radius + radialStepover >= MAX_R_STEPS + 2000) || (radius + radialStepover <= 0)) radialStepover *= -1;
-radius += radialStepover; for (const p of points) p.radial = radius;
-}
-startEdge(); pt = lineIter();
-}
-return pt;
-};
-},
-7: () => { // Pentagon Rainbow
-const vertices = 5; const shiftDeg = 2; const baseRadius = 3000; const translateRadius = 4000; let firstRun = true; let shiftCounter = 1; let pointList = []; let start = 0, end = 1; let lineIter = null;
-const rebuildPent = () => {
-pointList = nGonGenerator(vertices, baseRadius, shiftCounter * shiftDeg);
-pointList = translatePoints(pointList, { radial: translateRadius, angular: shiftCounter * convertDegreesToSteps(shiftDeg) });
-start = 0; end = 1; lineIter = createLineIterator(pointList[start], pointList[end], 100);
-};
-return (current, restart) => {
-if (firstRun || restart) { firstRun = false; shiftCounter = 1; rebuildPent(); }
-let pt = lineIter();
-if (!pt) {
-start = (start + 1) % vertices; end = (end + 1) % vertices;
-if (start === 0 && end === 1) { shiftCounter++; rebuildPent(); pt = lineIter(); } else { lineIter = createLineIterator(pointList[start], pointList[end], 100); pt = lineIter(); }
-}
-return pt;
-};
-},
-8: () => { // Random Walk 1 (random absolute targets)
-return (current, restart) => {
-if (restart) return { angular: 0, radial: 0 };
-return { angular: Math.floor(Math.random() * STEPS_PER_A_AXIS_REV), radial: Math.floor(Math.random() * (MAX_R_STEPS + 1)) };
-};
-},
-9: () => { // Random Walk 2 (straight lines between random points)
-let makeNew = true; let randomPoint = null; let lastPoint = null; let lineIter = null;
-return (current, restart) => {
-if (restart) { makeNew = true; lastPoint = current; }
-if (makeNew) {
-randomPoint = { radial: Math.floor(Math.random() * (MAX_R_STEPS + 1)), angular: Math.floor(Math.random() * STEPS_PER_A_AXIS_REV) };
-lineIter = createLineIterator(lastPoint || current, randomPoint, 100); makeNew = false;
-}
-const pt = lineIter();
-if (!pt) { makeNew = true; lastPoint = randomPoint; return lastPoint; }
-return pt;
-};
-},
-10: () => { // Accidental Butterfly
-const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
-const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
-return (current, restart) => {
-if (restart) radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
-let ang = current.angular + angleStep; let rad = current.radial + radialStep;
-if (rad > MAX_R_STEPS || rad < 0) { radialStep *= -1; rad += 2 * radialStep; }
-const rOffset = 200 * Math.sin(8 * convertStepsToRadians(ang));
-const aOffset = 40 * Math.cos(3 * convertStepsToRadians(ang)); // NOTE: firmware adds this directly in steps (not degrees)
-// Firmware logic: target.radial += rOffset; target.angular += aOffset; where aOffset amplitude is 40 steps.
-return { radial: Math.round(rad + rOffset), angular: Math.round(ang + aOffset) };
-};
-},
-11: () => { // Custom Sandscript (units radius: cm, angle: degrees, rev continuous, steps & time)
-const stepsPerRev = STEPS_PER_A_AXIS_REV;
-const degToSteps = stepsPerRev / 360;
-const stepsPerCm = this.deviceStepsPerCm;
-const maxRadiusCm = (this.scriptMaxRadius != null) ? this.scriptMaxRadius : (this.maxRadiusSteps / stepsPerCm);
-// Reset rev tracking on new factory creation
-this.revPrevAngleDeg = null; this.revUnwrappedAngleDeg = 0;
-// Reset sequences
-this.dslInputsSeq = []; this.dslOutputsSeq = []; this.dslLocalsSeq = [];
-this.dslStepCounter = 0; this.dslStartTimestamp = performance.now();
-return (current, restart) => {
-if (!this.compiledScript) return current;
-const currentRadiusCm = current.radial / stepsPerCm;
-const currentAngleDeg = (current.angular / stepsPerRev) * 360;
-// Update continuous revolution accumulator
-if (restart || this.revPrevAngleDeg == null) {
-this.revPrevAngleDeg = currentAngleDeg; this.revUnwrappedAngleDeg = currentAngleDeg; // start from actual
-} else {
-let delta = currentAngleDeg - this.revPrevAngleDeg;
-if (delta > 180) delta -= 360; else if (delta < -180) delta += 360; // shortest path
-this.revUnwrappedAngleDeg += delta;
-this.revPrevAngleDeg = currentAngleDeg;
-}
-const rev = this.revUnwrappedAngleDeg / 360;
-const timeMs = this.dslStartTimestamp != null ? (performance.now() - this.dslStartTimestamp) : 0;
-if (restart) {
-this.clearDslFault();
-}
-if (!restart && this.dslFaultActive) {
-return current;
-}
-const vars = { radius: currentRadiusCm, angle: currentAngleDeg, start: restart ? 1 : 0, rev, steps: this.dslStepCounter, time: timeMs };
-const res = evalDSLCompiled(this.compiledScript, vars, true);
-const values = res.outputs || {};
-const locals = res.locals || {};
-this.lastDSLInputs = { ...vars };
-this.lastDSLOutputs = { ...values };
-this.lastDSLLocals = { ...locals };
-// Store copies for later simulation detail lookup
-this.dslInputsSeq.push({ ...vars });
-if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
-this.dslOutputsSeq.push({ ...values });
-if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
-this.dslLocalsSeq.push({ ...locals });
-if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
-if (res.faultMask) {
-this.handleDslFault(res);
-return current;
-}
-this.clearDslFault();
-function has(v) { return v != null && isFinite(v); }
-let outRadiusCm = currentRadiusCm;
-if (has(values.next_radius)) outRadiusCm = values.next_radius; else if (has(values.delta_radius)) outRadiusCm = currentRadiusCm + values.delta_radius;
-let outAngleDeg = currentAngleDeg;
-if (has(values.next_angle)) outAngleDeg = values.next_angle; else if (has(values.delta_angle)) outAngleDeg = currentAngleDeg + values.delta_angle;
-outRadiusCm = Math.max(0, Math.min(maxRadiusCm, outRadiusCm));
-outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
-const radialSteps = Math.max(0, Math.min(MAX_R_STEPS, Math.round(outRadiusCm * stepsPerCm)));
-const angleSteps = Math.round(outAngleDeg * degToSteps) % stepsPerRev;
-this.dslStepCounter++;
-return { radial: radialSteps, angular: angleSteps };
-};
-}
-};
-
-// Return the step function directly (on-the-fly generation)
-const factory = patternFactories[id];
-if (!factory) return null;
-return factory();
-}
-}
-}
-
-// Simple debounce helper
-function debounce(fn, wait) {
-let t; return function (...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
-}
-
-// -------- DSL Compiler & Evaluator (Unified) --------
-const DSG_OP = {
-CONST: 'CONST',
-LOAD: 'LOAD',
-ADD: 'ADD',
-SUB: 'SUB',
-MUL: 'MUL',
-DIV: 'DIV',
-MOD: 'MOD',
-NEG: 'NEG',
-SIN: 'SIN',
-COS: 'COS',
-TAN: 'TAN',
-ABS: 'ABS',
-CLAMP: 'CLAMP',
-SIGN: 'SIGN',
-PINGPONG: 'PINGPONG',
-MIN: 'MIN',
-MAX: 'MAX',
-POW: 'POW',
-SQRT: 'SQRT',
-EXP: 'EXP',
-RANDOM: 'RANDOM',
-FLOOR: 'FLOOR',
-CEIL: 'CEIL',
-ROUND: 'ROUND',
-END: 'END'
-};
-// Added synthetic inputs: rev (angle/360 unwrapped), steps (evaluation counter), time (ms since script start)
-const DSG_INPUTS = ['radius', 'angle', 'start', 'rev', 'steps', 'time'];
-const DSG_OUTPUTS = ['next_radius', 'next_angle', 'delta_radius', 'delta_angle'];
-const DSG_FUNCS = {
-sin: 1,
-cos: 1,
-tan: 1,
-abs: 1,
-clamp: 3,
-sign: 1,
-pingpong: 2,
-min: 2,
-max: 2,
-pow: 2,
-sqrt: 1,
-exp: 1,
-random: 0,
-floor: 1,
-ceil: 1,
-round: 1
-};
-const DSG_CONSTS = {};
-const DSG_OUTPUT_MASK = {
-next_radius: 0x01,
-next_angle: 0x02,
-delta_radius: 0x04,
-delta_angle: 0x08
-};
-
-function psgRandomNext(state) {
-return (state * 1664525 + 1013904223) >>> 0;
-}
-
-function tokenizeDSL(source) {
-const lines = source.replace(/\r\n?/g, '\n').split(/\n/); const tokens = []; let global = 0; const errors = [];
-const push = (type, value, pos) => tokens.push({ type, value, pos });
-for (const line of lines) {
-if (/^\s*#/.test(line)) { global += line.length + 1; continue; }
-let i = 0; let hadCode = false;
-while (i < line.length) {
-const c = line[i]; const pos = global + i;
-if (/[ \t]/.test(c)) { i++; continue; }
-if (c == '#') break;
-if (/[0-9]/.test(c)) {
-let j = i + 1; while (j < line.length && /[0-9]/.test(line[j])) j++; if (j < line.length && line[j] == '.') { j++; while (j < line.length && /[0-9]/.test(line[j])) j++; }
-push('NUMBER', parseFloat(line.slice(i, j)), pos); i = j; hadCode = true; continue;
-}
-if (/[a-zA-Z_]/.test(c)) {
-let j = i + 1; while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
-push('IDENT', line.slice(i, j), pos); i = j; hadCode = true; continue;
-}
-if ('+-*/%=(),'.includes(c)) { push(c, c, pos); i++; hadCode = true; continue; }
-errors.push({ message: 'Unexpected char ' + c, pos }); i++;
-}
-if (hadCode) push('EOL', 'EOL', global + line.length - 1);
-global += line.length + 1;
-}
-return { tokens, errors };
-}
-function compileDSL(source) {
-const { tokens, errors } = tokenizeDSL(source); if (errors.length) return { ok: false, errors };
-let idx = 0; const assignments = {}; const usedOrder = []; const definedOutputs = new Set(); const localVars = new Set(); let usedMask = 0;
-const peek = () => tokens[idx]; const consume = t => { const tk = peek(); if (!tk || tk.type !== t) { errors.push({ message: 'Expected ' + t, pos: tk ? tk.pos : -1 }); return null; } idx++; return tk; };
-function parseExpression() {
-const output = []; const stack = []; let expectValue = true; const prec = o => (o === '+' || o === '-') ? 1 : ((o === '*' || o === '/' || o === '%') ? 2 : 0); const isOp = t => ['+', '-', '*', '/', '%'].includes(t);
-while (true) {
-const tk = peek(); if (!tk) break; if (tk.type === 'EOL') { break; }
-if (tk.type === 'NUMBER') { output.push(tk); idx++; expectValue = false; continue; }
-if (tk.type === 'IDENT') { const next = tokens[idx + 1]; if (next && next.type === '(') { stack.push(tk); idx += 2; stack.push({ type: '(' }); expectValue = true; continue; } output.push(tk); idx++; expectValue = false; continue; }
-if (tk.type === '(') { stack.push(tk); idx++; expectValue = true; continue; }
-if (tk.type === ')') { while (stack.length && stack[stack.length - 1].type !== '(') { output.push(stack.pop()); } if (!stack.length) { errors.push({ message: 'Mismatched )', pos: tk.pos }); idx++; break; } stack.pop(); if (stack.length && stack[stack.length - 1].type === 'IDENT') { output.push(stack.pop()); } idx++; expectValue = false; continue; }
-if (tk.type === ',') { while (stack.length && stack[stack.length - 1].type !== '(') { output.push(stack.pop()); } if (!stack.length) { errors.push({ message: 'Misplaced comma', pos: tk.pos }); } idx++; expectValue = true; continue; }
-if (isOp(tk.type)) { let op = tk.type; if (op === '-' && expectValue) { stack.push({ type: 'NEG', pos: tk.pos }); idx++; continue; } while (stack.length) { const top = stack[stack.length - 1]; if (isOp(top.type) && prec(top.type) >= prec(op)) { output.push(stack.pop()); } else break; } stack.push(tk); idx++; expectValue = true; continue; }
-break;
-}
-while (stack.length) { const s = stack.pop(); if (s.type === '(') errors.push({ message: 'Mismatched (', pos: s.pos }); else output.push(s); }
-// consume trailing EOL(s)
-while (peek() && peek().type === 'EOL') idx++;
-return output;
-}
-function rpnToBytecode(rpn, definedLocals) {
-const bc = [];
-for (const tk of rpn) {
-if (!tk) continue;
-if (tk.type === 'NUMBER') {
-bc.push({ op: DSG_OP.CONST, v: tk.value });
-continue;
-}
-if (tk.type === 'IDENT') {
-const nm = tk.value;
-if (DSG_CONSTS[nm] != null) {
-bc.push({ op: DSG_OP.CONST, v: DSG_CONSTS[nm] });
-continue;
-}
-if (DSG_FUNCS[nm] != null) {
-switch (nm) {
-case 'sin': bc.push({ op: DSG_OP.SIN }); break;
-case 'cos': bc.push({ op: DSG_OP.COS }); break;
-case 'tan': bc.push({ op: DSG_OP.TAN }); break;
-case 'abs': bc.push({ op: DSG_OP.ABS }); break;
-case 'clamp': bc.push({ op: DSG_OP.CLAMP }); break;
-case 'sign': bc.push({ op: DSG_OP.SIGN }); break;
-case 'pingpong': bc.push({ op: DSG_OP.PINGPONG }); break;
-case 'min': bc.push({ op: DSG_OP.MIN }); break;
-case 'max': bc.push({ op: DSG_OP.MAX }); break;
-case 'pow': bc.push({ op: DSG_OP.POW }); break;
-case 'sqrt': bc.push({ op: DSG_OP.SQRT }); break;
-case 'exp': bc.push({ op: DSG_OP.EXP }); break;
-case 'random': bc.push({ op: DSG_OP.RANDOM }); break;
-case 'floor': bc.push({ op: DSG_OP.FLOOR }); break;
-case 'ceil': bc.push({ op: DSG_OP.CEIL }); break;
-case 'round': bc.push({ op: DSG_OP.ROUND }); break;
-}
-continue;
-}
-if (DSG_INPUTS.includes(nm)) {
-bc.push({ op: DSG_OP.LOAD, v: nm });
-continue;
-}
-if (DSG_OUTPUTS.includes(nm)) {
-if (!definedOutputs.has(nm)) {
-errors.push({ message: 'Output ' + nm + ' used before it is assigned earlier in script', pos: tk.pos });
-}
-bc.push({ op: DSG_OP.LOAD, v: nm });
-continue;
-}
-if (definedLocals.has(nm)) {
-bc.push({ op: DSG_OP.LOAD, v: nm });
-continue;
-}
-errors.push({ message: 'Unknown identifier ' + nm, pos: tk.pos });
-continue;
-}
-if (['+', '-', '*', '/', '%'].includes(tk.type)) {
-bc.push({ op: { '+': DSG_OP.ADD, '-': DSG_OP.SUB, '*': DSG_OP.MUL, '/': DSG_OP.DIV, '%': DSG_OP.MOD }[tk.type] });
-continue;
-}
-if (tk.type === 'NEG') {
-bc.push({ op: DSG_OP.NEG });
-continue;
-}
-}
-bc.push({ op: DSG_OP.END });
-return bc;
-}
-while (idx < tokens.length && !errors.length) {
-// skip stray EOLs
-while (peek() && peek().type === 'EOL') idx++;
-const lhs = peek(); if (!lhs) break;
-if (lhs.type === 'IDENT') {
-const name = lhs.value; idx++;
-if (!consume('=')) break;
-const rpn = parseExpression();
-const bc = rpnToBytecode(rpn, localVars);
-if (DSG_OUTPUTS.includes(name)) {
-assignments[name] = bc; if (!usedOrder.includes(name)) usedOrder.push(name); definedOutputs.add(name);
-usedMask |= DSG_OUTPUT_MASK[name] || 0;
-} else if (DSG_INPUTS.includes(name)) {
-errors.push({ message: 'Cannot assign to read-only input ' + name, pos: lhs.pos }); break;
-}
-else {
-assignments[name] = bc; if (!usedOrder.includes(name)) usedOrder.push(name); localVars.add(name);
-}
-} else {
-errors.push({ message: 'Unexpected token', pos: lhs.pos }); break;
-}
-}
-if (!usedOrder.length && !errors.length) errors.push({ message: 'No assignments found', pos: 0 });
-if (errors.length) return { ok: false, errors };
-return {
-ok: true,
-script: {
-assignments,
-used: usedOrder,
-locals: [...localVars],
-usedMask,
-runtime: {
-randomInitialized: false,
-randomState: 0,
-faultMask: 0,
-faultValues: {}
-}
-}
-};
-}
-function evalDSLCompiled(compiled, baseVars = {}, collectLocals = false) {
-if (!compiled) throw new Error('No compiled script to evaluate');
-if (!compiled.runtime) {
-compiled.runtime = { randomInitialized: false, randomState: 0, faultMask: 0, faultValues: {} };
-}
-const runtime = compiled.runtime;
-if (baseVars && Number(baseVars.start)) {
-runtime.randomInitialized = false;
-}
-runtime.faultMask = 0;
-runtime.faultValues = {};
-
-const env = { ...baseVars };
-const out = {};
-const localsSnapshot = collectLocals ? {} : null;
-const toRadians = deg => deg * Math.PI / 180;
-const isFiniteNum = v => typeof v === 'number' && Number.isFinite(v);
-
-const ensureRandomSeeded = () => {
-if (runtime.randomInitialized) return;
-let seed = 0;
-if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-const buf = new Uint32Array(1);
-crypto.getRandomValues(buf);
-seed = buf[0] >>> 0;
-} else {
-seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
-}
-if (seed === 0) {
-const timePart = Math.floor((typeof performance !== 'undefined' ? performance.now() : Date.now())) & 0xFFFFFFFF;
-const radiusPart = Math.floor((Number(baseVars?.radius) || 0) * 65536) & 0xFFFFFFFF;
-seed = ((timePart << 16) ^ radiusPart ^ 0xA5A5A5A5) >>> 0;
-}
-if (seed === 0) seed = 0x9E3779B9; // last-resort non-zero seed
-runtime.randomState = seed >>> 0;
-runtime.randomInitialized = true;
-};
-
-const nextRandomUnit = () => {
-ensureRandomSeeded();
-runtime.randomState = psgRandomNext(runtime.randomState) >>> 0;
-const mantissa = (runtime.randomState >>> 8) & 0x00FFFFFF;
-return mantissa / 16777216;
-};
-
-function run(bc) {
-const st = [];
-for (const ins of bc) {
-switch (ins.op) {
-case DSG_OP.CONST: st.push(ins.v); break;
-case DSG_OP.LOAD: st.push(env[ins.v] ?? 0); break;
-case DSG_OP.ADD: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) + (b ?? 0)); break; }
-case DSG_OP.SUB: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) - (b ?? 0)); break; }
-case DSG_OP.MUL: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) * (b ?? 0)); break; }
-case DSG_OP.DIV: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) / (b ?? 0)); break; }
-case DSG_OP.MOD: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) % (b ?? 0)); break; }
-case DSG_OP.NEG: { const a = st.pop(); st.push(-(a ?? 0)); break; }
-case DSG_OP.SIN: { const a = st.pop(); st.push(Math.sin(toRadians(a ?? 0))); break; }
-case DSG_OP.COS: { const a = st.pop(); st.push(Math.cos(toRadians(a ?? 0))); break; }
-case DSG_OP.TAN: { const a = st.pop(); st.push(Math.tan(toRadians(a ?? 0))); break; }
-case DSG_OP.ABS: { const a = st.pop(); st.push(Math.abs(a ?? 0)); break; }
-case DSG_OP.CLAMP: {
-const maxV = st.pop();
-const minV = st.pop();
-const val = st.pop();
-st.push(Math.min(Math.max(val ?? 0, minV ?? 0), maxV ?? 0));
-break;
-}
-case DSG_OP.SIGN: {
-const a = st.pop() ?? 0;
-let outSign = 0;
-if (a > 1e-6) outSign = 1;
-else if (a < -1e-6) outSign = -1;
-st.push(outSign);
-break;
-}
-case DSG_OP.PINGPONG: {
-const maxV = st.pop();
-const v = st.pop();
-if (!isFiniteNum(maxV) || maxV <= 0) { st.push(0); break; }
-const period = 2 * maxV;
-let t = (v ?? 0) % period;
-if (t < 0) t += period;
-st.push(t <= maxV ? t : (2 * maxV - t));
-break;
-}
-case DSG_OP.MIN: { const b = st.pop(); const a = st.pop(); st.push(Math.min(a ?? 0, b ?? 0)); break; }
-case DSG_OP.MAX: { const b = st.pop(); const a = st.pop(); st.push(Math.max(a ?? 0, b ?? 0)); break; }
-case DSG_OP.POW: { const b = st.pop(); const a = st.pop(); st.push(Math.pow(a ?? 0, b ?? 0)); break; }
-case DSG_OP.SQRT: { const a = st.pop(); st.push(Math.sqrt(a ?? 0)); break; }
-case DSG_OP.EXP: { const a = st.pop(); st.push(Math.exp(a ?? 0)); break; }
-case DSG_OP.FLOOR: { const a = st.pop(); st.push(Math.floor(a ?? 0)); break; }
-case DSG_OP.CEIL: { const a = st.pop(); st.push(Math.ceil(a ?? 0)); break; }
-case DSG_OP.ROUND: { const a = st.pop(); st.push(Math.round(a ?? 0)); break; }
-case DSG_OP.RANDOM: { st.push(nextRandomUnit()); break; }
-case DSG_OP.END: return st.length ? (st[st.length - 1] ?? 0) : 0;
-}
-}
-return st.length ? (st[st.length - 1] ?? 0) : 0;
-}
-
-for (const name of compiled.used) {
-const expr = compiled.assignments[name];
-if (!expr) continue;
-const val = run(expr);
-out[name] = val;
-env[name] = val;
-if (collectLocals && localsSnapshot) {
-for (const l of compiled.locals || []) {
-if (Object.prototype.hasOwnProperty.call(env, l)) localsSnapshot[l] = env[l];
-}
-}
-}
-
-const faultValues = {};
-let faultMask = 0;
-const usedMask = compiled.usedMask ?? 0;
-const currentRadius = Number(baseVars?.radius) || 0;
-const currentAngle = Number(baseVars?.angle) || 0;
-
-if (usedMask & DSG_OUTPUT_MASK.next_radius) {
-if (!isFiniteNum(out.next_radius)) {
-faultMask |= DSG_OUTPUT_MASK.next_radius;
-faultValues.next_radius = out.next_radius;
-}
-}
-if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
-if (!isFiniteNum(out.delta_radius)) {
-faultMask |= DSG_OUTPUT_MASK.delta_radius;
-faultValues.delta_radius = out.delta_radius;
-}
-}
-if (usedMask & DSG_OUTPUT_MASK.next_angle) {
-if (!isFiniteNum(out.next_angle)) {
-faultMask |= DSG_OUTPUT_MASK.next_angle;
-faultValues.next_angle = out.next_angle;
-}
-}
-if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
-if (!isFiniteNum(out.delta_angle)) {
-faultMask |= DSG_OUTPUT_MASK.delta_angle;
-faultValues.delta_angle = out.delta_angle;
-}
-}
-
-let outRadius = currentRadius;
-if (usedMask & DSG_OUTPUT_MASK.next_radius) {
-outRadius = out.next_radius;
-} else if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
-outRadius = currentRadius + out.delta_radius;
-}
-if (!isFiniteNum(outRadius)) {
-if (usedMask & DSG_OUTPUT_MASK.next_radius) {
-faultMask |= DSG_OUTPUT_MASK.next_radius;
-if (faultValues.next_radius == null) faultValues.next_radius = outRadius;
-} else if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
-faultMask |= DSG_OUTPUT_MASK.delta_radius;
-if (faultValues.delta_radius == null) faultValues.delta_radius = outRadius;
-}
-}
-
-let outAngle = currentAngle;
-if (usedMask & DSG_OUTPUT_MASK.next_angle) {
-outAngle = out.next_angle;
-} else if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
-outAngle = currentAngle + out.delta_angle;
-}
-if (!isFiniteNum(outAngle)) {
-if (usedMask & DSG_OUTPUT_MASK.next_angle) {
-faultMask |= DSG_OUTPUT_MASK.next_angle;
-if (faultValues.next_angle == null) faultValues.next_angle = outAngle;
-} else if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
-faultMask |= DSG_OUTPUT_MASK.delta_angle;
-if (faultValues.delta_angle == null) faultValues.delta_angle = outAngle;
-}
-}
-
-runtime.faultMask = faultMask;
-runtime.faultValues = faultValues;
-
-const result = {
-outputs: out,
-faultMask,
-faultValues
-};
-if (collectLocals) result.locals = localsSnapshot;
-return result;
-}
-function formatBytecodeListing(bc) { return bc.map(ins => { if (ins.v != null) return ins.op + ' ' + ins.v; return ins.op; }).join('\n'); }
-
-document.addEventListener('alpine:init', () => {
-const orig = sandGardenApp; window.sandGardenApp = function () {
-const base = orig(); return Object.assign(base, {
-formatBytecode(bc) { return formatBytecodeListing(bc); },
-loadExample(ex) {
-if (!ex) return;
-this.skipNextScriptProcess = true;
-this.scriptSource = ex.code;
-this.lastLoadedScriptCode = this.normalizeScript(ex.code);
-this.activeScriptName = ex.name || null;
-this.scheduleScriptProcess(true);
-setTimeout(() => { this.skipNextScriptProcess = false; }, 0);
-},
-compileScript() {
-const res = compileDSL(this.scriptSource);
-if (!res.ok) {
-this.compileErrors = res.errors.map(e => ({ message: enhanceErrorMessage(e.message), pos: e.pos }));
-this.compiledScript = null;
-this.clearDslFault();
-return false;
-}
-this.compileErrors = [];
-this.compiledScript = res.script;
-this.clearDslFault();
-return true;
-},
-useScriptPattern() { if (!this.compiledScript) return; this.pattern = 11; this.setStatus('Using custom script'); this.regeneratePattern(); },
-simulateScript(options = {}) {
-const { silent = false, force = false } = options;
-if (this.debugStepsEnabled && !force) {
-if (!silent) {
-this.setStatus('Simulation controlled by device debug stream');
-}
-return false;
-}
-if (!this.compiledScript) {
-if (!silent) {
-this.setStatus('Compile first');
-}
-return false;
-}
-if (this.pattern !== 11) this.pattern = 11;
-this.regeneratePattern();
-if (!silent) {
-this.setStatus('Sandscript preview regenerated');
-}
-return true;
-},
-evalCompiledScript(current, startFlag, MAX_R_STEPS, STEPS_PER_A_AXIS_REV) {
-// Standalone evaluator variant (mirrors factory 11 logic) for preview mode.
-if (!this.compiledScript) return current;
-const stepsPerRev = STEPS_PER_A_AXIS_REV;
-const degToSteps = stepsPerRev / 360;
-const stepsPerCm = this.deviceStepsPerCm;
-const maxRadiusCm = (this.scriptMaxRadius != null) ? this.scriptMaxRadius : (this.maxRadiusSteps / stepsPerCm);
-const currentRadiusCm = current.radial / stepsPerCm;
-const currentAngleDeg = (current.angular / stepsPerRev) * 360;
-// Continuous rev tracking (unwrapped angle)
-if (startFlag || this.revPrevAngleDeg == null) {
-this.revPrevAngleDeg = currentAngleDeg;
-this.revUnwrappedAngleDeg = currentAngleDeg; // start from actual angle (prevents jump if not zero)
-// Reset temporal counters for preview mode start
-if (startFlag) { this.dslStepCounter = 0; this.dslStartTimestamp = performance.now(); }
-} else {
-let delta = currentAngleDeg - this.revPrevAngleDeg;
-if (delta > 180) delta -= 360; else if (delta < -180) delta += 360;
-this.revUnwrappedAngleDeg += delta;
-this.revPrevAngleDeg = currentAngleDeg;
-}
-const rev = this.revUnwrappedAngleDeg / 360;
-const timeMs = this.dslStartTimestamp != null ? (performance.now() - this.dslStartTimestamp) : 0;
-const vars = { radius: currentRadiusCm, angle: currentAngleDeg, start: startFlag ? 1 : 0, rev, steps: this.dslStepCounter, time: timeMs };
-if (startFlag) {
-this.clearDslFault();
-} else if (this.dslFaultActive) {
-return current;
-}
-const res = evalDSLCompiled(this.compiledScript, vars, true);
-const values = res.outputs || {};
-const locals = res.locals || {};
-this.lastDSLInputs = { ...vars };
-this.lastDSLOutputs = { ...values };
-this.lastDSLLocals = { ...locals };
-if (Array.isArray(this.dslInputsSeq)) {
-this.dslInputsSeq.push({ ...vars });
-if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
-}
-if (Array.isArray(this.dslOutputsSeq)) {
-this.dslOutputsSeq.push({ ...values });
-if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
-}
-if (Array.isArray(this.dslLocalsSeq)) {
-this.dslLocalsSeq.push({ ...locals });
-if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
-}
-if (res.faultMask) {
-this.handleDslFault(res);
-return current;
-}
-this.clearDslFault();
-this.dslStepCounter++;
-function has(v) { return v != null && isFinite(v); }
-let outRadiusCm = currentRadiusCm;
-if (has(values.next_radius)) outRadiusCm = values.next_radius; else if (has(values.delta_radius)) outRadiusCm = currentRadiusCm + values.delta_radius;
-let outAngleDeg = currentAngleDeg;
-if (has(values.next_angle)) outAngleDeg = values.next_angle; else if (has(values.delta_angle)) outAngleDeg = currentAngleDeg + values.delta_angle;
-// Mirror mode: reflect angle every other revolution (odd rev index flips direction across revolution midpoint)
-if (this.mirrorMode) {
-const revIndex = Math.floor(vars.rev);
-if (revIndex % 2 === 1) {
-const revStart = revIndex * 360;
-const offset = outAngleDeg - revStart;
-outAngleDeg = revStart + (360 - offset);
-}
-}
-outRadiusCm = Math.max(0, Math.min(maxRadiusCm, outRadiusCm));
-outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
-const radialSteps = Math.max(0, Math.min(MAX_R_STEPS, Math.round(outRadiusCm * stepsPerCm)));
-const angleSteps = Math.round(outAngleDeg * degToSteps) % stepsPerRev;
-return { radial: radialSteps, angular: angleSteps };
-}
-});
-};
-});
-
-function enhanceErrorMessage(msg) {
-if (/used before it is assigned/.test(msg)) return msg + ' (move its assignment above or reference the input variable instead).';
-if (/Invalid assignment target/.test(msg)) return msg + ' (allowed: next_radius, next_angle, delta_radius, delta_angle).';
-return msg;
-}
-</script></body></html>
+          }
+        ],
+        mirrorMode: false, // new mirror mode toggle (UI control can set this)
+        showDSLDetails: false,
+        lastDSLInputs: null,
+        lastDSLOutputs: null,
+        dslFault: null,
+        dslFaultActive: false,
+        lastFaultMessage: null,
+        lastDSLLocals: null,
+        // DSL temporal counters
+        dslStepCounter: 0, // increments per DSL evaluation (pattern 11)
+        dslStartTimestamp: null, // performance.now() when DSL pattern generation started
+        // Sequences for per-step DSL inputs/outputs (pattern 11 only)
+        dslInputsSeq: [],
+        dslOutputsSeq: [],
+        dslLocalsSeq: [],
+        scriptUploadInProgress: false,
+        scriptUploadProgress: 0,
+        scriptUploadStatus: '',
+        scriptTargetSlot: '',
+        maxScriptBytes: 768,
+        preferredScriptChunkSize: null,
+        scriptWriteModePreference: 'withResponse',
+        fmtNum(n) { if (n == null || !isFinite(n)) return '-'; return (Math.abs(n) < 0.001 ? n.toExponential(2) : n.toFixed(3)).replace(/\.0+$/, '').replace(/(\.[0-9]*?)0+$/, '$1'); },
+        formatClock(ts) {
+          if (!ts) return '-';
+          try {
+            return new Date(ts).toLocaleTimeString();
+          } catch (_) {
+            return '-';
+          }
+        },
+        // Drawing
+        canvas: null, ctx: null, traySize: 0, points: [],
+        // Ball & trench visualization (direct stamping; no offscreen accumulation)
+        ballRadiusPx: 6, trenchDepth: 1.0, trenchSoftness: 8,
+        lastHeadX: null, lastHeadY: null, trenchStampSpacingFactor: 0.55, // spacing = ballRadiusPx * factor
+        lastTrenchX: null, lastTrenchY: null, // last position where we drew trench TO
+        trailInitialized: false, ballPrevImage: null, ballPrevBox: null,
+        // simulation timing (step based - on-the-fly generation)
+        simulationRunning: false, linearSpeed: 300, lastTs: 0,
+        wasSimulationRunningBeforeHide: false, // track pre-visibility state for auto-resume
+        // Pattern generator state (produces one step at a time)
+        patternStepFn: null, // current pattern's step generator function
+        currentPolarState: { radial: 0, angular: 0 }, // current position in steps
+        targetPolarState: { radial: 0, angular: 0 }, // next target position in steps
+        animationProgress: 0, // 0-1 progress from current to target
+        isRestarting: true, // flag for pattern restart
+        lastRenderedProgress: 0, // track last rendered progress to draw trenches incrementally
+        accumulatedTrenchDistance: 0, // accumulated distance since last trench stamp
+        // path accumulation
+        pathCanvas: null, pathCtx: null, lastDrawnSegmentIndex: 0,
+        init() {
+          this.canvas = this.$refs.canvas;
+          this.ctx = this.canvas.getContext('2d');
+          this.debugCanvas = this.$refs.debugCanvas || null;
+          if (this.debugCanvas) {
+            this.debugCtx = this.debugCanvas.getContext('2d');
+          }
+          this.scriptMaxRadius = this.maxRadiusSteps / this.deviceStepsPerCm;
+          this.resizeCanvas();
+          window.addEventListener('resize', () => this.resizeCanvas());
+          // Auto-pause when tab hidden (will implement logic in onVisibilityChange)
+          document.addEventListener('visibilitychange', () => this.onVisibilityChange());
+          this.regeneratePattern();
+          this.setupScriptProcessing();
+          this.scheduleScriptProcess(true);
+          // Start dynamic favicon updater
+          this.startFaviconUpdater();
+          this.log('UI initialized');
+
+          // Auto-connect if page is served from device (not file://)
+          this.autoConnectIfServed();
+        },
+        autoConnectIfServed() {
+          // Check if page is served via HTTP (not opened as local file)
+          const isServedViaHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+          if (isServedViaHttp && window.location.hostname) {
+            // Page is served from a web server - auto-connect to this host
+            this.deviceHost = window.location.hostname;
+            this.log(`Auto-connecting to ${this.deviceHost} (served from device)`);
+
+            // Small delay to allow UI to fully initialize
+            setTimeout(async () => {
+              try {
+                await this.connect();
+                if (!this.connected) {
+                  this.log('Auto-connect failed - check device status and retry manually if needed');
+                }
+              } catch (err) {
+                this.log(`Auto-connect error: ${err.message}`);
+                this.setStatus('Auto-connect failed - please connect manually');
+              }
+            }, 500);
+          } else {
+            this.log('Opened as local file - manual connection required');
+          }
+        },
+        startFaviconUpdater() {
+          // Update favicon every 3 seconds with current canvas state
+          this.faviconUpdateInterval = setInterval(() => {
+            this.updateFavicon();
+          }, 3000);
+          // Initial update after a brief delay to ensure canvas is rendered
+          setTimeout(() => this.updateFavicon(), 500);
+        },
+        updateFavicon() {
+          if (!this.canvas) return;
+
+          try {
+            // Create a temporary canvas for the favicon
+            const faviconSize = 64; // Standard favicon size
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = faviconSize;
+            tempCanvas.height = faviconSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.filter = 'brightness(60%) contrast(7)';
+
+            // Draw the main canvas scaled down to favicon size
+            tempCtx.drawImage(this.canvas, 0, 0, faviconSize, faviconSize);
+
+            // Convert to data URL (use JPEG for smaller size, with good quality)
+            const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.85);
+
+            // Update the favicon link element
+            let favicon = document.getElementById('favicon');
+            if (!favicon) {
+              favicon = document.createElement('link');
+              favicon.id = 'favicon';
+              favicon.rel = 'icon';
+              favicon.type = 'image/jpeg';
+              document.head.appendChild(favicon);
+            }
+            favicon.href = dataUrl;
+          } catch (err) {
+            // Silent fail - canvas might not be ready or have cross-origin issues
+            console.warn('Favicon update failed:', err);
+          }
+        },
+        onVisibilityChange() {
+          // Auto-pause simulation when tab becomes hidden to avoid large time deltas on return
+          if (document.hidden) {
+            if (this.simulationRunning) {
+              this.wasSimulationRunningBeforeHide = true;
+              this.simulationRunning = false;
+              // Reset timestamp so resume does not accumulate background dt
+              this.lastTs = 0;
+            }
+          } else {
+            if (this.wasSimulationRunningBeforeHide) {
+              this.wasSimulationRunningBeforeHide = false;
+              this.lastTs = 0; // ensure fresh timing
+              this.simulationRunning = true;
+              requestAnimationFrame(this.animateStep.bind(this));
+            }
+          }
+        },
+        resizeCanvas() {
+          const rect = this.$refs.tray.getBoundingClientRect();
+          const size = Math.min(rect.width, rect.height);
+          this.canvas.width = size; this.canvas.height = size; this.traySize = size;
+          if (this.debugCanvas) {
+            this.debugCanvas.width = size;
+            this.debugCanvas.height = size;
+          }
+          this.ensurePathBuffer();
+          this.clearPath();
+          this.renderFrame();
+          // Reposition screws so they stay outside the circular tray
+          try { this.positionScrews(); } catch (_) { }
+          if (this.debugCtx) {
+            if (this.debugPoints.length) {
+              this.redrawDebugTrail();
+            } else {
+              this.debugCtx.clearRect(0, 0, size, size);
+            }
+          }
+        },
+
+        // Position screw elements (.sg-screw) around the tray so they don't overlap the circular
+        // visualization. Uses the tray bounding box and places screws at trayRadius + gap.
+        positionScrews() {
+          try {
+            const tray = this.$refs.tray;
+            if (!tray) return;
+            const parent = tray.parentElement; // wrapper with position:relative
+            if (!parent) return;
+            const screws = parent.querySelectorAll('.sg-screw');
+            if (!screws || !screws.length) return;
+            const trayRect = tray.getBoundingClientRect();
+            const parentRect = parent.getBoundingClientRect();
+            // center relative to parent (px)
+            const cx = (trayRect.left - parentRect.left) + trayRect.width / 2;
+            const cy = (trayRect.top - parentRect.top) + trayRect.height / 2;
+            // tray visual radius in px (uses same factor as canvas drawing)
+            const trayRadiusPx = Math.min(trayRect.width, trayRect.height) * this.trayRadiusFactor;
+            // gap to ensure screws sit outside the circular tray; scales with tray size
+            const gap = Math.max(12, Math.round(Math.min(trayRect.width, trayRect.height) * 0.06));
+            const placeR = trayRadiusPx + gap;
+            const count = screws.length;
+            for (let i = 0; i < count; i++) {
+              const angleDeg = -90 + (360 * i / count); // start at top and go clockwise
+              const a = angleDeg * Math.PI / 180;
+              const x = Math.round(cx + placeR * Math.cos(a));
+              const y = Math.round(cy + placeR * Math.sin(a));
+              const el = screws[i];
+              // set pixel positions relative to parent; keep translate(-50%,-50%) for centering
+              el.style.left = x + 'px';
+              el.style.top = y + 'px';
+              el.style.animationDelay = (i * 50) + 'ms'; // staggered fade-in
+              el.style.animationPlayState = 'running';
+            }
+          } catch (err) {
+            // non-fatal
+            console.warn('positionScrews error', err);
+          }
+        },
+        log(msg) {
+          const t = new Date().toLocaleTimeString();
+          this.logs.push(`[${t}] ${msg}`);
+          this.$nextTick(() => {
+            const el = this.$refs.log; el.scrollTop = el.scrollHeight;
+          });
+        },
+        setStatus(s) { this.statusMessage = s; this.log(s); },
+        faultMaskToNames(mask) {
+          if (!mask) return [];
+          const names = [];
+          for (const [name, bit] of Object.entries(DSG_OUTPUT_MASK)) {
+            if ((mask & bit) !== 0) names.push(name);
+          }
+          return names;
+        },
+        formatFaultValue(v) {
+          if (typeof v !== 'number') return '-';
+          if (Number.isNaN(v)) return 'NaN';
+          if (v === Infinity) return 'Infinity';
+          if (v === -Infinity) return '-Infinity';
+          if (!Number.isFinite(v)) return '-';
+          return this.fmtNum(v);
+        },
+        handleDslFault(result) {
+          if (!result) return;
+          const mask = result.faultMask >>> 0;
+          const names = this.faultMaskToNames(mask);
+          const faultValues = {};
+          if (result.faultValues) {
+            for (const [key, value] of Object.entries(result.faultValues)) {
+              faultValues[key] = value;
+            }
+          }
+          for (const name of names) {
+            if (!(name in faultValues) && result.outputs && Object.prototype.hasOwnProperty.call(result.outputs, name)) {
+              faultValues[name] = result.outputs[name];
+            }
+          }
+          this.dslFault = {
+            mask,
+            names,
+            values: faultValues,
+            outputs: { ...(result.outputs || {}) }
+          };
+          this.dslFaultActive = true;
+          if (this.simulationRunning) {
+            this.simulationRunning = false;
+          }
+          this.isRestarting = true;
+          if (this.compiledScript && this.compiledScript.runtime) {
+            this.compiledScript.runtime.faultMask = mask;
+            this.compiledScript.runtime.faultValues = { ...faultValues };
+          }
+          const summary = names.length ? names.join(', ') : 'unknown output';
+          if (!this.lastFaultMessage || this.lastFaultMessage.mask !== mask) {
+            this.setStatus('Sandscript fault (' + summary + ')');
+            this.lastFaultMessage = { mask, summary };
+          }
+        },
+        clearDslFault() {
+          if (!this.dslFaultActive && !this.dslFault) return;
+          this.dslFaultActive = false;
+          this.dslFault = null;
+          this.lastFaultMessage = null;
+          if (this.compiledScript && this.compiledScript.runtime) {
+            this.compiledScript.runtime.faultMask = 0;
+            this.compiledScript.runtime.faultValues = {};
+          }
+        },
+        normalizeScript(code) {
+          if (code == null) return '';
+          return code.replace(/\r\n?/g, '\n').trim();
+        },
+        findExampleByCode(code) {
+          const normalized = this.normalizeScript(code);
+          if (!normalized) return null;
+          if (!Array.isArray(this.exampleScripts)) return null;
+          return this.exampleScripts.find(ex => this.normalizeScript(ex.code) === normalized) || null;
+        },
+        setupScriptProcessing() {
+          this.lastLoadedScriptCode = this.normalizeScript(this.scriptSource);
+          const match = this.findExampleByCode(this.scriptSource);
+          this.activeScriptName = match ? match.name : null;
+          this.$watch('scriptSource', (value) => {
+            if (this.skipNextScriptProcess) {
+              this.skipNextScriptProcess = false;
+              return;
+            }
+            const normalized = this.normalizeScript(value);
+            if (this.lastLoadedScriptCode) {
+              if (normalized === this.lastLoadedScriptCode) {
+                const matchAgain = this.findExampleByCode(value);
+                if (matchAgain) {
+                  this.activeScriptName = matchAgain.name;
+                }
+              } else {
+                this.activeScriptName = null;
+              }
+            }
+            this.scheduleScriptProcess();
+          });
+        },
+        scheduleScriptProcess(immediate = false) {
+          if (this.scriptProcessTimer) {
+            clearTimeout(this.scriptProcessTimer);
+            this.scriptProcessTimer = null;
+          }
+          if (immediate) {
+            this.runScriptProcess();
+          } else {
+            const delay = Number.isFinite(this.scriptProcessDelay) ? this.scriptProcessDelay : 300;
+            this.scriptProcessTimer = setTimeout(() => {
+              this.scriptProcessTimer = null;
+              this.runScriptProcess();
+            }, delay);
+          }
+        },
+        runScriptProcess() {
+          const ok = this.compileScript();
+          if (ok) {
+            this.simulateScript({ silent: true, force: true });
+          }
+        },
+        filteredExampleScripts() {
+          const list = Array.isArray(this.exampleScripts) ? this.exampleScripts : [];
+          if (!list.length) return [];
+          const term = (this.scriptLibraryFilter || '').trim().toLowerCase();
+          const working = term
+            ? list.filter(ex => {
+              const name = (ex.name || '').toLowerCase();
+              const desc = (ex.description || '').toLowerCase();
+              return name.includes(term) || desc.includes(term);
+            })
+            : list.slice();
+          return working.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        },
+        async connect() {
+          if (this.connected || this.connecting) return;
+          if (!this.deviceHost || this.deviceHost.trim() === '') {
+            this.setStatus('Please enter device hostname or IP');
+            return;
+          }
+
+          this.connecting = true;
+          this.baseUrl = `http://${this.deviceHost}`;
+          this.setStatus('Connecting to ' + this.baseUrl + '...');
+
+          try {
+            // Test connection and get initial state
+            const response = await fetch(`${this.baseUrl}/api/state`);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const state = await response.json();
+            this.log('Initial state received: ' + JSON.stringify(state));
+
+            // Update state from server
+            if (state.speedMultiplier !== undefined) this.speedMultiplier = state.speedMultiplier;
+            if (state.pattern !== undefined) this.pattern = state.pattern;
+            if (state.autoMode !== undefined) this.autoMode = state.autoMode;
+            if (state.running !== undefined) this.running = state.running;
+            if (state.ledEffect !== undefined) this.ledEffect = state.ledEffect + 1; // Convert 0-based to 1-based
+            if (state.ledColorR !== undefined && state.ledColorG !== undefined && state.ledColorB !== undefined) {
+              this.ledColor = { r: state.ledColorR, g: state.ledColorG, b: state.ledColorB };
+            }
+            if (state.ledBrightness !== undefined) this.ledBrightness = state.ledBrightness;
+
+            // Setup Server-Sent Events for real-time updates
+            this.setupSSE();
+
+            this.debugStepsEnabled = false;
+            this.clearDebugTrail();
+            this.lastDebugStep = null;
+            this.connected = true;
+            this.setStatus('Connected to ' + this.deviceHost);
+            this.log('HTTP connection established');
+          } catch (err) {
+            this.setStatus('Connection failed: ' + err.message);
+            this.log('Error: ' + err.message);
+            this.baseUrl = '';
+          } finally {
+            this.connecting = false;
+          }
+        },
+        setupSSE() {
+          // Close existing connection if any
+          if (this.eventSource) {
+            this.eventSource.close();
+          }
+
+          // Create new EventSource for Server-Sent Events
+          this.eventSource = new EventSource(`${this.baseUrl}/api/events`);
+
+          this.eventSource.addEventListener('speed', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.speed !== undefined) {
+              this.speedMultiplier = data.speed;
+              this.log('Speed->' + data.speed.toFixed(3));
+            }
+          });
+
+          this.eventSource.addEventListener('pattern', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.pattern !== undefined) {
+              this.pattern = data.pattern;
+              this.regeneratePattern();
+              this.log('Pattern->' + data.pattern);
+            }
+          });
+
+          this.eventSource.addEventListener('mode', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.mode !== undefined) {
+              this.autoMode = data.mode === 1;
+              this.log('Mode->' + (this.autoMode ? 'Auto' : 'Manual'));
+            }
+          });
+
+          this.eventSource.addEventListener('run', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.run !== undefined) {
+              this.running = data.run === 1;
+              this.log('Run->' + (this.running ? 'Running' : 'Stopped'));
+            }
+          });
+
+          this.eventSource.addEventListener('ledEffect', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.ledEffect !== undefined) {
+              this.ledEffect = data.ledEffect + 1; // Convert 0-based to 1-based
+              this.log('LED Effect->' + this.ledEffect + ' (' + this.ledEffectMeta[data.ledEffect].name + ')');
+            }
+          });
+
+          this.eventSource.addEventListener('ledColor', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.r !== undefined && data.g !== undefined && data.b !== undefined) {
+              this.ledColor = { r: data.r, g: data.g, b: data.b };
+              this.log('LED Color->RGB(' + data.r + ',' + data.g + ',' + data.b + ')');
+            }
+          });
+
+          this.eventSource.addEventListener('ledBrightness', (e) => {
+            const data = JSON.parse(e.data);
+            if (data.ledBrightness !== undefined) {
+              this.ledBrightness = data.ledBrightness;
+              this.log('LED Brightness->' + data.ledBrightness);
+            }
+          });
+
+          this.eventSource.addEventListener('status', (e) => {
+            const txt = e.data;
+            if (txt.startsWith('[DEBUG] STEPS')) {
+              if (!txt.includes('ERR')) {
+                const modeMatch = txt.match(/\b(ON|OFF)\b/i);
+                if (modeMatch) {
+                  const enable = modeMatch[1].toUpperCase() === 'ON';
+                  if (enable && !this.debugStepsEnabled) {
+                    this.clearDebugTrail();
+                  }
+                  this.debugStepsEnabled = enable;
+                }
+              } else {
+                this.debugStepsEnabled = false;
+              }
+            }
+            this.setStatus(txt);
+          });
+
+          this.eventSource.addEventListener('telemetry', (e) => {
+            const txt = e.data;
+            // Handle telemetry messages (same logic as before)
+            if (txt.startsWith('JOY ')) {
+              const parts = Object.fromEntries(txt.substring(4).split(/\s+/).map(kv => kv.split('=')));
+              const a = parseInt(parts.a) || 0; const r = parseInt(parts.r) || 0; const mag = parseInt(parts.mag) || Math.max(Math.abs(a), Math.abs(r));
+              this.joy = { a, r, mag };
+              this.log(`JOY a=${a} r=${r} mag=${mag}`);
+            } else if (txt.startsWith('STATE ')) {
+              const parts = Object.fromEntries(txt.substring(6).split(/\s+/).map(kv => kv.split('=')));
+              const pat = parseInt(parts.pat); const auto = parts.auto === '1'; const run = parts.run === '1'; const brt = parseInt(parts.brt);
+              if (!isNaN(pat) && this.lastState.pat !== pat) { this.lastState.pat = pat; }
+              if (auto !== undefined && this.lastState.auto !== auto) { this.lastState.auto = auto; }
+              if (run !== undefined && this.lastState.run !== run) { this.lastState.run = run; }
+              if (!isNaN(brt) && this.lastState.brt !== brt) { this.lastState.brt = brt; }
+              this.log(txt);
+            } else if (txt.startsWith('STEP ')) {
+              this.handleStepTelemetry(txt);
+            } else if (txt === 'HB') {
+              this.heartbeatCount++;
+              this.lastHeartbeat = Date.now();
+              this.heartbeatActive = true;
+              setTimeout(() => { this.heartbeatActive = false; }, 800);
+            }
+          });
+
+          this.eventSource.addEventListener('state', (e) => {
+            // Handle initial state broadcast to new clients
+            const data = JSON.parse(e.data);
+            if (data.speed !== undefined) this.speedMultiplier = data.speed;
+            if (data.pattern !== undefined) this.pattern = data.pattern;
+            if (data.mode !== undefined) this.autoMode = data.mode === 1;
+            if (data.run !== undefined) this.running = data.run === 1;
+            if (data.ledEffect !== undefined) this.ledEffect = data.ledEffect + 1;
+            if (data.ledBrightness !== undefined) this.ledBrightness = data.ledBrightness;
+          });
+
+          this.eventSource.onerror = (err) => {
+            this.log('SSE error: Connection lost');
+            if (this.connected) {
+              this.onDisconnect();
+            }
+          };
+        },
+        disconnect() {
+          if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+          }
+          this.connected = false;
+          this.baseUrl = '';
+          this.setStatus('Disconnected');
+          this.log('Disconnected from device');
+        },
+        handleStepTelemetry(line) {
+          const payload = line.length > 5 ? line.substring(5) : '';
+          const kv = this.parseTelemetryKV(payload);
+          const toInt = v => {
+            if (v == null) return null;
+            const n = Number.parseInt(v, 10);
+            return Number.isFinite(n) ? n : null;
+          };
+          const toFloat = v => {
+            if (v == null) return null;
+            const n = Number.parseFloat(v);
+            return Number.isFinite(n) ? n : null;
+          };
+
+          const actualR = toInt(kv.cr ?? kv.r ?? kv.radial ?? kv.rs);
+          const actualA = toInt(kv.ca ?? kv.a ?? kv.angular ?? kv.as);
+          if (actualR == null || actualA == null) {
+            return;
+          }
+
+          const plannedR = toInt(kv.tr ?? kv.pr ?? kv.planR);
+          const plannedA = toInt(kv.ta ?? kv.pa ?? kv.planA);
+          const idxRaw = toInt(kv.idx);
+          const idx = idxRaw != null ? idxRaw : (this.debugPoints.length ? this.debugPoints[this.debugPoints.length - 1].idx + 1 : 1);
+          const restartFlag = kv.start === '1' || kv.start === 'true' || kv.start === 'yes';
+          const patternId = toInt(kv.pat);
+          const autoFlag = kv.auto == null ? null : (kv.auto === '1' || kv.auto.toLowerCase?.() === 'true');
+          const runFlag = kv.run == null ? null : (kv.run === '1' || kv.run.toLowerCase?.() === 'true');
+
+          if (restartFlag && this.debugPoints.length) {
+            this.clearDebugTrail();
+          }
+
+          const mmPerStep = this.deviceStepsPerMm > 0 ? (1 / this.deviceStepsPerMm) : 0;
+          let radiusMm = toFloat(kv.mm ?? kv.rm);
+          if (radiusMm == null) {
+            radiusMm = mmPerStep ? actualR * mmPerStep : null;
+          }
+          let angleDeg = toFloat(kv.deg ?? kv.ad);
+          if (angleDeg == null) {
+            angleDeg = (this.stepsPerARev > 0) ? (actualA / this.stepsPerARev) * 360 : null;
+          }
+          let xMm = toFloat(kv.x);
+          let yMm = toFloat(kv.y);
+          if ((xMm == null || yMm == null) && radiusMm != null && angleDeg != null) {
+            const thetaRad = angleDeg * Math.PI / 180;
+            xMm = radiusMm * Math.cos(thetaRad);
+            yMm = radiusMm * Math.sin(thetaRad);
+          }
+
+          const plannedRadiusMm = (plannedR != null && mmPerStep) ? plannedR * mmPerStep : null;
+          const plannedAngleDeg = (plannedA != null && this.stepsPerARev > 0) ? (plannedA / this.stepsPerARev) * 360 : null;
+          const deltaRadialSteps = (plannedR != null) ? actualR - plannedR : null;
+          const deltaAngularSteps = (plannedA != null) ? actualA - plannedA : null;
+          const deltaRadiusMm = (deltaRadialSteps != null && mmPerStep) ? deltaRadialSteps * mmPerStep : null;
+
+          const dslRadiusCm = toFloat(kv.dslrcm);
+          const dslAngleDeg = toFloat(kv.dsladeg);
+          const dslRev = toFloat(kv.dslrev);
+          const dslSteps = toInt(kv.dslsteps);
+          const dslTime = toInt(kv.dsltime);
+          let dslStartFlag = null;
+          if (kv.dslstart != null) {
+            const raw = String(kv.dslstart).toLowerCase();
+            dslStartFlag = (raw === '1' || raw === 'true' || raw === 'yes');
+          }
+
+          const entry = {
+            idx,
+            radialSteps: actualR,
+            angularSteps: actualA,
+            plannedRadial: plannedR,
+            plannedAngular: plannedA,
+            radiusMm,
+            angleDeg,
+            xMm,
+            yMm,
+            start: restartFlag,
+            pattern: patternId,
+            auto: autoFlag,
+            running: runFlag,
+            tag: kv.tag || null,
+            timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            receivedAt: Date.now(),
+            plannedRadiusMm,
+            plannedAngleDeg,
+            deltaRadialSteps,
+            deltaAngularSteps,
+            deltaRadiusMm,
+            mmPerStep,
+            displayRadialSteps: plannedR != null ? plannedR : actualR,
+            displayAngularSteps: plannedA != null ? plannedA : actualA,
+            dslInputs: (dslRadiusCm != null || dslAngleDeg != null || dslRev != null || dslSteps != null || dslTime != null || dslStartFlag != null) ? {
+              radiusCm: dslRadiusCm,
+              angleDeg: dslAngleDeg,
+              rev: dslRev,
+              steps: dslSteps,
+              timeMs: dslTime,
+              start: dslStartFlag
+            } : null
+          };
+
+          if (!this.debugStepsEnabled) {
+            this.debugStepsEnabled = true;
+          }
+
+          this.processDeviceScriptDebug(entry);
+          this.pushDebugPoint(entry);
+          this.lastDebugStep = entry;
+
+          if (patternId != null && !Number.isNaN(patternId) && patternId !== this.pattern) {
+            this.pattern = patternId;
+          }
+          if (autoFlag != null && autoFlag !== this.autoMode) {
+            this.autoMode = autoFlag;
+          }
+          if (runFlag != null && runFlag !== this.running) {
+            this.running = runFlag;
+          }
+          this.lastState = {
+            pat: patternId != null ? patternId : (this.lastState?.pat ?? null),
+            auto: autoFlag != null ? autoFlag : (this.lastState?.auto ?? null),
+            run: runFlag != null ? runFlag : (this.lastState?.run ?? null),
+            brt: this.lastState?.brt ?? null
+          };
+        },
+        parseTelemetryKV(payload) {
+          if (!payload || typeof payload !== 'string') return {};
+          const out = {};
+          const tokens = payload.trim().split(/\s+/);
+          for (const token of tokens) {
+            if (!token) continue;
+            const eq = token.indexOf('=');
+            if (eq === -1) {
+              out[token] = true;
+            } else {
+              const key = token.substring(0, eq);
+              const value = token.substring(eq + 1);
+              out[key] = value;
+            }
+          }
+          return out;
+        },
+        pushDebugPoint(entry) {
+          this.debugPoints.push(entry);
+          if (this.debugPoints.length > this.debugMaxPoints) {
+            const excess = this.debugPoints.length - this.debugMaxPoints;
+            this.debugPoints.splice(0, excess);
+          }
+          if (this.debugCtx && this.debugCanvas) {
+            this.redrawDebugTrail();
+          }
+        },
+        redrawDebugTrail() {
+          if (!this.debugCtx || !this.debugCanvas) return;
+          const ctx = this.debugCtx;
+          const width = this.debugCanvas.width;
+          const height = this.debugCanvas.height;
+          ctx.clearRect(0, 0, width, height);
+          this.debugLastCanvasPoint = null;
+
+          if (!this.debugPoints.length) {
+            return;
+          }
+
+          if (this.debugPoints.length) {
+            ctx.save();
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(255, 122, 0, 0.85)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            let segmentOpen = false;
+            for (const entry of this.debugPoints) {
+              const radialSteps = Number.isFinite(entry.displayRadialSteps) ? entry.displayRadialSteps : entry.radialSteps;
+              const angularSteps = Number.isFinite(entry.displayAngularSteps) ? entry.displayAngularSteps : entry.angularSteps;
+              const pt = this.stepsToCanvas(radialSteps, angularSteps);
+              if (!pt) continue;
+              if (entry.start || !segmentOpen) {
+                ctx.moveTo(pt.x, pt.y);
+                segmentOpen = true;
+              } else {
+                ctx.lineTo(pt.x, pt.y);
+              }
+              this.debugLastCanvasPoint = pt;
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // mark restarts
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+            for (const entry of this.debugPoints) {
+              if (!entry.start) continue;
+              const radialSteps = Number.isFinite(entry.displayRadialSteps) ? entry.displayRadialSteps : entry.radialSteps;
+              const angularSteps = Number.isFinite(entry.displayAngularSteps) ? entry.displayAngularSteps : entry.angularSteps;
+              const pt = this.stepsToCanvas(radialSteps, angularSteps);
+              if (!pt) continue;
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, 2.1, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+
+            // highlight latest point
+            const last = this.debugPoints[this.debugPoints.length - 1];
+            if (last) {
+              const radialSteps = Number.isFinite(last.displayRadialSteps) ? last.displayRadialSteps : last.radialSteps;
+              const angularSteps = Number.isFinite(last.displayAngularSteps) ? last.displayAngularSteps : last.angularSteps;
+              const head = this.stepsToCanvas(radialSteps, angularSteps);
+              if (head) {
+                ctx.save();
+                const color = last.mismatchRadial || last.mismatchAngular ? 'rgba(255, 80, 80, 0.95)' : 'rgba(255, 255, 255, 0.92)';
+                ctx.fillStyle = color;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.55)';
+                ctx.shadowBlur = 6;
+                ctx.beginPath();
+                ctx.arc(head.x, head.y, 3.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                this.debugLastCanvasPoint = head;
+              }
+            }
+          }
+        },
+        processDeviceScriptDebug(entry) {
+          if (!this.debugStepsEnabled) return;
+          if (!entry || entry.pattern !== this.scriptPatternId) return;
+          if (!entry.dslInputs || !this.compiledScript) return;
+
+          const inputs = entry.dslInputs;
+          const hasFinite = v => v != null && isFinite(v);
+          if (!hasFinite(inputs.radiusCm) || !hasFinite(inputs.angleDeg)) {
+            return;
+          }
+
+          const vars = {
+            radius: inputs.radiusCm,
+            angle: inputs.angleDeg,
+            start: inputs.start === true ? 1 : 0,
+            rev: hasFinite(inputs.rev) ? inputs.rev : 0,
+            steps: hasFinite(inputs.steps) ? inputs.steps : 0,
+            time: hasFinite(inputs.timeMs) ? inputs.timeMs : 0
+          };
+
+          let evalResult;
+          try {
+            evalResult = evalDSLCompiled(this.compiledScript, vars, true);
+          } catch (err) {
+            entry.simulationError = err && err.message ? err.message : String(err);
+            return;
+          }
+
+          const outputs = evalResult?.outputs || {};
+          const locals = evalResult?.locals || {};
+          this.lastDSLInputs = { ...vars };
+          this.lastDSLOutputs = { ...outputs };
+          this.lastDSLLocals = { ...locals };
+          if (Array.isArray(this.dslInputsSeq)) {
+            this.dslInputsSeq.push({ ...vars });
+            if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
+          }
+          if (Array.isArray(this.dslOutputsSeq)) {
+            this.dslOutputsSeq.push({ ...outputs });
+            if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
+          }
+          if (Array.isArray(this.dslLocalsSeq)) {
+            this.dslLocalsSeq.push({ ...locals });
+            if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
+          }
+
+          if (evalResult?.faultMask) {
+            const names = this.faultMaskToNames(evalResult.faultMask);
+            entry.simulationError = 'Fault: ' + (names.length ? names.join(', ') : evalResult.faultMask);
+            this.handleDslFault(evalResult);
+            return;
+          }
+          this.clearDslFault();
+
+          const stepsPerCm = this.deviceStepsPerCm;
+          const stepsPerRev = this.stepsPerARev;
+          const maxRadiusCm = this.maxRadiusSteps / stepsPerCm;
+          const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+
+          let outRadiusCm = vars.radius;
+          if (hasFinite(outputs.next_radius)) outRadiusCm = outputs.next_radius;
+          else if (hasFinite(outputs.delta_radius)) outRadiusCm = vars.radius + outputs.delta_radius;
+
+          let outAngleDeg = vars.angle;
+          if (hasFinite(outputs.next_angle)) outAngleDeg = outputs.next_angle;
+          else if (hasFinite(outputs.delta_angle)) outAngleDeg = vars.angle + outputs.delta_angle;
+
+          outRadiusCm = clamp(outRadiusCm, 0, maxRadiusCm);
+          outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
+
+          const radialSteps = Math.round(outRadiusCm * stepsPerCm);
+          let angularSteps = Math.round((outAngleDeg / 360) * stepsPerRev);
+          if (stepsPerRev > 0) {
+            angularSteps = ((angularSteps % stepsPerRev) + stepsPerRev) % stepsPerRev;
+          }
+
+          const mmPerStepDevice = this.deviceStepsPerMm > 0 ? (1 / this.deviceStepsPerMm) : 0;
+          const simulatedRadiusMm = mmPerStepDevice ? radialSteps * mmPerStepDevice : null;
+
+          entry.simulatedRadialSteps = radialSteps;
+          entry.simulatedAngularSteps = angularSteps;
+          entry.simulatedRadiusMm = simulatedRadiusMm;
+          entry.simulatedAngleDeg = outAngleDeg;
+          entry.simulationError = null;
+
+          const tolerance = this.deviceSimToleranceSteps;
+          if (hasFinite(entry.plannedRadial)) {
+            const diffR = Math.abs(radialSteps - entry.plannedRadial);
+            entry.mismatchRadial = diffR > tolerance;
+          } else {
+            entry.mismatchRadial = false;
+          }
+          if (hasFinite(entry.plannedAngular)) {
+            let diffA = Math.abs(angularSteps - entry.plannedAngular);
+            if (stepsPerRev > 0) {
+              diffA = diffA % stepsPerRev;
+              diffA = Math.min(diffA, stepsPerRev - diffA);
+            }
+            entry.mismatchAngular = diffA > tolerance;
+          } else {
+            entry.mismatchAngular = false;
+          }
+          this.appendDebugSimulationPoint(entry);
+        },
+        stepsToCanvas(rSteps, aSteps) {
+          if (!this.canvas || !Number.isFinite(rSteps) || !Number.isFinite(aSteps)) return null;
+          const radiusLimit = this.maxRadiusSteps > 0 ? this.maxRadiusSteps : 1;
+          const trayRadius = this.canvas.width * this.trayRadiusFactor;
+          const clampedR = Math.max(0, Math.min(radiusLimit, rSteps));
+          const norm = clampedR / radiusLimit;
+          const radiusPx = norm * trayRadius;
+          const theta = -(aSteps / this.stepsPerARev) * Math.PI * 2;
+          const cx = this.canvas.width / 2;
+          const cy = this.canvas.height / 2;
+          return { x: cx + radiusPx * Math.cos(theta), y: cy + radiusPx * Math.sin(theta) };
+        },
+        drawTrenchStamp(x, y) {
+          if (!this.ctx) return;
+          const ctx = this.ctx;
+          const innerR = this.ballRadiusPx * 0.2;
+          const outerR = this.ballRadiusPx + this.trenchSoftness;
+          const g = ctx.createRadialGradient(x, y, innerR, x, y, outerR);
+          g.addColorStop(0.0, 'rgba(255,255,255,0.55)');
+          g.addColorStop(0.28, 'rgba(245,245,245,0.38)');
+          g.addColorStop(0.55, 'rgba(230,230,230,0.22)');
+          g.addColorStop(0.75, 'rgba(200,200,200,0.15)');
+          g.addColorStop(0.90, 'rgba(180,180,180,0.10)');
+          g.addColorStop(1.0, 'rgba(150,150,150,0)');
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(x, y, outerR, 0, Math.PI * 2);
+          ctx.fill();
+        },
+        drawTrenchSegment(x0, y0, x1, y1) {
+          if (!this.ctx) return;
+          if (!Number.isFinite(x0) || !Number.isFinite(y0)) {
+            this.drawTrenchStamp(x1, y1);
+            return;
+          }
+          const spacing = this.ballRadiusPx * this.trenchStampSpacingFactor;
+          const dx = x1 - x0;
+          const dy = y1 - y0;
+          const dist = Math.hypot(dx, dy);
+          if (dist === 0) {
+            this.drawTrenchStamp(x1, y1);
+            return;
+          }
+          const steps = Math.max(1, Math.floor(dist / spacing));
+          for (let i = 0; i <= steps; i++) {
+            const f = i / steps;
+            const sx = x0 + dx * f;
+            const sy = y0 + dy * f;
+            this.drawTrenchStamp(sx, sy);
+          }
+        },
+        drawBallAt(x, y) {
+          if (!this.ctx) return;
+          const ctx = this.ctx;
+          const ballR = this.ballRadiusPx;
+          // Soft glow under ball
+          const glow = ctx.createRadialGradient(x, y, ballR * 0.2, x, y, ballR * 1.3);
+          glow.addColorStop(0, 'rgba(255,255,255,0.55)');
+          glow.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(x, y, ballR * 1.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          const grad = ctx.createRadialGradient(x - ballR * 0.4, y - ballR * 0.4, ballR * 0.2, x, y, ballR);
+          grad.addColorStop(0, '#eeeeee');
+          grad.addColorStop(0.45, '#d9d9d9');
+          grad.addColorStop(1, '#b5b5b5');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(x, y, ballR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          ctx.beginPath();
+          ctx.arc(x - ballR * 0.35, y - ballR * 0.35, ballR * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          const pad = Math.ceil(ballR * 1.4);
+          const bx = Math.max(0, x - pad);
+          const by = Math.max(0, y - pad);
+          const bw = Math.min(this.canvas.width - bx, pad * 2);
+          const bh = Math.min(this.canvas.height - by, pad * 2);
+          try {
+            this.ballPrevImage = ctx.getImageData(bx, by, bw, bh);
+            this.ballPrevBox = { x: bx, y: by };
+          } catch (_) {
+            this.ballPrevImage = null;
+            this.ballPrevBox = null;
+          }
+        },
+        appendDebugSimulationPoint(entry) {
+          if (!this.ctx || !entry || !this.debugStepsEnabled || !this.compiledScript) return;
+          if (!Number.isFinite(entry.simulatedRadialSteps) || !Number.isFinite(entry.simulatedAngularSteps)) {
+            return;
+          }
+          if (entry.start || !this.debugSimulationPoints.length) {
+            this.debugSimulationPoints = [];
+          }
+          const pt = this.stepsToCanvas(entry.simulatedRadialSteps, entry.simulatedAngularSteps);
+          if (!pt) return;
+          this.debugSimulationPoints.push(pt);
+          this.drawDebugSimulationPath();
+        },
+        drawDebugSimulationPath() {
+          if (!this.ctx) return;
+          this.trailInitialized = true;
+          this.drawBackground();
+          this.lastHeadX = null;
+          this.lastHeadY = null;
+          this.ballPrevImage = null;
+          this.ballPrevBox = null;
+          const pts = this.debugSimulationPoints;
+          if (!pts || !pts.length) {
+            return;
+          }
+          this.points = pts.map(p => ({ x: p.x, y: p.y }));
+          for (let i = 0; i < pts.length; i++) {
+            const current = pts[i];
+            if (i === 0) {
+              this.drawTrenchStamp(current.x, current.y);
+            } else {
+              const prev = pts[i - 1];
+              this.drawTrenchSegment(prev.x, prev.y, current.x, current.y);
+            }
+          }
+          const head = pts[pts.length - 1];
+          this.drawBallAt(head.x, head.y);
+          this.lastHeadX = head.x;
+          this.lastHeadY = head.y;
+        },
+        textFromDV(dv) { let str = ''; for (let i = 0; i < dv.byteLength; i++) { const c = dv.getUint8(i); if (c === 0) break; str += String.fromCharCode(c); } return str.trim(); },
+        toggleRun() { this.running = !this.running; this.sendRun(); },
+        debouncedSendSpeed: debounce(function () { this.sendSpeed(); }, 400),
+        async sendSpeed() {
+          if (!this.connected) return;
+          this.setStatus('Speed multiplier -> ' + this.speedMultiplier.toFixed(2));
+          try {
+            const response = await fetch(`${this.baseUrl}/api/speed`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: parseFloat(this.speedMultiplier.toFixed(3)) })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Speed write err: ' + e.message);
+          }
+        },
+        async sendMode() {
+          if (!this.connected) return;
+          this.setStatus('Mode -> ' + (this.autoMode ? 'Automatic' : 'Manual'));
+          try {
+            const response = await fetch(`${this.baseUrl}/api/mode`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: this.autoMode })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Mode write err: ' + e.message);
+          }
+        },
+        async sendRun() {
+          if (!this.connected) return;
+          this.setStatus(this.running ? 'Pattern running' : 'Pattern stopped');
+          try {
+            const response = await fetch(`${this.baseUrl}/api/run`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: this.running })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          } catch (e) {
+            this.log('Run write err: ' + e.message);
+          }
+        },
+        async sendCommand(cmd) {
+          if (!this.connected) throw new Error('Not connected to device');
+          try {
+            const response = await fetch(`${this.baseUrl}/api/command`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ command: cmd })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.log('CMD ' + cmd);
+          } catch (e) {
+            this.log('Command err: ' + e.message);
+            throw e;
+          }
+        },
+        async sendReset() {
+          if (!this.connected) throw new Error('Not connected to device');
+          if (!confirm('Are you sure you want to restart the device? This will disconnect all clients and reboot the Sand Garden.')) {
+            return;
+          }
+          try {
+            this.log('Sending reset command...');
+            const response = await fetch(`${this.baseUrl}/api/reset`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.log('Device restarting...');
+            this.setStatus('Device restarting - please wait');
+            // Device will restart, so disconnect and allow user to reconnect
+            setTimeout(() => this.disconnect(), 500);
+          } catch (e) {
+            this.log('Reset err: ' + e.message);
+            throw e;
+          }
+        },
+        async onDebugToggle(evt) {
+          const desired = evt.target.checked;
+          try {
+            await this.setDeviceDebug(desired);
+          } catch (err) {
+            evt.target.checked = !desired;
+            const msg = 'Debug stream toggle failed: ' + (err && err.message ? err.message : err);
+            this.setStatus(msg);
+          }
+        },
+        async setDeviceDebug(enable) {
+          if (!this.connected || !this.chars.command) {
+            throw new Error('Device not connected');
+          }
+          const verb = enable ? 'ON' : 'OFF';
+          this.setStatus('Requesting debug stream ' + verb);
+          try {
+            await this.sendCommand(`DEBUG_STEPS ${verb}`);
+            if (enable) {
+              this.clearDebugTrail();
+              this.lastDebugStep = null;
+              this.simulationRunning = false;
+              this.points = [];
+              this.drawBackground();
+            } else {
+              this.debugSimulationPoints = [];
+              this.simulationRunning = false;
+              this.regeneratePattern();
+            }
+            this.debugStepsEnabled = enable;
+          } catch (err) {
+            throw err;
+          }
+        },
+        async uploadScriptToDevice() {
+          if (this.scriptUploadInProgress) return;
+          if (!this.connected) {
+            this.setStatus('Connect to the device before uploading');
+            return;
+          }
+
+          if (!this.compiledScript) {
+            this.compileScript();
+            if (!this.compiledScript) {
+              this.setStatus('Fix compile errors before uploading');
+              return;
+            }
+          }
+
+          const encoder = new TextEncoder();
+          const normalized = this.scriptSource.replace(/\r\n?/g, '\n');
+          const scriptBytes = encoder.encode(normalized);
+
+          if (scriptBytes.length === 0) {
+            this.setStatus('Script is empty');
+            return;
+          }
+          if (scriptBytes.length > this.maxScriptBytes) {
+            this.setStatus(`Script exceeds ${this.maxScriptBytes} byte limit (${scriptBytes.length})`);
+            return;
+          }
+
+          let slotNum = -1;
+          if (this.scriptTargetSlot) {
+            slotNum = parseInt(this.scriptTargetSlot, 10);
+            if (!Number.isFinite(slotNum) || slotNum <= 0) {
+              this.setStatus('Slot must be a positive integer');
+              return;
+            }
+          }
+
+          this.scriptUploadInProgress = true;
+          this.scriptUploadProgress = 0;
+          this.scriptUploadStatus = 'Preparing upload...';
+          this.log(`[SCRIPT] Upload start len=${scriptBytes.length}`);
+
+          try {
+            // Step 1: Begin script upload
+            const beginPayload = { length: scriptBytes.length };
+            if (slotNum > 0) beginPayload.slot = slotNum;
+
+            let response = await fetch(`${this.baseUrl}/api/script/begin`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(beginPayload)
+            });
+            if (!response.ok) throw new Error(`Begin failed: HTTP ${response.status}`);
+
+            this.scriptUploadStatus = 'Uploading script data...';
+            this.scriptUploadProgress = 25;
+
+            // Step 2: Send script data
+            response = await fetch(`${this.baseUrl}/api/script/chunk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/octet-stream' },
+              body: scriptBytes
+            });
+            if (!response.ok) throw new Error(`Chunk failed: HTTP ${response.status}`);
+
+            this.scriptUploadProgress = 75;
+
+            // Step 3: Finalize upload
+            response = await fetch(`${this.baseUrl}/api/script/end`, {
+              method: 'POST'
+            });
+            if (!response.ok) throw new Error(`End failed: HTTP ${response.status}`);
+
+            this.scriptUploadStatus = `Uploaded ${scriptBytes.length} bytes`;
+            this.scriptUploadProgress = 100;
+            this.setStatus(`[SCRIPT] Uploaded ${scriptBytes.length} bytes`);
+            this.log('[SCRIPT] Upload successful');
+
+            // Switch to pattern 11 if not already there
+            if (this.pattern !== 11) {
+              await this.selectPattern(11);
+            }
+          } catch (err) {
+            this.scriptUploadStatus = 'Upload failed: ' + (err.message || err);
+            this.setStatus('Script upload failed: ' + (err.message || err));
+            this.log('[SCRIPT] Upload error: ' + (err.message || err));
+          } finally {
+            this.scriptUploadInProgress = false;
+            if (this.scriptUploadProgress !== 100) {
+              this.scriptUploadProgress = 0;
+            }
+          }
+        },
+
+        scriptChunkCandidates() {
+          const smallFirst = [20, 32, 40, 60, 80, 100, 128, 160, 180];
+          const sizes = [];
+          const preferred = this.preferredScriptChunkSize;
+          if (preferred && !sizes.includes(preferred)) sizes.push(preferred);
+          const hint = this.estimateScriptChunkHint();
+          if (hint && !sizes.includes(hint)) sizes.push(hint);
+          for (const preset of smallFirst) {
+            if (!sizes.includes(preset)) sizes.push(preset);
+          }
+          const unique = [];
+          for (const raw of sizes) {
+            const size = Math.max(1, Math.floor(raw));
+            if (!unique.includes(size)) unique.push(size);
+          }
+          // Always prioritize the safest minimum chunk size to avoid MTU violations.
+          unique.sort((a, b) => a - b);
+          return unique;
+        },
+
+        estimateScriptChunkHint() {
+          const hints = [];
+          const device = this.device;
+          if (device) {
+            if (typeof device.maxWriteValueLength === 'number') hints.push(device.maxWriteValueLength);
+            if (typeof device.maxWriteValueLengthWithoutResponse === 'number') hints.push(device.maxWriteValueLengthWithoutResponse);
+          }
+          const server = this.server;
+          if (server) {
+            if (typeof server.maxWriteValueLength === 'number') hints.push(server.maxWriteValueLength);
+            if (typeof server.maxWriteValueLengthWithoutResponse === 'number') hints.push(server.maxWriteValueLengthWithoutResponse);
+          }
+          const scriptChar = this.chars.script;
+          if (scriptChar) {
+            const svc = scriptChar.service;
+            if (svc && svc.device) {
+              const dev = svc.device;
+              if (typeof dev.maxWriteValueLength === 'number') hints.push(dev.maxWriteValueLength);
+              if (typeof dev.maxWriteValueLengthWithoutResponse === 'number') hints.push(dev.maxWriteValueLengthWithoutResponse);
+            }
+          }
+          const valid = hints.filter(v => Number.isFinite(v) && v > 0);
+          if (!valid.length) return null;
+          const attSafe = Math.max(...valid) - 3; // subtract ATT header for payload safety
+          const clamped = Math.max(1, Math.min(120, Math.floor(attSafe)));
+          return clamped;
+        },
+
+        async transmitScriptChunks(scriptBytes, chunkSize) {
+          const scriptChar = this.chars.script;
+          if (!scriptChar) throw new Error('Script characteristic missing');
+          const hasNoResponse = typeof scriptChar.writeValueWithoutResponse === 'function';
+          let mode = this.scriptWriteModePreference || 'withResponse';
+          if (mode === 'withoutResponse' && !hasNoResponse) mode = 'withResponse';
+          let useNoResponse = mode === 'withoutResponse';
+          let writer;
+          if (useNoResponse) {
+            writer = scriptChar.writeValueWithoutResponse.bind(scriptChar);
+          }
+          if (!writer || typeof writer !== 'function') {
+            writer = scriptChar.writeValue.bind(scriptChar);
+            useNoResponse = false;
+            mode = 'withResponse';
+          }
+          if (typeof writer !== 'function') throw new Error('Script characteristic not writable');
+          const safeChunk = Math.max(1, Math.floor(chunkSize));
+          const total = scriptBytes.length;
+          for (let offset = 0; offset < total; offset += safeChunk) {
+            const end = Math.min(offset + safeChunk, total);
+            const slice = scriptBytes.subarray(offset, end);
+            try {
+              await writer(slice);
+            } catch (err) {
+              if (useNoResponse && hasNoResponse) {
+                this.log('[SCRIPT] write-without-response failed; switching to acknowledged writes');
+                this.scriptWriteModePreference = 'withResponse';
+              }
+              err.chunkOffset = offset;
+              err.chunkSize = slice.length;
+              throw err;
+            }
+            this.scriptUploadProgress = Math.round((end / total) * 100);
+            if (useNoResponse) {
+              const pause = Math.min(150, Math.max(25, slice.length * 6));
+              await this.sleep(pause);
+            } else {
+              const pause = Math.min(120, Math.max(30, slice.length * 8));
+              await this.sleep(pause);
+            }
+          }
+          this.scriptWriteModePreference = useNoResponse ? 'withoutResponse' : 'withResponse';
+        },
+        sleep(ms) { return new Promise(res => setTimeout(res, ms)); },
+        // Removed direct LED color helpers (unsupported)
+        async disconnectDevice() {
+          if (this.device && this.device.gatt && this.device.gatt.connected) {
+            try { this.device.gatt.disconnect(); } catch (e) { this.log('Disconnect err: ' + e.message); }
+          }
+          this.onDisconnect();
+        },
+        onDisconnect() {
+          this.connected = false;
+          this.connecting = false;
+          this.server = null;
+          this.chars = { speed: null, pattern: null, status: null, mode: null, run: null, telemetry: null, command: null, script: null, ledEffect: null, ledColor: null };
+          this.debugStepsEnabled = false;
+          this.clearDebugTrail();
+          this.lastDebugStep = null;
+          this.setStatus('Device disconnected');
+        },
+        async selectPattern(id) {
+          this.pattern = id;
+          this.setStatus('Selected pattern ' + id);
+          this.initializePattern();
+          if (this.debugPoints.length) {
+            this.clearDebugTrail();
+          }
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/pattern`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: id })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('Pattern write err: ' + e.message);
+            }
+          }
+        },
+        async selectLedEffect(id) {
+          if (id < 1 || id > this.NUM_LED_EFFECTS) return;
+          this.ledEffect = id;
+          const effectIndex = id - 1; // Convert UI (1 to NUM_LED_EFFECTS) to firmware (0 to NUM_LED_EFFECTS-1)
+          this.setStatus('Selected LED effect ' + id + ' (' + this.ledEffectMeta[effectIndex].name + ')');
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/led/effect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: effectIndex })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('LED effect write err: ' + e.message);
+            }
+          }
+        },
+        async sendLedColor() {
+          const colorStr = this.ledColor.r + ',' + this.ledColor.g + ',' + this.ledColor.b;
+          this.setStatus('LED color -> RGB(' + colorStr + ')');
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/led/color`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ r: this.ledColor.r, g: this.ledColor.g, b: this.ledColor.b })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('LED color write err: ' + e.message);
+            }
+          }
+        },
+        async sendLedBrightness() {
+          this.setStatus('LED brightness -> ' + this.ledBrightness);
+          if (this.connected) {
+            try {
+              const response = await fetch(`${this.baseUrl}/api/led/brightness`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: this.ledBrightness })
+              });
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } catch (e) {
+              this.log('LED brightness write err: ' + e.message);
+            }
+          }
+        },
+        onLedColorChange() {
+          // Convert hex color to RGB
+          const hex = this.ledColorHex;
+          const r = parseInt(hex.substr(1, 2), 16);
+          const g = parseInt(hex.substr(3, 2), 16);
+          const b = parseInt(hex.substr(5, 2), 16);
+          this.ledColor = { r, g, b };
+          this.sendLedColor();
+        },
+        initializePattern() {
+          // Initialize the pattern generator for on-the-fly step generation
+          this.patternStepFn = this.createPatternStepFunction(this.pattern);
+          this.currentPolarState = { radial: 0, angular: 0 };
+          this.targetPolarState = { radial: 0, angular: 0 };
+          this.animationProgress = 1; // start at target (will generate first step immediately)
+          this.isRestarting = true;
+          this.points = []; // clear old points array (not used in new system)
+          this.resetTrail();
+          this.clearDslFault();
+
+          if (this.pattern !== 11) {
+            this.dslInputsSeq = [];
+            this.dslOutputsSeq = [];
+            this.lastDSLInputs = null;
+            this.lastDSLOutputs = null;
+            this.dslStepCounter = 0;
+            this.dslStartTimestamp = null;
+          }
+          else {
+            this.updateDSLDetails();
+          }
+          if (this.pattern !== 11) {
+            this.dslLocalsSeq = [];
+            this.lastDSLLocals = null;
+          }
+          this.drawBackground();
+          this.renderFrame();
+        },
+        regeneratePattern() {
+          // Alias for compatibility - now just re-initializes the pattern
+          this.initializePattern();
+        },
+        clearPattern() {
+          this.patternStepFn = null;
+          this.currentPolarState = { radial: 0, angular: 0 };
+          this.targetPolarState = { radial: 0, angular: 0 };
+          this.animationProgress = 1;
+          this.points = [];
+          this.resetTrail();
+          this.clearDebugTrail();
+          this.drawBackground();
+          this.renderFrame();
+        },
+        resetTrail() {
+          this.lastHeadX = null;
+          this.lastHeadY = null;
+          this.lastTrenchX = null;
+          this.lastTrenchY = null;
+          this.trailInitialized = false;
+          this.ballPrevImage = null;
+          this.ballPrevBox = null;
+          this.accumulatedTrenchDistance = 0;
+          this.lastRenderedProgress = 0;
+        },
+        clearDebugTrail() {
+          this.debugPoints = [];
+          this.debugSimulationPoints = [];
+          this.debugLastCanvasPoint = null;
+          if (this.debugCtx && this.debugCanvas) {
+            this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
+          }
+        },
+        toggleSimulation() {
+          if (this.debugStepsEnabled) {
+            this.simulationRunning = false;
+            return;
+          }
+          this.simulationRunning = !this.simulationRunning;
+          if (this.simulationRunning) {
+            this.lastTs = 0;
+            requestAnimationFrame(this.animateStep.bind(this));
+          }
+        },
+        stepOnce() {
+          if (this.debugStepsEnabled) return;
+          if (this.simulationRunning) return; // disabled while running
+          if (!this.patternStepFn) return;
+
+          // If we're at the target, generate next step
+          if (this.animationProgress >= 1) {
+            this.generateNextStep();
+          }
+
+          // Move to the end of current animation
+          this.animationProgress = 1;
+          this.updateDSLDetails();
+          this.renderFrame();
+        },
+        animateStep(ts) {
+          if (!this.simulationRunning) return;
+          if (!this.lastTs) this.lastTs = ts;
+          const dt = (ts - this.lastTs) / 1000;
+          this.lastTs = ts;
+
+          if (!this.patternStepFn) {
+            this.simulationRunning = false;
+            return;
+          }
+
+          // If we've reached the target, generate the next step
+          if (this.animationProgress >= 1) {
+            this.generateNextStep();
+          }
+
+          // Calculate distance for this frame
+          const segmentDistance = this.calculateSegmentDistance();
+          if (segmentDistance > 0) {
+            const distanceDelta = this.linearSpeed * dt;
+            const progressDelta = distanceDelta / segmentDistance;
+            this.animationProgress = Math.min(1, this.animationProgress + progressDelta);
+          } else {
+            // Zero distance segment, skip immediately
+            this.animationProgress = 1;
+          }
+
+          this.updateDSLDetails();
+          this.renderFrame();
+          requestAnimationFrame(this.animateStep.bind(this));
+        },
+        generateNextStep() {
+          if (!this.patternStepFn) return;
+
+          // Current becomes previous target
+          this.currentPolarState = { ...this.targetPolarState };
+
+          // Generate next target
+          const nextTarget = this.patternStepFn(this.currentPolarState, this.isRestarting);
+          this.isRestarting = false;
+
+          if (!nextTarget) {
+            // Pattern exhausted, restart
+            this.isRestarting = true;
+            this.currentPolarState = { radial: 0, angular: 0 };
+            this.targetPolarState = { radial: 0, angular: 0 };
+            this.resetTrail();
+            this.drawBackground();
+            return;
+          }
+
+          this.targetPolarState = nextTarget;
+          this.animationProgress = 0;
+          this.lastRenderedProgress = 0; // Reset for new segment
+          // Don't reset accumulatedTrenchDistance - it should carry over for continuous spacing
+        },
+        calculateSegmentDistance() {
+          // Calculate polar distance from current to target
+          const MAX_R_STEPS = 7000;
+          const STEPS_PER_A_AXIS_REV = 2 * 2048;
+
+          const r0 = this.currentPolarState.radial;
+          const r1 = this.targetPolarState.radial;
+          const a0 = this.currentPolarState.angular;
+          const a1 = this.targetPolarState.angular;
+
+          // Compute angular difference (shortest path) - FIX: proper wrapping
+          let dθSteps = a1 - a0;
+          const halfRev = STEPS_PER_A_AXIS_REV / 2;
+          while (dθSteps > halfRev) dθSteps -= STEPS_PER_A_AXIS_REV;
+          while (dθSteps < -halfRev) dθSteps += STEPS_PER_A_AXIS_REV;
+
+          const dr = r1 - r0;
+
+          // Convert angular steps to canvas pixels for distance calculation
+          // Use average radius for arc length
+          const avgRadius = (r0 + r1) / 2;
+          const trayRadiusPx = this.canvas ? this.canvas.width * this.trayRadiusFactor : 400;
+          const avgRadiusPx = (avgRadius / MAX_R_STEPS) * trayRadiusPx;
+
+          // Arc distance in pixels
+          const angleRad = (dθSteps / STEPS_PER_A_AXIS_REV) * 2 * Math.PI;
+          const arcDistPx = avgRadiusPx * Math.abs(angleRad);
+
+          // Radial distance in pixels
+          const radialDistPx = (Math.abs(dr) / MAX_R_STEPS) * trayRadiusPx;
+
+          // Combined distance (Pythagorean)
+          return Math.hypot(radialDistPx, arcDistPx);
+        },
+        drawBackground() {
+          if (!this.ctx) return; const ctx = this.ctx; const w = this.canvas.width; const h = this.canvas.height; ctx.clearRect(0, 0, w, h);
+          const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.05, w / 2, h / 2, w * 0.5);
+          grad.addColorStop(0, '#ffffff'); grad.addColorStop(1, '#cfcfcf');
+          ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(w / 2, h / 2, w / 2 - 2, 0, Math.PI * 2); ctx.fill();
+        },
+        ensurePathBuffer() { /* offscreen path buffer removed */ },
+        clearPath() { /* not needed in on-the-fly system */ },
+        updateDSLDetails() {
+          if (this.pattern !== 11) return; // only for DSL pattern
+          // In on-the-fly system, we update DSL details based on current position
+          // The details were already set during step generation
+        },
+        renderFrame() {
+          const ctx = this.ctx;
+          if (!this.trailInitialized) {
+            this.drawBackground();
+            this.trailInitialized = true;
+          }
+
+          if (!this.patternStepFn) return;
+
+          // Calculate interpolated position between current and target
+          const t = this.animationProgress >= 1 ? 1 : this.animationProgress;
+
+          // Interpolate in polar coordinates
+          const r0 = this.currentPolarState.radial;
+          const r1 = this.targetPolarState.radial;
+          const a0 = this.currentPolarState.angular;
+          const a1 = this.targetPolarState.angular;
+
+          const STEPS_PER_A_AXIS_REV = 2 * 2048;
+
+          // Angular interpolation (shortest path)
+          let dθSteps = a1 - a0;
+          const halfRev = STEPS_PER_A_AXIS_REV / 2;
+          while (dθSteps > halfRev) dθSteps -= STEPS_PER_A_AXIS_REV;
+          while (dθSteps < -halfRev) dθSteps += STEPS_PER_A_AXIS_REV;
+
+          // Previous position (where we last drew)
+          const prevR = r0 + (r1 - r0) * this.lastRenderedProgress;
+          const prevA = a0 + dθSteps * this.lastRenderedProgress;
+          const prevPt = this.polarToCanvas(prevR, prevA);
+
+          // Current position
+          const currentR = r0 + (r1 - r0) * t;
+          const currentA = a0 + dθSteps * t;
+          const pt = this.polarToCanvas(currentR, currentA);
+
+          if (!pt) return;
+
+          const hx = pt.x;
+          const hy = pt.y;
+
+          // Draw trench: only when we've moved a sufficient distance from last trench position
+          const trenchStampSpacing = this.ballRadiusPx * this.trenchStampSpacingFactor;
+
+          if (this.lastTrenchX == null || this.lastTrenchY == null) {
+            // Very first stamp
+            this.drawTrenchStamp(hx, hy);
+            this.lastTrenchX = hx;
+            this.lastTrenchY = hy;
+          } else {
+            // Check distance from last trench position
+            const dx = hx - this.lastTrenchX;
+            const dy = hy - this.lastTrenchY;
+            const distanceSinceLastTrench = Math.hypot(dx, dy);
+
+            // Draw trench segment if we've moved enough distance
+            if (distanceSinceLastTrench >= trenchStampSpacing * 0.8) {
+              this.drawTrenchSegment(this.lastTrenchX, this.lastTrenchY, hx, hy);
+              this.lastTrenchX = hx;
+              this.lastTrenchY = hy;
+            }
+          }
+
+          // Update tracking variables for ball position
+          this.lastRenderedProgress = t;
+          this.lastHeadX = hx;
+          this.lastHeadY = hy;
+
+          // Always restore previous ball and draw new ball position (for smooth animation)
+          const ballR = this.ballRadiusPx;
+          if (this.ballPrevImage && this.ballPrevBox) {
+            try { ctx.putImageData(this.ballPrevImage, this.ballPrevBox.x, this.ballPrevBox.y); } catch (_) { }
+          }
+          this.drawBallAt(hx, hy);
+        },
+        polarToCanvas(rSteps, aSteps) {
+          if (!this.canvas) return null;
+          const MAX_R_STEPS = 7000;
+          const STEPS_PER_A_AXIS_REV = 2 * 2048;
+          const size = this.canvas.width;
+          const cx = size / 2;
+          const cy = size / 2;
+          const trayR = size * this.trayRadiusFactor;
+
+          const clampedR = Math.max(0, Math.min(MAX_R_STEPS, rSteps));
+          const rNorm = clampedR / MAX_R_STEPS;
+          const rPx = rNorm * trayR;
+          const theta = -(aSteps / STEPS_PER_A_AXIS_REV) * (Math.PI * 2);
+
+          return {
+            x: cx + rPx * Math.cos(theta),
+            y: cy + rPx * Math.sin(theta)
+          };
+        },
+        exportImage() {
+          // Ensure frame is up to date
+          this.renderFrame();
+          let sourceCanvas = this.canvas;
+          if (this.debugCanvas && this.debugPoints.length) {
+            const composite = document.createElement('canvas');
+            composite.width = this.canvas.width;
+            composite.height = this.canvas.height;
+            const cctx = composite.getContext('2d');
+            cctx.drawImage(this.canvas, 0, 0);
+            cctx.drawImage(this.debugCanvas, 0, 0);
+            sourceCanvas = composite;
+          }
+          const link = document.createElement('a');
+          link.download = 'sand-pattern-' + this.pattern + '.png';
+          link.href = sourceCanvas.toDataURL('image/png');
+          link.click();
+        },
+        // Pattern generator factories (return step functions for on-the-fly generation)
+        createPatternStepFunction(id) {
+          const MAX_R_STEPS = 7000;
+          const STEPS_PER_MOTOR_REV = 2048;
+          const STEPS_PER_A_AXIS_REV = 2 * STEPS_PER_MOTOR_REV;
+
+          // --- Math helpers mirroring firmware ---
+          const fmap = (n, in_min, in_max, out_min, out_max) => (n - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+          const convertDegreesToSteps = deg => Math.round(fmap(deg, 0, 360, 0, 2 * STEPS_PER_MOTOR_REV));
+          const convertStepsToRadians = steps => fmap(steps, 0, 2 * STEPS_PER_MOTOR_REV, 0, 2 * Math.PI);
+          const modulus = (x, y) => x < 0 ? ((x + 1) % y) + y - 1 : x % y;
+
+          // --- drawLine replication (stateful iterator per line) ---
+          function createLineIterator(point0, point1, resolution = 100) {
+            // replicate core algorithm (cartesian interpolation & polar reconversion)
+            const numPoints = Math.max(0, Math.min(100, resolution));
+            let p0 = { ...point0 }; let p1 = { ...point1 };
+            const points = [];
+            // Vertical line detection ±0.5 deg window (convertDegreesToSteps(0.5))
+            const halfDegSteps = convertDegreesToSteps(0.5);
+            const comparisonA = STEPS_PER_A_AXIS_REV - Math.max(p0.angular, p1.angular);
+            const comparisonB = Math.min(p0.angular, p1.angular);
+            let rotated = false;
+            if (comparisonA - comparisonB <= halfDegSteps && comparisonA - comparisonB >= -halfDegSteps) {
+              rotated = true; p0.angular += convertDegreesToSteps(90); p1.angular += convertDegreesToSteps(90);
+            }
+            // Cartesian coords
+            const x0 = p0.radial * Math.cos(convertStepsToRadians(p0.angular));
+            const y0 = p0.radial * Math.sin(convertStepsToRadians(p0.angular));
+            const x1 = p1.radial * Math.cos(convertStepsToRadians(p1.angular));
+            const y1 = p1.radial * Math.sin(convertStepsToRadians(p1.angular));
+            const denom = x1 - x0; const m = (y1 - y0) / denom; const b = y0 - m * x0;
+            let useNumPoints = numPoints;
+            if (b < 100 && b > -100) useNumPoints = 100; // origin proximity boost
+            const stepover = (x1 - x0) / useNumPoints;
+            for (let i = 0; i < useNumPoints; i++) {
+              if (i === 0) {
+                points.push({ radial: p0.radial, angular: p0.angular });
+              } else if (i === useNumPoints - 1) {
+                points.push({ radial: p1.radial, angular: p1.angular });
+              } else {
+                const xtemp = x0 + (i) * stepover; // (i) because first already added
+                const ytemp = m * xtemp + b;
+                let theta = Math.atan2(ytemp, xtemp); if (theta < 0) theta = 2 * Math.PI + theta;
+                const radial = Math.sqrt(xtemp * xtemp + ytemp * ytemp);
+                points.push({ radial: Math.round(radial), angular: Math.round(fmap(theta, 0, 2 * Math.PI, 0, 2 * STEPS_PER_MOTOR_REV)) });
+              }
+            }
+            if (rotated) {
+              const shift = convertDegreesToSteps(90);
+              for (const p of points) p.angular -= shift;
+            }
+            let idx = 0;
+            return () => {
+              if (idx >= points.length) return null; return points[idx++];
+            };
+          }
+
+          // Polygon generator + translate (subset of firmware)
+          function nGonGenerator(numPoints, radius, rotationDeg = 0) {
+            const angleStep = STEPS_PER_A_AXIS_REV / numPoints; const rotSteps = convertDegreesToSteps(rotationDeg);
+            const arr = []; for (let i = 0; i < numPoints; i++) arr.push({ radial: radius, angular: i * angleStep + rotSteps }); return arr;
+          }
+          function translatePoints(pointArray, centerPoint) {
+            if (!centerPoint.radial) return pointArray; // origin
+            const cx = centerPoint.radial * Math.cos(convertStepsToRadians(centerPoint.angular));
+            const cy = centerPoint.radial * Math.sin(convertStepsToRadians(centerPoint.angular));
+            return pointArray.map(p => {
+              const x = p.radial * Math.cos(convertStepsToRadians(p.angular)) + cx;
+              const y = p.radial * Math.sin(convertStepsToRadians(p.angular)) + cy;
+              let theta = Math.atan2(y, x); if (theta < 0) theta += 2 * Math.PI;
+              const r = Math.sqrt(x * x + y * y);
+              return { radial: Math.round(r), angular: Math.round(fmap(theta, 0, 2 * Math.PI, 0, 2 * STEPS_PER_MOTOR_REV)) };
+            });
+          }
+
+          // --- Pattern function factories (mirror firmware static vars via closure) ---
+          const patternFactories = {
+            1: () => { // Simple Spiral
+              const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
+              const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
+              return (current, restart) => {
+                if (restart) { radialStep = Math.trunc(MAX_R_STEPS / radialDivisions); }
+                let target = { angular: current.angular + angleStep, radial: current.radial + radialStep };
+                if (target.radial > MAX_R_STEPS || target.radial < 0) { radialStep *= -1; target.radial += 2 * radialStep; }
+                return target;
+              };
+            },
+            2: () => { // Cardioids
+              const radialStep = Math.trunc(MAX_R_STEPS / 8); let direction = 1; let firstRun = true;
+              return (current, restart) => {
+                if (firstRun || restart) { firstRun = false; return { angular: 0, radial: 0 }; }
+                const ang = current.angular + convertDegreesToSteps(43);
+                let nextRad = current.radial + direction * radialStep; if (nextRad > MAX_R_STEPS || nextRad < 0) { direction *= -1; nextRad = current.radial + direction * radialStep; }
+                return { angular: ang, radial: nextRad };
+              };
+            },
+            3: () => { // Wavy Spiral
+              const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
+              const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
+              const amplitude = 200; const period = 8;
+              return (current, restart) => {
+                if (restart) radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
+                let baseRad = current.radial + radialStep; let ang = current.angular + angleStep;
+                if (baseRad > MAX_R_STEPS || baseRad < 0) { radialStep *= -1; baseRad += 2 * radialStep; }
+                const wave = amplitude * Math.sin(period * convertStepsToRadians(ang));
+                return { angular: ang, radial: Math.round(baseRad + wave) };
+              };
+            },
+            4: () => { // Rotating Squares
+              const segments = 20; const angleShift = convertDegreesToSteps(10);
+              let p1, p2, p3, p4; let step = 0; let firstRun = true; let lineIter = null;
+              const makeLine = (a, b) => (lineIter = createLineIterator(a, b, segments));
+              return (current, restart) => {
+                if (firstRun || restart) {
+                  p1 = { angular: 0, radial: 7000 }; p2 = { angular: convertDegreesToSteps(90), radial: 7000 };
+                  p3 = { angular: convertDegreesToSteps(180), radial: 7000 }; p4 = { angular: convertDegreesToSteps(270), radial: 7000 };
+                  step = 0; firstRun = false; lineIter = createLineIterator(p1, p2, segments);
+                }
+                let point = lineIter && lineIter();
+                if (!point) { // finished edge
+                  step++;
+                  switch (step) {
+                    case 1: makeLine(p2, p3); break;
+                    case 2: makeLine(p3, p4); break;
+                    case 3: makeLine(p4, p1); break;
+                    default:
+                      // rotate and restart
+                      step = 0; p1.angular += angleShift; p2.angular += angleShift; p3.angular += angleShift; p4.angular += angleShift; makeLine(p1, p2); break;
+                  }
+                  point = lineIter();
+                }
+                return point;
+              };
+            },
+            5: () => { // Pentagon Spiral
+              const vertices = 5; let vertexList = []; let start = 0, end = 1; let firstRun = true; let radialStepover = 500; let lineIter = null;
+              const rebuildLine = () => { lineIter = createLineIterator(vertexList[start], vertexList[end], 100); };
+              return (current, restart) => {
+                if (firstRun || restart) { vertexList = nGonGenerator(vertices, 1000, 0); firstRun = false; start = 0; end = 1; radialStepover = 500; rebuildLine(); }
+                let point = lineIter();
+                if (!point) { // edge complete
+                  start = (start + 1) % vertices; end = (end + 1) % vertices;
+                  if (start === 0 && end === 1) { // completed polygon, adjust radii
+                    for (let i = 0; i < vertices; i++) {
+                      let newR = vertexList[i].radial + radialStepover; if (newR > MAX_R_STEPS || newR < 0) { radialStepover *= -1; newR += 2 * radialStepover; }
+                      vertexList[i].radial = newR;
+                    }
+                  }
+                  rebuildLine(); point = lineIter();
+                }
+                return point;
+              };
+            },
+            6: () => { // Hexagon Vortex
+              const vertices = 6; let step = 0; let segments = 100; let firstRun = true; let radialStepover = 350; let radius = 1000; const angleShift = convertDegreesToSteps(5);
+              let points = []; let lineIter = null; let idxEdge = 0;
+              const rebuildHex = () => { points = nGonGenerator(vertices, radius, 0); };
+              const startEdge = () => { const a = points[idxEdge]; const b = points[(idxEdge + 1) % vertices]; lineIter = createLineIterator(a, b, segments); };
+              return (current, restart) => {
+                if (firstRun || restart) { firstRun = false; step = 0; radius = 1000; radialStepover = 350; idxEdge = 0; rebuildHex(); startEdge(); }
+                let pt = lineIter();
+                if (!pt) { // move to next edge or rotate/resize
+                  idxEdge++;
+                  if (idxEdge >= vertices) { // hex complete
+                    idxEdge = 0; // rotate
+                    for (const p of points) p.angular += angleShift;
+                    if ((radius + radialStepover >= MAX_R_STEPS + 2000) || (radius + radialStepover <= 0)) radialStepover *= -1;
+                    radius += radialStepover; for (const p of points) p.radial = radius;
+                  }
+                  startEdge(); pt = lineIter();
+                }
+                return pt;
+              };
+            },
+            7: () => { // Pentagon Rainbow
+              const vertices = 5; const shiftDeg = 2; const baseRadius = 3000; const translateRadius = 4000; let firstRun = true; let shiftCounter = 1; let pointList = []; let start = 0, end = 1; let lineIter = null;
+              const rebuildPent = () => {
+                pointList = nGonGenerator(vertices, baseRadius, shiftCounter * shiftDeg);
+                pointList = translatePoints(pointList, { radial: translateRadius, angular: shiftCounter * convertDegreesToSteps(shiftDeg) });
+                start = 0; end = 1; lineIter = createLineIterator(pointList[start], pointList[end], 100);
+              };
+              return (current, restart) => {
+                if (firstRun || restart) { firstRun = false; shiftCounter = 1; rebuildPent(); }
+                let pt = lineIter();
+                if (!pt) {
+                  start = (start + 1) % vertices; end = (end + 1) % vertices;
+                  if (start === 0 && end === 1) { shiftCounter++; rebuildPent(); pt = lineIter(); } else { lineIter = createLineIterator(pointList[start], pointList[end], 100); pt = lineIter(); }
+                }
+                return pt;
+              };
+            },
+            8: () => { // Random Walk 1 (random absolute targets)
+              return (current, restart) => {
+                if (restart) return { angular: 0, radial: 0 };
+                return { angular: Math.floor(Math.random() * STEPS_PER_A_AXIS_REV), radial: Math.floor(Math.random() * (MAX_R_STEPS + 1)) };
+              };
+            },
+            9: () => { // Random Walk 2 (straight lines between random points)
+              let makeNew = true; let randomPoint = null; let lastPoint = null; let lineIter = null;
+              return (current, restart) => {
+                if (restart) { makeNew = true; lastPoint = current; }
+                if (makeNew) {
+                  randomPoint = { radial: Math.floor(Math.random() * (MAX_R_STEPS + 1)), angular: Math.floor(Math.random() * STEPS_PER_A_AXIS_REV) };
+                  lineIter = createLineIterator(lastPoint || current, randomPoint, 100); makeNew = false;
+                }
+                const pt = lineIter();
+                if (!pt) { makeNew = true; lastPoint = randomPoint; return lastPoint; }
+                return pt;
+              };
+            },
+            10: () => { // Accidental Butterfly
+              const angleDivisions = 100; const angleStep = convertDegreesToSteps(360 / angleDivisions);
+              const radialDivisions = 10 * angleDivisions; let radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
+              return (current, restart) => {
+                if (restart) radialStep = Math.trunc(MAX_R_STEPS / radialDivisions);
+                let ang = current.angular + angleStep; let rad = current.radial + radialStep;
+                if (rad > MAX_R_STEPS || rad < 0) { radialStep *= -1; rad += 2 * radialStep; }
+                const rOffset = 200 * Math.sin(8 * convertStepsToRadians(ang));
+                const aOffset = 40 * Math.cos(3 * convertStepsToRadians(ang)); // NOTE: firmware adds this directly in steps (not degrees)
+                // Firmware logic: target.radial += rOffset; target.angular += aOffset; where aOffset amplitude is 40 steps.
+                return { radial: Math.round(rad + rOffset), angular: Math.round(ang + aOffset) };
+              };
+            },
+            11: () => { // Custom Sandscript (units radius: cm, angle: degrees, rev continuous, steps & time)
+              const stepsPerRev = STEPS_PER_A_AXIS_REV;
+              const degToSteps = stepsPerRev / 360;
+              const stepsPerCm = this.deviceStepsPerCm;
+              const maxRadiusCm = (this.scriptMaxRadius != null) ? this.scriptMaxRadius : (this.maxRadiusSteps / stepsPerCm);
+              // Reset rev tracking on new factory creation
+              this.revPrevAngleDeg = null; this.revUnwrappedAngleDeg = 0;
+              // Reset sequences
+              this.dslInputsSeq = []; this.dslOutputsSeq = []; this.dslLocalsSeq = [];
+              this.dslStepCounter = 0; this.dslStartTimestamp = performance.now();
+              return (current, restart) => {
+                if (!this.compiledScript) return current;
+                const currentRadiusCm = current.radial / stepsPerCm;
+                const currentAngleDeg = (current.angular / stepsPerRev) * 360;
+                // Update continuous revolution accumulator
+                if (restart || this.revPrevAngleDeg == null) {
+                  this.revPrevAngleDeg = currentAngleDeg; this.revUnwrappedAngleDeg = currentAngleDeg; // start from actual
+                } else {
+                  let delta = currentAngleDeg - this.revPrevAngleDeg;
+                  if (delta > 180) delta -= 360; else if (delta < -180) delta += 360; // shortest path
+                  this.revUnwrappedAngleDeg += delta;
+                  this.revPrevAngleDeg = currentAngleDeg;
+                }
+                const rev = this.revUnwrappedAngleDeg / 360;
+                const timeMs = this.dslStartTimestamp != null ? (performance.now() - this.dslStartTimestamp) : 0;
+                if (restart) {
+                  this.clearDslFault();
+                }
+                if (!restart && this.dslFaultActive) {
+                  return current;
+                }
+                const vars = { radius: currentRadiusCm, angle: currentAngleDeg, start: restart ? 1 : 0, rev, steps: this.dslStepCounter, time: timeMs };
+                const res = evalDSLCompiled(this.compiledScript, vars, true);
+                const values = res.outputs || {};
+                const locals = res.locals || {};
+                this.lastDSLInputs = { ...vars };
+                this.lastDSLOutputs = { ...values };
+                this.lastDSLLocals = { ...locals };
+                // Store copies for later simulation detail lookup
+                this.dslInputsSeq.push({ ...vars });
+                if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
+                this.dslOutputsSeq.push({ ...values });
+                if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
+                this.dslLocalsSeq.push({ ...locals });
+                if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
+                if (res.faultMask) {
+                  this.handleDslFault(res);
+                  return current;
+                }
+                this.clearDslFault();
+                function has(v) { return v != null && isFinite(v); }
+                let outRadiusCm = currentRadiusCm;
+                if (has(values.next_radius)) outRadiusCm = values.next_radius; else if (has(values.delta_radius)) outRadiusCm = currentRadiusCm + values.delta_radius;
+                let outAngleDeg = currentAngleDeg;
+                if (has(values.next_angle)) outAngleDeg = values.next_angle; else if (has(values.delta_angle)) outAngleDeg = currentAngleDeg + values.delta_angle;
+                outRadiusCm = Math.max(0, Math.min(maxRadiusCm, outRadiusCm));
+                outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
+                const radialSteps = Math.max(0, Math.min(MAX_R_STEPS, Math.round(outRadiusCm * stepsPerCm)));
+                const angleSteps = Math.round(outAngleDeg * degToSteps) % stepsPerRev;
+                this.dslStepCounter++;
+                return { radial: radialSteps, angular: angleSteps };
+              };
+            }
+          };
+
+          // Return the step function directly (on-the-fly generation)
+          const factory = patternFactories[id];
+          if (!factory) return null;
+          return factory();
+        }
+      }
+    }
+
+    // Simple debounce helper
+    function debounce(fn, wait) {
+      let t; return function (...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
+    }
+
+    // -------- DSL Compiler & Evaluator (Unified) --------
+    const DSG_OP = {
+      CONST: 'CONST',
+      LOAD: 'LOAD',
+      ADD: 'ADD',
+      SUB: 'SUB',
+      MUL: 'MUL',
+      DIV: 'DIV',
+      MOD: 'MOD',
+      NEG: 'NEG',
+      SIN: 'SIN',
+      COS: 'COS',
+      TAN: 'TAN',
+      ABS: 'ABS',
+      CLAMP: 'CLAMP',
+      SIGN: 'SIGN',
+      PINGPONG: 'PINGPONG',
+      MIN: 'MIN',
+      MAX: 'MAX',
+      POW: 'POW',
+      SQRT: 'SQRT',
+      EXP: 'EXP',
+      RANDOM: 'RANDOM',
+      FLOOR: 'FLOOR',
+      CEIL: 'CEIL',
+      ROUND: 'ROUND',
+      END: 'END'
+    };
+    // Added synthetic inputs: rev (angle/360 unwrapped), steps (evaluation counter), time (ms since script start)
+    const DSG_INPUTS = ['radius', 'angle', 'start', 'rev', 'steps', 'time'];
+    const DSG_OUTPUTS = ['next_radius', 'next_angle', 'delta_radius', 'delta_angle'];
+    const DSG_FUNCS = {
+      sin: 1,
+      cos: 1,
+      tan: 1,
+      abs: 1,
+      clamp: 3,
+      sign: 1,
+      pingpong: 2,
+      min: 2,
+      max: 2,
+      pow: 2,
+      sqrt: 1,
+      exp: 1,
+      random: 0,
+      floor: 1,
+      ceil: 1,
+      round: 1
+    };
+    const DSG_CONSTS = {};
+    const DSG_OUTPUT_MASK = {
+      next_radius: 0x01,
+      next_angle: 0x02,
+      delta_radius: 0x04,
+      delta_angle: 0x08
+    };
+
+    function psgRandomNext(state) {
+      return (state * 1664525 + 1013904223) >>> 0;
+    }
+
+    function tokenizeDSL(source) {
+      const lines = source.replace(/\r\n?/g, '\n').split(/\n/); const tokens = []; let global = 0; const errors = [];
+      const push = (type, value, pos) => tokens.push({ type, value, pos });
+      for (const line of lines) {
+        if (/^\s*#/.test(line)) { global += line.length + 1; continue; }
+        let i = 0; let hadCode = false;
+        while (i < line.length) {
+          const c = line[i]; const pos = global + i;
+          if (/[ \t]/.test(c)) { i++; continue; }
+          if (c == '#') break;
+          if (/[0-9]/.test(c)) {
+            let j = i + 1; while (j < line.length && /[0-9]/.test(line[j])) j++; if (j < line.length && line[j] == '.') { j++; while (j < line.length && /[0-9]/.test(line[j])) j++; }
+            push('NUMBER', parseFloat(line.slice(i, j)), pos); i = j; hadCode = true; continue;
+          }
+          if (/[a-zA-Z_]/.test(c)) {
+            let j = i + 1; while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
+            push('IDENT', line.slice(i, j), pos); i = j; hadCode = true; continue;
+          }
+          if ('+-*/%=(),'.includes(c)) { push(c, c, pos); i++; hadCode = true; continue; }
+          errors.push({ message: 'Unexpected char ' + c, pos }); i++;
+        }
+        if (hadCode) push('EOL', 'EOL', global + line.length - 1);
+        global += line.length + 1;
+      }
+      return { tokens, errors };
+    }
+    function compileDSL(source) {
+      const { tokens, errors } = tokenizeDSL(source); if (errors.length) return { ok: false, errors };
+      let idx = 0; const assignments = {}; const usedOrder = []; const definedOutputs = new Set(); const localVars = new Set(); let usedMask = 0;
+      const peek = () => tokens[idx]; const consume = t => { const tk = peek(); if (!tk || tk.type !== t) { errors.push({ message: 'Expected ' + t, pos: tk ? tk.pos : -1 }); return null; } idx++; return tk; };
+      function parseExpression() {
+        const output = []; const stack = []; let expectValue = true; const prec = o => (o === '+' || o === '-') ? 1 : ((o === '*' || o === '/' || o === '%') ? 2 : 0); const isOp = t => ['+', '-', '*', '/', '%'].includes(t);
+        while (true) {
+          const tk = peek(); if (!tk) break; if (tk.type === 'EOL') { break; }
+          if (tk.type === 'NUMBER') { output.push(tk); idx++; expectValue = false; continue; }
+          if (tk.type === 'IDENT') { const next = tokens[idx + 1]; if (next && next.type === '(') { stack.push(tk); idx += 2; stack.push({ type: '(' }); expectValue = true; continue; } output.push(tk); idx++; expectValue = false; continue; }
+          if (tk.type === '(') { stack.push(tk); idx++; expectValue = true; continue; }
+          if (tk.type === ')') { while (stack.length && stack[stack.length - 1].type !== '(') { output.push(stack.pop()); } if (!stack.length) { errors.push({ message: 'Mismatched )', pos: tk.pos }); idx++; break; } stack.pop(); if (stack.length && stack[stack.length - 1].type === 'IDENT') { output.push(stack.pop()); } idx++; expectValue = false; continue; }
+          if (tk.type === ',') { while (stack.length && stack[stack.length - 1].type !== '(') { output.push(stack.pop()); } if (!stack.length) { errors.push({ message: 'Misplaced comma', pos: tk.pos }); } idx++; expectValue = true; continue; }
+          if (isOp(tk.type)) { let op = tk.type; if (op === '-' && expectValue) { stack.push({ type: 'NEG', pos: tk.pos }); idx++; continue; } while (stack.length) { const top = stack[stack.length - 1]; if (isOp(top.type) && prec(top.type) >= prec(op)) { output.push(stack.pop()); } else break; } stack.push(tk); idx++; expectValue = true; continue; }
+          break;
+        }
+        while (stack.length) { const s = stack.pop(); if (s.type === '(') errors.push({ message: 'Mismatched (', pos: s.pos }); else output.push(s); }
+        // consume trailing EOL(s)
+        while (peek() && peek().type === 'EOL') idx++;
+        return output;
+      }
+      function rpnToBytecode(rpn, definedLocals) {
+        const bc = [];
+        for (const tk of rpn) {
+          if (!tk) continue;
+          if (tk.type === 'NUMBER') {
+            bc.push({ op: DSG_OP.CONST, v: tk.value });
+            continue;
+          }
+          if (tk.type === 'IDENT') {
+            const nm = tk.value;
+            if (DSG_CONSTS[nm] != null) {
+              bc.push({ op: DSG_OP.CONST, v: DSG_CONSTS[nm] });
+              continue;
+            }
+            if (DSG_FUNCS[nm] != null) {
+              switch (nm) {
+                case 'sin': bc.push({ op: DSG_OP.SIN }); break;
+                case 'cos': bc.push({ op: DSG_OP.COS }); break;
+                case 'tan': bc.push({ op: DSG_OP.TAN }); break;
+                case 'abs': bc.push({ op: DSG_OP.ABS }); break;
+                case 'clamp': bc.push({ op: DSG_OP.CLAMP }); break;
+                case 'sign': bc.push({ op: DSG_OP.SIGN }); break;
+                case 'pingpong': bc.push({ op: DSG_OP.PINGPONG }); break;
+                case 'min': bc.push({ op: DSG_OP.MIN }); break;
+                case 'max': bc.push({ op: DSG_OP.MAX }); break;
+                case 'pow': bc.push({ op: DSG_OP.POW }); break;
+                case 'sqrt': bc.push({ op: DSG_OP.SQRT }); break;
+                case 'exp': bc.push({ op: DSG_OP.EXP }); break;
+                case 'random': bc.push({ op: DSG_OP.RANDOM }); break;
+                case 'floor': bc.push({ op: DSG_OP.FLOOR }); break;
+                case 'ceil': bc.push({ op: DSG_OP.CEIL }); break;
+                case 'round': bc.push({ op: DSG_OP.ROUND }); break;
+              }
+              continue;
+            }
+            if (DSG_INPUTS.includes(nm)) {
+              bc.push({ op: DSG_OP.LOAD, v: nm });
+              continue;
+            }
+            if (DSG_OUTPUTS.includes(nm)) {
+              if (!definedOutputs.has(nm)) {
+                errors.push({ message: 'Output ' + nm + ' used before it is assigned earlier in script', pos: tk.pos });
+              }
+              bc.push({ op: DSG_OP.LOAD, v: nm });
+              continue;
+            }
+            if (definedLocals.has(nm)) {
+              bc.push({ op: DSG_OP.LOAD, v: nm });
+              continue;
+            }
+            errors.push({ message: 'Unknown identifier ' + nm, pos: tk.pos });
+            continue;
+          }
+          if (['+', '-', '*', '/', '%'].includes(tk.type)) {
+            bc.push({ op: { '+': DSG_OP.ADD, '-': DSG_OP.SUB, '*': DSG_OP.MUL, '/': DSG_OP.DIV, '%': DSG_OP.MOD }[tk.type] });
+            continue;
+          }
+          if (tk.type === 'NEG') {
+            bc.push({ op: DSG_OP.NEG });
+            continue;
+          }
+        }
+        bc.push({ op: DSG_OP.END });
+        return bc;
+      }
+      while (idx < tokens.length && !errors.length) {
+        // skip stray EOLs
+        while (peek() && peek().type === 'EOL') idx++;
+        const lhs = peek(); if (!lhs) break;
+        if (lhs.type === 'IDENT') {
+          const name = lhs.value; idx++;
+          if (!consume('=')) break;
+          const rpn = parseExpression();
+          const bc = rpnToBytecode(rpn, localVars);
+          if (DSG_OUTPUTS.includes(name)) {
+            assignments[name] = bc; if (!usedOrder.includes(name)) usedOrder.push(name); definedOutputs.add(name);
+            usedMask |= DSG_OUTPUT_MASK[name] || 0;
+          } else if (DSG_INPUTS.includes(name)) {
+            errors.push({ message: 'Cannot assign to read-only input ' + name, pos: lhs.pos }); break;
+          }
+          else {
+            assignments[name] = bc; if (!usedOrder.includes(name)) usedOrder.push(name); localVars.add(name);
+          }
+        } else {
+          errors.push({ message: 'Unexpected token', pos: lhs.pos }); break;
+        }
+      }
+      if (!usedOrder.length && !errors.length) errors.push({ message: 'No assignments found', pos: 0 });
+      if (errors.length) return { ok: false, errors };
+      return {
+        ok: true,
+        script: {
+          assignments,
+          used: usedOrder,
+          locals: [...localVars],
+          usedMask,
+          runtime: {
+            randomInitialized: false,
+            randomState: 0,
+            faultMask: 0,
+            faultValues: {}
+          }
+        }
+      };
+    }
+    function evalDSLCompiled(compiled, baseVars = {}, collectLocals = false) {
+      if (!compiled) throw new Error('No compiled script to evaluate');
+      if (!compiled.runtime) {
+        compiled.runtime = { randomInitialized: false, randomState: 0, faultMask: 0, faultValues: {} };
+      }
+      const runtime = compiled.runtime;
+      if (baseVars && Number(baseVars.start)) {
+        runtime.randomInitialized = false;
+      }
+      runtime.faultMask = 0;
+      runtime.faultValues = {};
+
+      const env = { ...baseVars };
+      const out = {};
+      const localsSnapshot = collectLocals ? {} : null;
+      const toRadians = deg => deg * Math.PI / 180;
+      const isFiniteNum = v => typeof v === 'number' && Number.isFinite(v);
+
+      const ensureRandomSeeded = () => {
+        if (runtime.randomInitialized) return;
+        let seed = 0;
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+          const buf = new Uint32Array(1);
+          crypto.getRandomValues(buf);
+          seed = buf[0] >>> 0;
+        } else {
+          seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+        }
+        if (seed === 0) {
+          const timePart = Math.floor((typeof performance !== 'undefined' ? performance.now() : Date.now())) & 0xFFFFFFFF;
+          const radiusPart = Math.floor((Number(baseVars?.radius) || 0) * 65536) & 0xFFFFFFFF;
+          seed = ((timePart << 16) ^ radiusPart ^ 0xA5A5A5A5) >>> 0;
+        }
+        if (seed === 0) seed = 0x9E3779B9; // last-resort non-zero seed
+        runtime.randomState = seed >>> 0;
+        runtime.randomInitialized = true;
+      };
+
+      const nextRandomUnit = () => {
+        ensureRandomSeeded();
+        runtime.randomState = psgRandomNext(runtime.randomState) >>> 0;
+        const mantissa = (runtime.randomState >>> 8) & 0x00FFFFFF;
+        return mantissa / 16777216;
+      };
+
+      function run(bc) {
+        const st = [];
+        for (const ins of bc) {
+          switch (ins.op) {
+            case DSG_OP.CONST: st.push(ins.v); break;
+            case DSG_OP.LOAD: st.push(env[ins.v] ?? 0); break;
+            case DSG_OP.ADD: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) + (b ?? 0)); break; }
+            case DSG_OP.SUB: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) - (b ?? 0)); break; }
+            case DSG_OP.MUL: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) * (b ?? 0)); break; }
+            case DSG_OP.DIV: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) / (b ?? 0)); break; }
+            case DSG_OP.MOD: { const b = st.pop(); const a = st.pop(); st.push((a ?? 0) % (b ?? 0)); break; }
+            case DSG_OP.NEG: { const a = st.pop(); st.push(-(a ?? 0)); break; }
+            case DSG_OP.SIN: { const a = st.pop(); st.push(Math.sin(toRadians(a ?? 0))); break; }
+            case DSG_OP.COS: { const a = st.pop(); st.push(Math.cos(toRadians(a ?? 0))); break; }
+            case DSG_OP.TAN: { const a = st.pop(); st.push(Math.tan(toRadians(a ?? 0))); break; }
+            case DSG_OP.ABS: { const a = st.pop(); st.push(Math.abs(a ?? 0)); break; }
+            case DSG_OP.CLAMP: {
+              const maxV = st.pop();
+              const minV = st.pop();
+              const val = st.pop();
+              st.push(Math.min(Math.max(val ?? 0, minV ?? 0), maxV ?? 0));
+              break;
+            }
+            case DSG_OP.SIGN: {
+              const a = st.pop() ?? 0;
+              let outSign = 0;
+              if (a > 1e-6) outSign = 1;
+              else if (a < -1e-6) outSign = -1;
+              st.push(outSign);
+              break;
+            }
+            case DSG_OP.PINGPONG: {
+              const maxV = st.pop();
+              const v = st.pop();
+              if (!isFiniteNum(maxV) || maxV <= 0) { st.push(0); break; }
+              const period = 2 * maxV;
+              let t = (v ?? 0) % period;
+              if (t < 0) t += period;
+              st.push(t <= maxV ? t : (2 * maxV - t));
+              break;
+            }
+            case DSG_OP.MIN: { const b = st.pop(); const a = st.pop(); st.push(Math.min(a ?? 0, b ?? 0)); break; }
+            case DSG_OP.MAX: { const b = st.pop(); const a = st.pop(); st.push(Math.max(a ?? 0, b ?? 0)); break; }
+            case DSG_OP.POW: { const b = st.pop(); const a = st.pop(); st.push(Math.pow(a ?? 0, b ?? 0)); break; }
+            case DSG_OP.SQRT: { const a = st.pop(); st.push(Math.sqrt(a ?? 0)); break; }
+            case DSG_OP.EXP: { const a = st.pop(); st.push(Math.exp(a ?? 0)); break; }
+            case DSG_OP.FLOOR: { const a = st.pop(); st.push(Math.floor(a ?? 0)); break; }
+            case DSG_OP.CEIL: { const a = st.pop(); st.push(Math.ceil(a ?? 0)); break; }
+            case DSG_OP.ROUND: { const a = st.pop(); st.push(Math.round(a ?? 0)); break; }
+            case DSG_OP.RANDOM: { st.push(nextRandomUnit()); break; }
+            case DSG_OP.END: return st.length ? (st[st.length - 1] ?? 0) : 0;
+          }
+        }
+        return st.length ? (st[st.length - 1] ?? 0) : 0;
+      }
+
+      for (const name of compiled.used) {
+        const expr = compiled.assignments[name];
+        if (!expr) continue;
+        const val = run(expr);
+        out[name] = val;
+        env[name] = val;
+        if (collectLocals && localsSnapshot) {
+          for (const l of compiled.locals || []) {
+            if (Object.prototype.hasOwnProperty.call(env, l)) localsSnapshot[l] = env[l];
+          }
+        }
+      }
+
+      const faultValues = {};
+      let faultMask = 0;
+      const usedMask = compiled.usedMask ?? 0;
+      const currentRadius = Number(baseVars?.radius) || 0;
+      const currentAngle = Number(baseVars?.angle) || 0;
+
+      if (usedMask & DSG_OUTPUT_MASK.next_radius) {
+        if (!isFiniteNum(out.next_radius)) {
+          faultMask |= DSG_OUTPUT_MASK.next_radius;
+          faultValues.next_radius = out.next_radius;
+        }
+      }
+      if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
+        if (!isFiniteNum(out.delta_radius)) {
+          faultMask |= DSG_OUTPUT_MASK.delta_radius;
+          faultValues.delta_radius = out.delta_radius;
+        }
+      }
+      if (usedMask & DSG_OUTPUT_MASK.next_angle) {
+        if (!isFiniteNum(out.next_angle)) {
+          faultMask |= DSG_OUTPUT_MASK.next_angle;
+          faultValues.next_angle = out.next_angle;
+        }
+      }
+      if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
+        if (!isFiniteNum(out.delta_angle)) {
+          faultMask |= DSG_OUTPUT_MASK.delta_angle;
+          faultValues.delta_angle = out.delta_angle;
+        }
+      }
+
+      let outRadius = currentRadius;
+      if (usedMask & DSG_OUTPUT_MASK.next_radius) {
+        outRadius = out.next_radius;
+      } else if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
+        outRadius = currentRadius + out.delta_radius;
+      }
+      if (!isFiniteNum(outRadius)) {
+        if (usedMask & DSG_OUTPUT_MASK.next_radius) {
+          faultMask |= DSG_OUTPUT_MASK.next_radius;
+          if (faultValues.next_radius == null) faultValues.next_radius = outRadius;
+        } else if (usedMask & DSG_OUTPUT_MASK.delta_radius) {
+          faultMask |= DSG_OUTPUT_MASK.delta_radius;
+          if (faultValues.delta_radius == null) faultValues.delta_radius = outRadius;
+        }
+      }
+
+      let outAngle = currentAngle;
+      if (usedMask & DSG_OUTPUT_MASK.next_angle) {
+        outAngle = out.next_angle;
+      } else if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
+        outAngle = currentAngle + out.delta_angle;
+      }
+      if (!isFiniteNum(outAngle)) {
+        if (usedMask & DSG_OUTPUT_MASK.next_angle) {
+          faultMask |= DSG_OUTPUT_MASK.next_angle;
+          if (faultValues.next_angle == null) faultValues.next_angle = outAngle;
+        } else if (usedMask & DSG_OUTPUT_MASK.delta_angle) {
+          faultMask |= DSG_OUTPUT_MASK.delta_angle;
+          if (faultValues.delta_angle == null) faultValues.delta_angle = outAngle;
+        }
+      }
+
+      runtime.faultMask = faultMask;
+      runtime.faultValues = faultValues;
+
+      const result = {
+        outputs: out,
+        faultMask,
+        faultValues
+      };
+      if (collectLocals) result.locals = localsSnapshot;
+      return result;
+    }
+    function formatBytecodeListing(bc) { return bc.map(ins => { if (ins.v != null) return ins.op + ' ' + ins.v; return ins.op; }).join('\n'); }
+
+    document.addEventListener('alpine:init', () => {
+      const orig = sandGardenApp; window.sandGardenApp = function () {
+        const base = orig(); return Object.assign(base, {
+          formatBytecode(bc) { return formatBytecodeListing(bc); },
+          loadExample(ex) {
+            if (!ex) return;
+            this.skipNextScriptProcess = true;
+            this.scriptSource = ex.code;
+            this.lastLoadedScriptCode = this.normalizeScript(ex.code);
+            this.activeScriptName = ex.name || null;
+            this.scheduleScriptProcess(true);
+            setTimeout(() => { this.skipNextScriptProcess = false; }, 0);
+          },
+          compileScript() {
+            const res = compileDSL(this.scriptSource);
+            if (!res.ok) {
+              this.compileErrors = res.errors.map(e => ({ message: enhanceErrorMessage(e.message), pos: e.pos }));
+              this.compiledScript = null;
+              this.clearDslFault();
+              return false;
+            }
+            this.compileErrors = [];
+            this.compiledScript = res.script;
+            this.clearDslFault();
+            return true;
+          },
+          useScriptPattern() { if (!this.compiledScript) return; this.pattern = 11; this.setStatus('Using custom script'); this.regeneratePattern(); },
+          simulateScript(options = {}) {
+            const { silent = false, force = false } = options;
+            if (this.debugStepsEnabled && !force) {
+              if (!silent) {
+                this.setStatus('Simulation controlled by device debug stream');
+              }
+              return false;
+            }
+            if (!this.compiledScript) {
+              if (!silent) {
+                this.setStatus('Compile first');
+              }
+              return false;
+            }
+            if (this.pattern !== 11) this.pattern = 11;
+            this.regeneratePattern();
+            if (!silent) {
+              this.setStatus('Sandscript preview regenerated');
+            }
+            return true;
+          },
+          evalCompiledScript(current, startFlag, MAX_R_STEPS, STEPS_PER_A_AXIS_REV) {
+            // Standalone evaluator variant (mirrors factory 11 logic) for preview mode.
+            if (!this.compiledScript) return current;
+            const stepsPerRev = STEPS_PER_A_AXIS_REV;
+            const degToSteps = stepsPerRev / 360;
+            const stepsPerCm = this.deviceStepsPerCm;
+            const maxRadiusCm = (this.scriptMaxRadius != null) ? this.scriptMaxRadius : (this.maxRadiusSteps / stepsPerCm);
+            const currentRadiusCm = current.radial / stepsPerCm;
+            const currentAngleDeg = (current.angular / stepsPerRev) * 360;
+            // Continuous rev tracking (unwrapped angle)
+            if (startFlag || this.revPrevAngleDeg == null) {
+              this.revPrevAngleDeg = currentAngleDeg;
+              this.revUnwrappedAngleDeg = currentAngleDeg; // start from actual angle (prevents jump if not zero)
+              // Reset temporal counters for preview mode start
+              if (startFlag) { this.dslStepCounter = 0; this.dslStartTimestamp = performance.now(); }
+            } else {
+              let delta = currentAngleDeg - this.revPrevAngleDeg;
+              if (delta > 180) delta -= 360; else if (delta < -180) delta += 360;
+              this.revUnwrappedAngleDeg += delta;
+              this.revPrevAngleDeg = currentAngleDeg;
+            }
+            const rev = this.revUnwrappedAngleDeg / 360;
+            const timeMs = this.dslStartTimestamp != null ? (performance.now() - this.dslStartTimestamp) : 0;
+            const vars = { radius: currentRadiusCm, angle: currentAngleDeg, start: startFlag ? 1 : 0, rev, steps: this.dslStepCounter, time: timeMs };
+            if (startFlag) {
+              this.clearDslFault();
+            } else if (this.dslFaultActive) {
+              return current;
+            }
+            const res = evalDSLCompiled(this.compiledScript, vars, true);
+            const values = res.outputs || {};
+            const locals = res.locals || {};
+            this.lastDSLInputs = { ...vars };
+            this.lastDSLOutputs = { ...values };
+            this.lastDSLLocals = { ...locals };
+            if (Array.isArray(this.dslInputsSeq)) {
+              this.dslInputsSeq.push({ ...vars });
+              if (this.dslInputsSeq.length > this.debugMaxPoints) this.dslInputsSeq.shift();
+            }
+            if (Array.isArray(this.dslOutputsSeq)) {
+              this.dslOutputsSeq.push({ ...values });
+              if (this.dslOutputsSeq.length > this.debugMaxPoints) this.dslOutputsSeq.shift();
+            }
+            if (Array.isArray(this.dslLocalsSeq)) {
+              this.dslLocalsSeq.push({ ...locals });
+              if (this.dslLocalsSeq.length > this.debugMaxPoints) this.dslLocalsSeq.shift();
+            }
+            if (res.faultMask) {
+              this.handleDslFault(res);
+              return current;
+            }
+            this.clearDslFault();
+            this.dslStepCounter++;
+            function has(v) { return v != null && isFinite(v); }
+            let outRadiusCm = currentRadiusCm;
+            if (has(values.next_radius)) outRadiusCm = values.next_radius; else if (has(values.delta_radius)) outRadiusCm = currentRadiusCm + values.delta_radius;
+            let outAngleDeg = currentAngleDeg;
+            if (has(values.next_angle)) outAngleDeg = values.next_angle; else if (has(values.delta_angle)) outAngleDeg = currentAngleDeg + values.delta_angle;
+            // Mirror mode: reflect angle every other revolution (odd rev index flips direction across revolution midpoint)
+            if (this.mirrorMode) {
+              const revIndex = Math.floor(vars.rev);
+              if (revIndex % 2 === 1) {
+                const revStart = revIndex * 360;
+                const offset = outAngleDeg - revStart;
+                outAngleDeg = revStart + (360 - offset);
+              }
+            }
+            outRadiusCm = Math.max(0, Math.min(maxRadiusCm, outRadiusCm));
+            outAngleDeg = ((outAngleDeg % 360) + 360) % 360;
+            const radialSteps = Math.max(0, Math.min(MAX_R_STEPS, Math.round(outRadiusCm * stepsPerCm)));
+            const angleSteps = Math.round(outAngleDeg * degToSteps) % stepsPerRev;
+            return { radial: radialSteps, angular: angleSteps };
+          }
+        });
+      };
+    });
+
+    function enhanceErrorMessage(msg) {
+      if (/used before it is assigned/.test(msg)) return msg + ' (move its assignment above or reference the input variable instead).';
+      if (/Invalid assignment target/.test(msg)) return msg + ' (allowed: next_radius, next_angle, delta_radius, delta_angle).';
+      return msg;
+    }
+  </script>
+</body>
+
+</html>
 )rawliteral";
 
 const size_t WEB_CLIENT_HTML_SIZE = sizeof(WEB_CLIENT_HTML) - 1;

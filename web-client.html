@@ -206,6 +206,8 @@
         </button>
         <button x-show="connected" @click="disconnect()"
           class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Disconnect</button>
+        <button x-show="connected" @click="sendReset()"
+          class="px-4 py-2 rounded-md bg-orange-600 hover:bg-orange-500 transition font-medium focus:outline-none focus:ring-2 focus:ring-sg-accent/60">Reset Device</button>
       </div>
     </header>
 
@@ -2023,6 +2025,27 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             this.log('CMD ' + cmd);
           } catch (e) {
             this.log('Command err: ' + e.message);
+            throw e;
+          }
+        },
+        async sendReset() {
+          if (!this.connected) throw new Error('Not connected to device');
+          if (!confirm('Are you sure you want to restart the device? This will disconnect all clients and reboot the Sand Garden.')) {
+            return;
+          }
+          try {
+            this.log('Sending reset command...');
+            const response = await fetch(`${this.baseUrl}/api/reset`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.log('Device restarting...');
+            this.setStatus('Device restarting - please wait');
+            // Device will restart, so disconnect and allow user to reconnect
+            setTimeout(() => this.disconnect(), 500);
+          } catch (e) {
+            this.log('Reset err: ' + e.message);
             throw e;
           }
         },
