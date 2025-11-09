@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import API_LED_EFFECT, API_PATTERN, DOMAIN, LED_EFFECTS, PATTERNS
+from .const import API_PATTERN, DOMAIN, PATTERNS
 from .coordinator import SandGardenCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,12 +24,7 @@ async def async_setup_entry(
     """Set up Sand Garden select entities."""
     coordinator: SandGardenCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities(
-        [
-            SandGardenPatternSelect(coordinator, entry),
-            SandGardenLEDEffectSelect(coordinator, entry),
-        ]
-    )
+    async_add_entities([SandGardenPatternSelect(coordinator, entry)])
 
 
 class SandGardenPatternSelect(CoordinatorEntity, SelectEntity):
@@ -71,46 +66,4 @@ class SandGardenPatternSelect(CoordinatorEntity, SelectEntity):
             await self.coordinator.async_send_command(API_PATTERN, {"value": pattern_id})
             # Optimistically update the value
             self.coordinator.data["pattern"] = pattern_id
-            self.async_write_ha_state()
-
-
-class SandGardenLEDEffectSelect(CoordinatorEntity, SelectEntity):
-    """Representation of Sand Garden LED effect selector."""
-
-    _attr_has_entity_name = True
-    _attr_name = "LED Effect"
-    _attr_icon = "mdi:led-strip-variant"
-
-    def __init__(
-        self, coordinator: SandGardenCoordinator, entry: ConfigEntry
-    ) -> None:
-        """Initialize the select entity."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{entry.entry_id}_led_effect"
-        self._attr_options = list(LED_EFFECTS.values())
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
-
-    @property
-    def current_option(self) -> str | None:
-        """Return the current LED effect."""
-        effect_id = self.coordinator.data.get("ledEffect")
-        if effect_id is not None:
-            return LED_EFFECTS.get(effect_id)
-        return None
-
-    async def async_select_option(self, option: str) -> None:
-        """Change the selected LED effect."""
-        # Find effect ID by name
-        effect_id = next(
-            (eid for eid, name in LED_EFFECTS.items() if name == option), None
-        )
-        if effect_id is not None:
-            await self.coordinator.async_send_command(API_LED_EFFECT, {"value": effect_id})
-            # Optimistically update the value
-            self.coordinator.data["ledEffect"] = effect_id
             self.async_write_ha_state()
