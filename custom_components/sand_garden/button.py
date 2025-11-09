@@ -61,7 +61,6 @@ class SandGardenResetButton(CoordinatorEntity, ButtonEntity):
     _attr_has_entity_name = True
     _attr_name = "Reset"
     _attr_icon = "mdi:restart"
-    _attr_entity_category = "config"
 
     def __init__(
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
