@@ -16,6 +16,7 @@ API_COMMAND = "/api/command"
 API_LED_EFFECT = "/api/led/effect"
 API_LED_COLOR = "/api/led/color"
 API_LED_BRIGHTNESS = "/api/led/brightness"
+API_RESET = "/api/reset"
 API_EVENTS = "/api/events"
 
 # Patterns (1-based index as per device API)

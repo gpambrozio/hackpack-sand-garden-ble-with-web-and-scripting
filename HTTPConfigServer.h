@@ -66,6 +66,7 @@ private:
   void _handleLedEffect(AsyncWebServerRequest *request, uint8_t *data, size_t len);
   void _handleLedColor(AsyncWebServerRequest *request, uint8_t *data, size_t len);
   void _handleLedBrightness(AsyncWebServerRequest *request, uint8_t *data, size_t len);
+  void _handleReset(AsyncWebServerRequest *request);
   void _handleEvents(AsyncWebServerRequest *request);
 
   void _resetScriptTransfer(const char *reasonTag, bool notify = true);
