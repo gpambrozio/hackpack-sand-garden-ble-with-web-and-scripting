@@ -10,6 +10,7 @@ from homeassistant.components.light import (
     ATTR_RGB_COLOR,
     ColorMode,
     LightEntity,
+    LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -40,6 +41,7 @@ class SandGardenLight(CoordinatorEntity, LightEntity):
     _attr_name = "LED Strip"
     _attr_color_mode = ColorMode.RGB
     _attr_supported_color_modes = {ColorMode.RGB}
+    _attr_supported_features = LightEntityFeature.EFFECT
     _attr_effect_list = list(LED_EFFECTS.values())
 
     def __init__(
