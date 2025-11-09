@@ -1,0 +1,20 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Setup Sand Garden",
+        "description": "Enter the hostname or IP address of your Sand Garden device.",
+        "data": {
+          "host": "Hostname or IP address"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the device. Please check the hostname/IP and ensure the device is on your network.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  }
+}

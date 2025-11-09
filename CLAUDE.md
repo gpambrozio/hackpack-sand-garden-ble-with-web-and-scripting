@@ -591,6 +591,52 @@ Edit constants in PatternScript.h (lines 26-31). Increase carefully—larger lim
 - **wifi-setup.html**: WiFi credential configuration tool (BLE-based)
 - **Readme.md**: User-facing documentation and quick start
 - **DSL_IMPLEMENTATION_PLAN.md**: Technical specification for SandScript (grammar, opcodes, memory layout)
+- **custom_components/sand_garden/**: Home Assistant custom integration
+
+## Home Assistant Integration
+
+A custom integration located in `custom_components/sand_garden/` provides native Home Assistant control of the device via the HTTP REST API.
+
+### Integration Architecture
+
+- **Platform**: Custom HACS integration using config flow (no YAML required)
+- **Communication**: HTTP REST API + Server-Sent Events (SSE) for real-time updates
+- **Coordinator**: `SandGardenCoordinator` manages SSE connection and state updates
+- **Entities**: Light (with effects), Number (speed), Select (pattern), Switch (2), Button
+
+### Key Files
+
+- `__init__.py` - Integration setup, platform loading
+- `config_flow.py` - UI configuration flow
+- `coordinator.py` - SSE listener and API communication
+- `const.py` - **LED_EFFECTS and PATTERNS dictionaries (0-based device indices)**
+- `light.py` - LED control (color, brightness, effects integrated)
+- `number.py` - Speed multiplier control
+- `select.py` - Pattern selection
+- `switch.py` - Auto mode and running state
+- `button.py` - Home command
+- `manifest.json` - Integration metadata
+- `strings.json` / `translations/en.json` - UI text
+
+### Important Implementation Details
+
+**LED Effects (0-based, 14 total):**
+The `LED_EFFECTS` dict in `const.py` must match the device firmware exactly. Effects are integrated into the Light entity (not a separate select entity). The Light entity requires `LightEntityFeature.EFFECT` in `supported_features` to show the effects dropdown in HA UI.
+
+**Patterns (1-based, 11 total):**
+The `PATTERNS` dict uses 1-based indexing to match the device API. Pattern 11 is always SandScript.
+
+**Real-time Updates:**
+The coordinator maintains a persistent SSE connection to `/api/events` for push updates. Falls back to 30-second polling if SSE disconnects.
+
+### Modifying the Integration
+
+When device features change:
+1. Update `const.py` if patterns/effects change (maintain correct indexing)
+2. Add new entities in appropriate platform files (light.py, switch.py, etc.)
+3. Update `strings.json` and `translations/en.json` for new UI text
+4. Update `README.md` files in both root and `custom_components/sand_garden/`
+5. Test by removing/re-adding integration in HA after changes
 
 ## Notes
 

@@ -1,0 +1,7 @@
+{
+  "name": "Sand Garden",
+  "content_in_root": false,
+  "filename": "sand_garden",
+  "render_readme": true,
+  "homeassistant": "2023.1.0"
+}

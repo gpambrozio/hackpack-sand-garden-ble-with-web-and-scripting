@@ -1,2 +1,8 @@
 build
 *.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
