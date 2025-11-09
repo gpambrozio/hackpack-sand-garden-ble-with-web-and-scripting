@@ -74,19 +74,20 @@ def validate_html(html):
     Returns: (is_valid, error_message)
     """
     # Check for basic HTML structure
-    if not re.search(r'<html[^>]*>', html, re.IGNORECASE):
+    if not re.search(r'<html(?:\s|>)', html, re.IGNORECASE):
         return False, "Missing <html> tag"
 
-    if not re.search(r'<head[^>]*>', html, re.IGNORECASE):
+    if not re.search(r'<head(?:\s|>)', html, re.IGNORECASE):
         return False, "Missing <head> tag"
 
-    if not re.search(r'<body[^>]*>', html, re.IGNORECASE):
+    if not re.search(r'<body(?:\s|>)', html, re.IGNORECASE):
         return False, "Missing <body> tag"
 
     # Check that major tags are balanced
     tags_to_check = ['html', 'head', 'body', 'script', 'style']
     for tag in tags_to_check:
-        opening = len(re.findall(f'<{tag}[^>]*>', html, re.IGNORECASE))
+        # Use word boundary to match complete tag names only (e.g., <head> but not <header>)
+        opening = len(re.findall(f'<{tag}(?:\\s|>)', html, re.IGNORECASE))
         closing = len(re.findall(f'</{tag}>', html, re.IGNORECASE))
         if opening != closing:
             return False, f"Unbalanced <{tag}> tags: {opening} opening, {closing} closing"
