@@ -49,8 +49,10 @@ The integration creates the following entities:
 
 - **🔢 Speed Multiplier** - Adjust pattern speed (0.01 - 5.0x)
 - **🎨 Pattern Select** - Choose from 11 built-in patterns
-- **💡 LED Strip** - RGB color and brightness control
-- **✨ LED Effect** - 10 visual effects (Rainbow, Fire, Ocean, etc.)
+- **💡 LED Strip** - Complete LED control with:
+  - RGB color picker (for Solid Color effect)
+  - Brightness slider (0-100%)
+  - Effect selector (14 visual effects)
 - **▶️ Running Switch** - Start/stop pattern execution
 - **🔄 Auto Mode Switch** - Enable automatic pattern cycling
 - **🏠 Home Button** - Return to origin position
@@ -77,14 +79,21 @@ Control which pattern is drawn in the sand:
 
 ### LED Effects
 
-Beautiful LED animations:
-- Solid Color
-- Rainbow Wave
-- Rainbow Cycle
-- Theater Chase
-- Twinkle
-- Fire, Ocean, Lava, Forest
-- Party mode
+14 beautiful LED animations (accessible via the Light entity's effect dropdown):
+- Rainbow - Moving rainbow wave across the strip
+- Full Rainbow - Whole strip cycles through rainbow colors
+- Color Waves - Sine wave color patterns
+- Twinkle - Random sparkling stars
+- Theater Chase - Marquee-style chase effect
+- Palette Cycle - Cycling through color palettes
+- Confetti - Random colored dots
+- Comet - Comet/meteor with fading tail
+- Breathing Pulse - Calming breathing effect
+- Rotating Wedge - Colored wedge sweeps around the circle
+- Bidirectional Chase - Two dots chase in opposite directions
+- Color Segments - Rotating colored pie segments
+- Solid Color - Single solid color (use color picker)
+- Off - Turn off all LEDs
 
 ### Automations
 
@@ -103,19 +112,24 @@ automation:
       - platform: sun
         event: sunset
     action:
+      # Select a pattern
       - service: select.select_option
         target:
           entity_id: select.sand_garden_pattern
         data:
           option: "Pentagon Rainbow"
+      # Start the pattern
       - service: switch.turn_on
         target:
           entity_id: switch.sand_garden_running
+      # Set LED effect, color, and brightness
       - service: light.turn_on
         target:
           entity_id: light.sand_garden_led_strip
         data:
+          effect: "Breathing Pulse"
           rgb_color: [255, 100, 50]
+          brightness: 200
 ```
 
 ## Documentation

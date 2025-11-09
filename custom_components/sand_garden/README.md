@@ -8,10 +8,12 @@ This integration provides full control of your Sand Garden device through Home A
 
 ### Entities
 
-- **Light** - LED Strip color and brightness control
+- **Light** - LED Strip with integrated controls:
+  - RGB color picker (for Solid Color effect)
+  - Brightness slider (0-255)
+  - Effect selector (14 visual effects)
 - **Number** - Speed multiplier adjustment (0.01 - 5.0)
 - **Select** - Pattern selection (11 built-in patterns)
-- **Select** - LED effect selection (10 visual effects)
 - **Switch** - Auto mode toggle
 - **Switch** - Running state (start/stop pattern execution)
 - **Button** - Home command (return to origin)
@@ -119,35 +121,40 @@ data:
 
 ### Controlling LEDs
 
-**Change LED Effect:**
-```yaml
-service: select.select_option
-target:
-  entity_id: select.sand_garden_led_effect
-data:
-  option: "Rainbow Wave"
-```
+All LED controls are integrated into the Light entity.
 
-**Available LED Effects:**
-- Solid Color
-- Rainbow Wave
-- Rainbow Cycle
-- Theater Chase
-- Twinkle
-- Fire
-- Ocean
-- Lava
-- Forest
-- Party
-
-**Set LED Color:**
+**Set LED Effect, Color, and Brightness:**
 ```yaml
 service: light.turn_on
 target:
   entity_id: light.sand_garden_led_strip
 data:
+  effect: "Breathing Pulse"
   rgb_color: [255, 0, 128]
   brightness: 200
+```
+
+**Available LED Effects:**
+- Rainbow - Moving rainbow wave across the strip
+- Full Rainbow - Whole strip cycles through rainbow colors
+- Color Waves - Sine wave color patterns
+- Twinkle - Random sparkling stars
+- Theater Chase - Marquee-style chase effect
+- Palette Cycle - Cycling through color palettes
+- Confetti - Random colored dots
+- Comet - Comet/meteor with fading tail
+- Breathing Pulse - Calming breathing effect
+- Rotating Wedge - Colored wedge sweeps around the circle
+- Bidirectional Chase - Two dots chase in opposite directions
+- Color Segments - Rotating colored pie segments
+- Solid Color - Single solid color (use with rgb_color)
+- Off - Turn off all LEDs
+
+**Turn Off LEDs:**
+```yaml
+service: light.turn_off
+target:
+  entity_id: light.sand_garden_led_strip
 ```
 
 ### Running Commands
