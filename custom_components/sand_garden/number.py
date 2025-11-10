@@ -8,10 +8,10 @@ from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import API_SPEED, DOMAIN, SPEED_MAX, SPEED_MIN, SPEED_STEP
 from .coordinator import SandGardenCoordinator
+from .entity import SandGardenEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +27,9 @@ async def async_setup_entry(
     async_add_entities([SandGardenSpeedNumber(coordinator, entry)])
 
 
-class SandGardenSpeedNumber(CoordinatorEntity, NumberEntity):
+class SandGardenSpeedNumber(SandGardenEntity, NumberEntity):
     """Representation of Sand Garden speed control."""
 
-    _attr_has_entity_name = True
     _attr_name = "Speed Multiplier"
     _attr_icon = "mdi:speedometer"
     _attr_native_min_value = SPEED_MIN
@@ -42,14 +41,8 @@ class SandGardenSpeedNumber(CoordinatorEntity, NumberEntity):
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
     ) -> None:
         """Initialize the number entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_speed"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
 
     @property
     def native_value(self) -> float | None:

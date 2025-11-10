@@ -15,10 +15,10 @@ from homeassistant.components.light import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import API_LED_BRIGHTNESS, API_LED_COLOR, API_LED_EFFECT, DOMAIN, LED_EFFECTS
 from .coordinator import SandGardenCoordinator
+from .entity import SandGardenEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,10 +34,9 @@ async def async_setup_entry(
     async_add_entities([SandGardenLight(coordinator, entry)])
 
 
-class SandGardenLight(CoordinatorEntity, LightEntity):
+class SandGardenLight(SandGardenEntity, LightEntity):
     """Representation of Sand Garden LED strip."""
 
-    _attr_has_entity_name = True
     _attr_name = "LED Strip"
     _attr_color_mode = ColorMode.RGB
     _attr_supported_color_modes = {ColorMode.RGB}
@@ -48,14 +47,8 @@ class SandGardenLight(CoordinatorEntity, LightEntity):
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
     ) -> None:
         """Initialize the light entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_led_strip"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
 
     @property
     def is_on(self) -> bool:

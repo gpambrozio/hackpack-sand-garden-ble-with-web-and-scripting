@@ -8,10 +8,10 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import API_PATTERN, DOMAIN, PATTERNS
 from .coordinator import SandGardenCoordinator
+from .entity import SandGardenEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +27,9 @@ async def async_setup_entry(
     async_add_entities([SandGardenPatternSelect(coordinator, entry)])
 
 
-class SandGardenPatternSelect(CoordinatorEntity, SelectEntity):
+class SandGardenPatternSelect(SandGardenEntity, SelectEntity):
     """Representation of Sand Garden pattern selector."""
 
-    _attr_has_entity_name = True
     _attr_name = "Pattern"
     _attr_icon = "mdi:drawing"
 
@@ -38,15 +37,9 @@ class SandGardenPatternSelect(CoordinatorEntity, SelectEntity):
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
     ) -> None:
         """Initialize the select entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_pattern"
         self._attr_options = list(PATTERNS.values())
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
 
     @property
     def current_option(self) -> str | None:

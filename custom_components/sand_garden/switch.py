@@ -8,10 +8,10 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import API_MODE, API_RUN, DOMAIN
 from .coordinator import SandGardenCoordinator
+from .entity import SandGardenEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,10 +32,9 @@ async def async_setup_entry(
     )
 
 
-class SandGardenAutoModeSwitch(CoordinatorEntity, SwitchEntity):
+class SandGardenAutoModeSwitch(SandGardenEntity, SwitchEntity):
     """Representation of Sand Garden auto mode switch."""
 
-    _attr_has_entity_name = True
     _attr_name = "Auto Mode"
     _attr_icon = "mdi:auto-mode"
 
@@ -43,14 +42,8 @@ class SandGardenAutoModeSwitch(CoordinatorEntity, SwitchEntity):
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
     ) -> None:
         """Initialize the switch entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_auto_mode"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
 
     @property
     def is_on(self) -> bool | None:
@@ -72,10 +65,9 @@ class SandGardenAutoModeSwitch(CoordinatorEntity, SwitchEntity):
         self.async_write_ha_state()
 
 
-class SandGardenRunningSwitch(CoordinatorEntity, SwitchEntity):
+class SandGardenRunningSwitch(SandGardenEntity, SwitchEntity):
     """Representation of Sand Garden running state switch."""
 
-    _attr_has_entity_name = True
     _attr_name = "Running"
     _attr_icon = "mdi:play-pause"
 
@@ -83,14 +75,8 @@ class SandGardenRunningSwitch(CoordinatorEntity, SwitchEntity):
         self, coordinator: SandGardenCoordinator, entry: ConfigEntry
     ) -> None:
         """Initialize the switch entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_running"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Sand Garden",
-            "manufacturer": "CrunchLabs",
-            "model": "Sand Garden",
-        }
 
     @property
     def is_on(self) -> bool | None:
