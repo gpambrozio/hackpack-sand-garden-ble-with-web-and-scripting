@@ -47,6 +47,7 @@ class SandGardenHomeButton(CoordinatorEntity, ButtonEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     async def async_press(self) -> None:
@@ -73,6 +74,7 @@ class SandGardenResetButton(CoordinatorEntity, ButtonEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     async def async_press(self) -> None:

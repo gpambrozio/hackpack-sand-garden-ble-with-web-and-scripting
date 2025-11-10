@@ -46,6 +46,7 @@ class SandGardenPatternSelect(CoordinatorEntity, SelectEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     @property

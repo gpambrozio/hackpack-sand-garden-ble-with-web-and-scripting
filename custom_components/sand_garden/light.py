@@ -55,6 +55,7 @@ class SandGardenLight(CoordinatorEntity, LightEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     @property

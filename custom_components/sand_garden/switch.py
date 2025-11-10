@@ -50,6 +50,7 @@ class SandGardenAutoModeSwitch(CoordinatorEntity, SwitchEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     @property
@@ -90,6 +91,7 @@ class SandGardenRunningSwitch(CoordinatorEntity, SwitchEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     @property

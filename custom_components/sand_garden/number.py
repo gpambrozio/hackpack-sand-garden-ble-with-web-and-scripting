@@ -49,6 +49,7 @@ class SandGardenSpeedNumber(CoordinatorEntity, NumberEntity):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
+            "icon": "mdi:palette",
         }
 
     @property
