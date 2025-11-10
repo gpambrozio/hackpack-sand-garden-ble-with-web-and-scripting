@@ -23,5 +23,4 @@ class SandGardenEntity(CoordinatorEntity[SandGardenCoordinator]):
             "name": "Sand Garden",
             "manufacturer": "CrunchLabs",
             "model": "Sand Garden",
-            "icon": "mdi:palette",
         }
