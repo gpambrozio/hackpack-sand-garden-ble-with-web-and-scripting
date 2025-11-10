@@ -4,7 +4,6 @@
   "codeowners": ["@sand-garden"],
   "config_flow": true,
   "documentation": "https://github.com/sand-garden/hackpack",
-  "icon": "mdi:zen",
   "integration_type": "device",
   "iot_class": "local_push",
   "requirements": ["aiohttp>=3.8.0"],
