@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import API_SPEED, SPEED_MAX, SPEED_MIN, SPEED_STEP
+from .const import API_SPEED, DOMAIN, SPEED_MAX, SPEED_MIN, SPEED_STEP
 from .coordinator import SandGardenCoordinator
 from .entity import SandGardenEntity
 

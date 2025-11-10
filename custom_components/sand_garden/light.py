@@ -16,7 +16,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import API_LED_BRIGHTNESS, API_LED_COLOR, API_LED_EFFECT, LED_EFFECTS
+from .const import API_LED_BRIGHTNESS, API_LED_COLOR, API_LED_EFFECT, DOMAIN, LED_EFFECTS
 from .coordinator import SandGardenCoordinator
 from .entity import SandGardenEntity
 

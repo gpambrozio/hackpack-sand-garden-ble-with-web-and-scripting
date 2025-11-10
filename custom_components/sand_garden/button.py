@@ -8,7 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import API_COMMAND, API_RESET
+from .const import API_COMMAND, API_RESET, DOMAIN
 from .coordinator import SandGardenCoordinator
 from .entity import SandGardenEntity
 
