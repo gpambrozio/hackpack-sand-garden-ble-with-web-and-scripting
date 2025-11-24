@@ -31,7 +31,11 @@ PATTERNS = {
     8: "Random Walk 1",
     9: "Random Walk 2",
     10: "Accidental Butterfly",
-    11: "SandScript",
+    11: "Star Spiral Normal",
+    12: "Star Spiral Detail",
+    13: "Star Spiral Round",
+    14: "Star Rainbow",
+    15: "SandScript",
 }
 
 # LED Effects (0-based index as per device)

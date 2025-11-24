@@ -163,6 +163,10 @@ Positions pattern_PentagonRainbow(Positions current, bool restartPattern = false
 Positions pattern_RandomWalk1(Positions current, bool restartPattern = false);         // Random walk 1 (connected by arcs)
 Positions pattern_RandomWalk2(Positions current, bool restartPattern = false);         // Random walk 2 (connected by lines)
 Positions pattern_AccidentalButterfly(Positions current, bool restartPattern = false); // Accidental Butterfly
+Positions pattern_StarSpiralNormal(Positions current, bool restartPattern = false);    // Normal Star Spiral
+Positions pattern_StarSpiralDetail(Positions current, bool restartPattern = false);    // Star Spiral with finer detail
+Positions pattern_StarSpiralRound(Positions current, bool restartPattern = false);     // Star Spiral with circular outside
+Positions pattern_StarRainbow(Positions current, bool restartPattern = false);         // Rotating off-center star
 Positions pattern_SandScript(Positions current, bool restartPattern = false);          // SandScript-driven pattern (dynamic slot)
 
 /**
@@ -194,7 +198,7 @@ typedef Positions (*PatternFunction)(Positions, bool);
  * but keep it in mind when working with the array.
  */
 PatternFunction patterns[] = {pattern_SimpleSpiral, pattern_Cardioids, pattern_WavySpiral, pattern_RotatingSquares, pattern_PentagonSpiral, pattern_HexagonVortex, pattern_PentagonRainbow, pattern_RandomWalk1,
-                              pattern_RandomWalk2, pattern_AccidentalButterfly, pattern_SandScript};
+                              pattern_RandomWalk2, pattern_AccidentalButterfly, pattern_StarSpiralNormal, pattern_StarSpiralDetail, pattern_StarSpiralRound, pattern_StarRainbow, pattern_SandScript};
 
 static const size_t PATTERN_COUNT = sizeof(patterns) / sizeof(patterns[0]);
 static const int SCRIPT_PATTERN_INDEX = static_cast<int>(PATTERN_COUNT); // 1-based index for BLE/UI
@@ -3458,6 +3462,216 @@ Positions pattern_AccidentalButterfly(Positions current, bool restartPattern)
   target.angular += aOffset;
 
   return target; // Return the target position so that the motion control functions can move to it.
+}
+
+/**
+ * @brief Pattern: Star Spiral Normal. Generates a 5-pointed star pattern that spirals in and out.
+ *
+ * This function creates a star shape by connecting every 2nd vertex of a pentagon (vertices 0->2->4->1->3->0).
+ * After completing a star, the radius is adjusted, creating a spiral effect.
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_StarSpiralNormal(Positions current, bool restartPattern)
+{
+  Positions target;
+  static int start = 0;
+  static int end = 2;
+  static bool firstRun = true;
+  const int vertices = 5;
+  static Positions vertexList[vertices];
+  static int radialStepover = 1000;
+
+  if (firstRun || restartPattern)
+  {
+    nGonGenerator(vertexList, vertices, {0, 0}, 1000, 0.0);
+    firstRun = false;
+    start = 0;
+    end = 2;
+    radialStepover = 1000;
+  }
+
+  target = drawLine(vertexList[start], vertexList[end], current, 100);
+
+  if ((target.angular == vertexList[end].angular) &&
+      (target.radial == vertexList[end].radial))
+  {
+    start += 2;
+    end += 2;
+    start = modulus(start, vertices);
+    end = modulus(end, vertices);
+    if (start == 0 && end == 2)
+    {
+      for (int i = 0; i < vertices; i++)
+      {
+        int newR = vertexList[i].radial + radialStepover;
+        if (newR > MAX_R_STEPS || newR < 0)
+        {
+          radialStepover *= -1;
+          newR += 2 * radialStepover;
+        }
+        vertexList[i].radial = newR;
+      }
+    }
+  }
+  return target;
+}
+
+/**
+ * @brief Pattern: Star Spiral Detail. Like Star Spiral Normal but with finer detail (smaller radial steps).
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_StarSpiralDetail(Positions current, bool restartPattern)
+{
+  Positions target;
+  static int start = 0;
+  static int end = 2;
+  static bool firstRun = true;
+  const int vertices = 5;
+  static Positions vertexList[vertices];
+  static int radialStepover = 500;
+
+  if (firstRun || restartPattern)
+  {
+    nGonGenerator(vertexList, vertices, {0, 0}, 1000, 0.0);
+    firstRun = false;
+    start = 0;
+    end = 2;
+    radialStepover = 500;
+  }
+
+  target = drawLine(vertexList[start], vertexList[end], current, 100);
+
+  if ((target.angular == vertexList[end].angular) &&
+      (target.radial == vertexList[end].radial))
+  {
+    start += 2;
+    end += 2;
+    start = modulus(start, vertices);
+    end = modulus(end, vertices);
+    if (start == 0 && end == 2)
+    {
+      for (int i = 0; i < vertices; i++)
+      {
+        int newR = vertexList[i].radial + radialStepover;
+        if (newR > MAX_R_STEPS || newR < 0)
+        {
+          radialStepover *= -1;
+          newR += 2 * radialStepover;
+        }
+        vertexList[i].radial = newR;
+      }
+    }
+  }
+  return target;
+}
+
+/**
+ * @brief Pattern: Star Spiral Round. Pentagon spiral with circular appearance (connects adjacent vertices).
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_StarSpiralRound(Positions current, bool restartPattern)
+{
+  Positions target;
+  static int start = 0;
+  static int end = 2;
+  static bool firstRun = true;
+  const int vertices = 5;
+  static Positions vertexList[vertices];
+  static int radialStepover = 500;
+
+  if (firstRun || restartPattern)
+  {
+    nGonGenerator(vertexList, vertices, {0, 0}, 1000, 0.0);
+    firstRun = false;
+    start = 0;
+    end = 2;
+    radialStepover = 500;
+  }
+
+  target = drawLine(vertexList[start], vertexList[end], current, 100);
+
+  if ((target.angular == vertexList[end].angular) &&
+      (target.radial == vertexList[end].radial))
+  {
+    start++;
+    end++;
+    start = modulus(start, vertices);
+    end = modulus(end, vertices);
+    if (start == 0 && end == 2)
+    {
+      for (int i = 0; i < vertices; i++)
+      {
+        int newR = vertexList[i].radial + radialStepover;
+        if (newR > MAX_R_STEPS || newR < 0)
+        {
+          radialStepover *= -1;
+          newR += 2 * radialStepover;
+        }
+        vertexList[i].radial = newR;
+      }
+    }
+  }
+  return target;
+}
+
+/**
+ * @brief Pattern: Star Rainbow. Off-center rotating star pattern.
+ *
+ * Creates a 5-pointed star that is off-center and rotates with each iteration,
+ * creating a rainbow-like spreading effect.
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_StarRainbow(Positions current, bool restartPattern)
+{
+  Positions target;
+  static int start = 0;
+  static int end = 2;
+  static bool firstRun = true;
+  const int vertices = 5;
+  static Positions pointList[vertices];
+  const int shiftDeg = 2;
+  static int angleShift = convertDegreesToSteps(shiftDeg);
+  static int shiftCounter = 1;
+
+  if (firstRun || restartPattern)
+  {
+    nGonGenerator(pointList, vertices, {0, 0}, 3000, 0.0);
+    translatePoints(pointList, vertices, {4000, 0});
+    firstRun = false;
+    start = 0;
+    end = 2;
+    shiftCounter = 1;
+  }
+
+  target = drawLine(pointList[start], pointList[end], current, 100);
+
+  if ((target.angular == pointList[end].angular) && (target.radial == pointList[end].radial))
+  {
+    start += 2;
+    end += 2;
+    start = modulus(start, vertices);
+    end = modulus(end, vertices);
+    nGonGenerator(pointList, vertices, {0, 0}, 3000, shiftCounter * shiftDeg);
+    translatePoints(pointList, vertices, {4000, shiftCounter * angleShift});
+    shiftCounter++;
+  }
+  return target;
 }
 
 #pragma endregion Patterns
