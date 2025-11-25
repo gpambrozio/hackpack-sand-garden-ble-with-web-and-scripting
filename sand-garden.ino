@@ -167,6 +167,9 @@ Positions pattern_StarSpiralNormal(Positions current, bool restartPattern = fals
 Positions pattern_StarSpiralDetail(Positions current, bool restartPattern = false);    // Star Spiral with finer detail
 Positions pattern_StarSpiralRound(Positions current, bool restartPattern = false);     // Star Spiral with circular outside
 Positions pattern_StarRainbow(Positions current, bool restartPattern = false);         // Rotating off-center star
+Positions pattern_Spirograph(Positions current, bool restartPattern = false);          // Classic spirograph (hypotrochoid)
+Positions pattern_Lissajous(Positions current, bool restartPattern = false);           // Lissajous harmonic curves
+Positions pattern_Harmonograph(Positions current, bool restartPattern = false);        // Damped pendulum simulation
 Positions pattern_SandScript(Positions current, bool restartPattern = false);          // SandScript-driven pattern (dynamic slot)
 
 /**
@@ -198,7 +201,8 @@ typedef Positions (*PatternFunction)(Positions, bool);
  * but keep it in mind when working with the array.
  */
 PatternFunction patterns[] = {pattern_SimpleSpiral, pattern_Cardioids, pattern_WavySpiral, pattern_RotatingSquares, pattern_PentagonSpiral, pattern_HexagonVortex, pattern_PentagonRainbow, pattern_RandomWalk1,
-                              pattern_RandomWalk2, pattern_AccidentalButterfly, pattern_StarSpiralNormal, pattern_StarSpiralDetail, pattern_StarSpiralRound, pattern_StarRainbow, pattern_SandScript};
+                              pattern_RandomWalk2, pattern_AccidentalButterfly, pattern_StarSpiralNormal, pattern_StarSpiralDetail, pattern_StarSpiralRound, pattern_StarRainbow,
+                              pattern_Spirograph, pattern_Lissajous, pattern_Harmonograph, pattern_SandScript};
 
 static const size_t PATTERN_COUNT = sizeof(patterns) / sizeof(patterns[0]);
 static const int SCRIPT_PATTERN_INDEX = static_cast<int>(PATTERN_COUNT); // 1-based index for BLE/UI
@@ -2750,6 +2754,25 @@ int modulus(int x, int y)
  */
 // Removed unused function: calculateDistanceBetweenPoints
 
+/**
+ * @brief Computes the greatest common divisor of two integers using Euclidean algorithm.
+ *
+ * @param a First integer.
+ * @param b Second integer.
+ *
+ * @return int The greatest common divisor.
+ */
+int gcd_int(int a, int b)
+{
+  while (b != 0)
+  {
+    int temp = b;
+    b = a % b;
+    a = temp;
+  }
+  return a;
+}
+
 #pragma endregion Math
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3671,6 +3694,188 @@ Positions pattern_StarRainbow(Positions current, bool restartPattern)
     translatePoints(pointList, vertices, {4000, shiftCounter * angleShift});
     shiftCounter++;
   }
+  return target;
+}
+
+/**
+ * @brief Pattern: Spirograph (Hypotrochoid). Creates classic spirograph toy patterns.
+ *
+ * A hypotrochoid is traced by a point attached to a circle rolling inside a larger circle.
+ * The ratio R:r determines the number of cusps in the pattern.
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_Spirograph(Positions current, bool restartPattern)
+{
+  Positions target;
+  static float t = 0.0f;
+  static float angleOffset = 0.0f;
+  static bool firstRun = true;
+
+  // Spirograph parameters (R:r = 5:3 creates 5-cusped flower)
+  const float R = 5.0f;                     // Fixed circle radius (arbitrary units)
+  const float r = 3.0f;                     // Rolling circle radius
+  const float d = 2.5f;                     // Pen distance from rolling center
+  const float scale = MAX_R_STEPS / 7.0f;   // Scale to fit sand garden
+  const float rotationStep = 0.1745f;       // ~10 degrees rotation per cycle
+  const float period = 2.0f * PI * r;       // Full pattern period
+
+  if (firstRun || restartPattern)
+  {
+    t = 0.0f;
+    angleOffset = 0.0f;
+    firstRun = false;
+  }
+
+  // Parametric equations for hypotrochoid
+  float x = (R - r) * cos(t) + d * cos((R - r) / r * t);
+  float y = (R - r) * sin(t) - d * sin((R - r) / r * t);
+
+  // Convert Cartesian to polar
+  float radius = sqrt(x * x + y * y) * scale;
+  float angle = atan2(y, x) + angleOffset;
+  if (angle < 0)
+    angle += 2.0f * PI;
+
+  target.radial = constrain((int)radius, 0, MAX_R_STEPS);
+  target.angular = convertRadiansToSteps(angle);
+
+  t += 0.02f; // Step size (smaller = smoother)
+
+  // After completing a cycle, rotate the pattern
+  if (t >= period)
+  {
+    t = 0.0f;
+    angleOffset += rotationStep;
+  }
+
+  return target;
+}
+
+/**
+ * @brief Pattern: Lissajous. Creates interlocking harmonic curves.
+ *
+ * Lissajous figures are created by two perpendicular harmonic oscillators.
+ * The ratio a:b determines the shape (3:4 creates a complex weave pattern).
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_Lissajous(Positions current, bool restartPattern)
+{
+  Positions target;
+  static float t = 0.0f;
+  static float angleOffset = 0.0f;
+  static bool firstRun = true;
+
+  // Lissajous parameters (a:b = 3:4 creates complex weave)
+  const float A = 0.9f;             // X amplitude (fraction of max radius)
+  const float B = 0.9f;             // Y amplitude
+  const float a = 3.0f;             // X frequency
+  const float b = 4.0f;             // Y frequency
+  const float delta = PI / 2.0f;    // Phase offset
+  const float scale = MAX_R_STEPS * 0.5f;
+  const float rotationStep = 0.1309f;  // ~7.5 degrees rotation per cycle
+
+  if (firstRun || restartPattern)
+  {
+    t = 0.0f;
+    angleOffset = 0.0f;
+    firstRun = false;
+  }
+
+  // Parametric Lissajous equations
+  float x = A * sin(a * t + delta);
+  float y = B * sin(b * t);
+
+  // Convert to polar (centered)
+  float radius = sqrt(x * x + y * y) * scale;
+  float angle = atan2(y, x) + angleOffset;
+  if (angle < 0)
+    angle += 2.0f * PI;
+
+  target.radial = constrain((int)radius, 0, MAX_R_STEPS);
+  target.angular = convertRadiansToSteps(angle);
+
+  t += 0.015f;
+
+  // After completing figure, rotate the pattern
+  float period = 2.0f * PI * ((float)b / (float)gcd_int((int)a, (int)b));
+  if (t > period)
+  {
+    t = 0.0f;
+    angleOffset += rotationStep;
+  }
+
+  return target;
+}
+
+/**
+ * @brief Pattern: Harmonograph. Simulates damped pendulum interference patterns.
+ *
+ * A harmonograph combines multiple damped harmonic oscillators to create
+ * complex interference patterns that slowly decay toward the center.
+ *
+ * @param current The current position of the gantry.
+ * @param restartPattern A flag that allows restarting the pattern. Defaults to false.
+ *
+ * @return Positions The next target position for the motion controller.
+ */
+Positions pattern_Harmonograph(Positions current, bool restartPattern)
+{
+  Positions target;
+  static float t = 0.0f;
+  static float angleOffset = 0.0f;
+  static bool firstRun = true;
+
+  // Harmonograph parameters (tuned for visual appeal)
+  const float A1 = 1.0f, A2 = 1.0f, A3 = 1.0f, A4 = 1.0f;
+  const float f1 = 2.0f, f2 = 3.0f, f3 = 3.0f, f4 = 2.0f;
+  const float p1 = 0.0f, p2 = 0.0f, p3 = PI / 2.0f, p4 = PI / 4.0f;
+  const float d1 = 0.002f, d2 = 0.002f, d3 = 0.002f, d4 = 0.002f;
+  const float scale = MAX_R_STEPS * 0.4f;
+  const float maxT = 500.0f; // Reset point
+  const float rotationStep = 0.2618f;  // ~15 degrees rotation per cycle
+
+  if (firstRun || restartPattern)
+  {
+    t = 0.0f;
+    angleOffset = 0.0f;
+    firstRun = false;
+  }
+
+  // Damped harmonic oscillators
+  float decay1 = exp(-d1 * t);
+  float decay2 = exp(-d2 * t);
+  float decay3 = exp(-d3 * t);
+  float decay4 = exp(-d4 * t);
+
+  float x = A1 * sin(f1 * t + p1) * decay1 + A2 * sin(f2 * t + p2) * decay2;
+  float y = A3 * sin(f3 * t + p3) * decay3 + A4 * sin(f4 * t + p4) * decay4;
+
+  // Convert to polar
+  float radius = sqrt(x * x + y * y) * scale;
+  float angle = atan2(y, x) + angleOffset;
+  if (angle < 0)
+    angle += 2.0f * PI;
+
+  target.radial = constrain((int)radius, 0, MAX_R_STEPS);
+  target.angular = convertRadiansToSteps(angle);
+
+  t += 0.05f;
+
+  // Reset when pattern decays to near-zero, rotate for next cycle
+  if (t > maxT || radius < 50)
+  {
+    t = 0.0f;
+    angleOffset += rotationStep;
+  }
+
   return target;
 }
 

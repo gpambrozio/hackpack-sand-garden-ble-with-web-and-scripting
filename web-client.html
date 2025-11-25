@@ -805,7 +805,10 @@
           { id: 12, type: 'builtin', name: 'Star Spiral Detail', short: 'star dtl', description: 'Star spiral with finer detail (smaller steps).', pointsTarget: 5000 },
           { id: 13, type: 'builtin', name: 'Star Spiral Round', short: 'star rnd', description: 'Pentagon with circular appearance.', pointsTarget: 3500 },
           { id: 14, type: 'builtin', name: 'Star Rainbow', short: 'star rb', description: 'Off-center rotating star pattern.', pointsTarget: 2500 },
-          { id: 15, type: 'sandscript', name: 'Sandscript', short: 'script', description: 'Your custom Sandscript.' }
+          { id: 15, type: 'builtin', name: 'Spirograph', short: 'spiro', description: 'Classic spirograph hypotrochoid pattern (5-cusp flower).', pointsTarget: 3000 },
+          { id: 16, type: 'builtin', name: 'Lissajous', short: 'lissaj', description: 'Harmonic curves from perpendicular oscillators (3:4 ratio).', pointsTarget: 3500 },
+          { id: 17, type: 'builtin', name: 'Harmonograph', short: 'harmon', description: 'Damped pendulum interference patterns.', pointsTarget: 4000 },
+          { id: 18, type: 'sandscript', name: 'Sandscript', short: 'script', description: 'Your custom Sandscript.' }
         ],
         ledEffectMeta: [
           { id: 1, name: 'Rainbow', description: 'Moving rainbow wave across the strip' },
@@ -975,9 +978,9 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         lastFaultMessage: null,
         lastDSLLocals: null,
         // DSL temporal counters
-        dslStepCounter: 0, // increments per DSL evaluation (pattern 11)
+        dslStepCounter: 0, // increments per DSL evaluation (pattern 18)
         dslStartTimestamp: null, // performance.now() when DSL pattern generation started
-        // Sequences for per-step DSL inputs/outputs (pattern 11 only)
+        // Sequences for per-step DSL inputs/outputs (pattern 18 only)
         dslInputsSeq: [],
         dslOutputsSeq: [],
         dslLocalsSeq: [],
@@ -2165,9 +2168,9 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             this.setStatus(`[SCRIPT] Uploaded ${scriptBytes.length} bytes`);
             this.log('[SCRIPT] Upload successful');
 
-            // Switch to pattern 11 if not already there
-            if (this.pattern !== 11) {
-              await this.selectPattern(11);
+            // Switch to pattern 19 if not already there
+            if (this.pattern !== 18) {
+              await this.selectPattern(19);
             }
           } catch (err) {
             this.scriptUploadStatus = 'Upload failed: ' + (err.message || err);
@@ -2380,7 +2383,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           this.resetTrail();
           this.clearDslFault();
 
-          if (this.pattern !== 11) {
+          if (this.pattern !== 18) {
             this.dslInputsSeq = [];
             this.dslOutputsSeq = [];
             this.lastDSLInputs = null;
@@ -2391,7 +2394,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
           else {
             this.updateDSLDetails();
           }
-          if (this.pattern !== 11) {
+          if (this.pattern !== 18) {
             this.dslLocalsSeq = [];
             this.lastDSLLocals = null;
           }
@@ -2557,7 +2560,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
         ensurePathBuffer() { /* offscreen path buffer removed */ },
         clearPath() { /* not needed in on-the-fly system */ },
         updateDSLDetails() {
-          if (this.pattern !== 11) return; // only for DSL pattern
+          if (this.pattern !== 18) return; // only for DSL pattern
           // In on-the-fly system, we update DSL details based on current position
           // The details were already set during step generation
         },
@@ -2897,7 +2900,144 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
                 return { radial: Math.round(rad + rOffset), angular: Math.round(ang + aOffset) };
               };
             },
-            11: () => { // Custom Sandscript (units radius: cm, angle: degrees, rev continuous, steps & time)
+            11: () => { // Star Spiral Normal (5-pointed star, skip 2 vertices)
+              const vertices = 5; let vertexList = []; let start = 0, end = 2; let firstRun = true; let radialStepover = 1000; let lineIter = null;
+              const rebuildLine = () => { lineIter = createLineIterator(vertexList[start], vertexList[end], 100); };
+              return (current, restart) => {
+                if (firstRun || restart) { vertexList = nGonGenerator(vertices, 1000, 0); firstRun = false; start = 0; end = 2; radialStepover = 1000; rebuildLine(); }
+                let point = lineIter();
+                if (!point) {
+                  start = modulus(start + 2, vertices); end = modulus(end + 2, vertices);
+                  if (start === 0 && end === 2) {
+                    for (let i = 0; i < vertices; i++) {
+                      let newR = vertexList[i].radial + radialStepover;
+                      if (newR > MAX_R_STEPS || newR < 0) { radialStepover *= -1; newR += 2 * radialStepover; }
+                      vertexList[i].radial = newR;
+                    }
+                  }
+                  rebuildLine(); point = lineIter();
+                }
+                return point;
+              };
+            },
+            12: () => { // Star Spiral Detail (finer detail, smaller steps)
+              const vertices = 5; let vertexList = []; let start = 0, end = 2; let firstRun = true; let radialStepover = 500; let lineIter = null;
+              const rebuildLine = () => { lineIter = createLineIterator(vertexList[start], vertexList[end], 100); };
+              return (current, restart) => {
+                if (firstRun || restart) { vertexList = nGonGenerator(vertices, 1000, 0); firstRun = false; start = 0; end = 2; radialStepover = 500; rebuildLine(); }
+                let point = lineIter();
+                if (!point) {
+                  start = modulus(start + 2, vertices); end = modulus(end + 2, vertices);
+                  if (start === 0 && end === 2) {
+                    for (let i = 0; i < vertices; i++) {
+                      let newR = vertexList[i].radial + radialStepover;
+                      if (newR > MAX_R_STEPS || newR < 0) { radialStepover *= -1; newR += 2 * radialStepover; }
+                      vertexList[i].radial = newR;
+                    }
+                  }
+                  rebuildLine(); point = lineIter();
+                }
+                return point;
+              };
+            },
+            13: () => { // Star Spiral Round (pentagon, connects adjacent vertices)
+              const vertices = 5; let vertexList = []; let start = 0, end = 2; let firstRun = true; let radialStepover = 500; let lineIter = null;
+              const rebuildLine = () => { lineIter = createLineIterator(vertexList[start], vertexList[end], 100); };
+              return (current, restart) => {
+                if (firstRun || restart) { vertexList = nGonGenerator(vertices, 1000, 0); firstRun = false; start = 0; end = 2; radialStepover = 500; rebuildLine(); }
+                let point = lineIter();
+                if (!point) {
+                  start = modulus(start + 1, vertices); end = modulus(end + 1, vertices);
+                  if (start === 0 && end === 2) {
+                    for (let i = 0; i < vertices; i++) {
+                      let newR = vertexList[i].radial + radialStepover;
+                      if (newR > MAX_R_STEPS || newR < 0) { radialStepover *= -1; newR += 2 * radialStepover; }
+                      vertexList[i].radial = newR;
+                    }
+                  }
+                  rebuildLine(); point = lineIter();
+                }
+                return point;
+              };
+            },
+            14: () => { // Star Rainbow (off-center rotating star)
+              const vertices = 5; const shiftDeg = 2; const baseRadius = 3000; const translateRadius = 4000;
+              let firstRun = true; let shiftCounter = 1; let pointList = []; let start = 0, end = 2; let lineIter = null;
+              const rebuildStar = () => {
+                pointList = nGonGenerator(vertices, baseRadius, shiftCounter * shiftDeg);
+                pointList = translatePoints(pointList, { radial: translateRadius, angular: shiftCounter * convertDegreesToSteps(shiftDeg) });
+                lineIter = createLineIterator(pointList[start], pointList[end], 100);
+              };
+              return (current, restart) => {
+                if (firstRun || restart) { firstRun = false; shiftCounter = 1; start = 0; end = 2; rebuildStar(); }
+                let pt = lineIter();
+                if (!pt) {
+                  start = modulus(start + 2, vertices); end = modulus(end + 2, vertices);
+                  rebuildStar();
+                  shiftCounter++;
+                  pt = lineIter();
+                }
+                return pt;
+              };
+            },
+            15: () => { // Spirograph (Hypotrochoid)
+              const R = 5.0, r = 3.0, d = 2.5; // R:r = 5:3 creates 5-cusped flower
+              const scale = MAX_R_STEPS / 7.0;
+              const rotationStep = 0.1745; // ~10 degrees per cycle
+              const period = 2 * Math.PI * r;
+              let t = 0; let angleOffset = 0; let firstRun = true;
+              return (current, restart) => {
+                if (firstRun || restart) { t = 0; angleOffset = 0; firstRun = false; }
+                const x = (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t);
+                const y = (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t);
+                const radius = Math.sqrt(x * x + y * y) * scale;
+                let angle = Math.atan2(y, x) + angleOffset; if (angle < 0) angle += 2 * Math.PI;
+                t += 0.02;
+                if (t >= period) { t = 0; angleOffset += rotationStep; }
+                return { radial: Math.min(Math.max(0, Math.round(radius)), MAX_R_STEPS), angular: Math.round(fmap(angle, 0, 2 * Math.PI, 0, STEPS_PER_A_AXIS_REV)) };
+              };
+            },
+            16: () => { // Lissajous (harmonic curves)
+              const A = 0.9, B = 0.9, a = 3, b = 4, delta = Math.PI / 2;
+              const scale = MAX_R_STEPS * 0.5;
+              const rotationStep = 0.1309; // ~7.5 degrees per cycle
+              const gcd = (x, y) => { while (y !== 0) { const temp = y; y = x % y; x = temp; } return x; };
+              const period = 2 * Math.PI * (b / gcd(a, b));
+              let t = 0; let angleOffset = 0; let firstRun = true;
+              return (current, restart) => {
+                if (firstRun || restart) { t = 0; angleOffset = 0; firstRun = false; }
+                const x = A * Math.sin(a * t + delta);
+                const y = B * Math.sin(b * t);
+                const radius = Math.sqrt(x * x + y * y) * scale;
+                let angle = Math.atan2(y, x) + angleOffset; if (angle < 0) angle += 2 * Math.PI;
+                t += 0.015;
+                if (t > period) { t = 0; angleOffset += rotationStep; }
+                return { radial: Math.min(Math.max(0, Math.round(radius)), MAX_R_STEPS), angular: Math.round(fmap(angle, 0, 2 * Math.PI, 0, STEPS_PER_A_AXIS_REV)) };
+              };
+            },
+            17: () => { // Harmonograph (damped pendulum)
+              const A1 = 1, A2 = 1, A3 = 1, A4 = 1;
+              const f1 = 2, f2 = 3, f3 = 3, f4 = 2;
+              const p1 = 0, p2 = 0, p3 = Math.PI / 2, p4 = Math.PI / 4;
+              const d1 = 0.002, d2 = 0.002, d3 = 0.002, d4 = 0.002;
+              const scale = MAX_R_STEPS * 0.4;
+              const maxT = 500;
+              const rotationStep = 0.2618; // ~15 degrees per cycle
+              let t = 0; let angleOffset = 0; let firstRun = true;
+              return (current, restart) => {
+                if (firstRun || restart) { t = 0; angleOffset = 0; firstRun = false; }
+                const decay1 = Math.exp(-d1 * t), decay2 = Math.exp(-d2 * t);
+                const decay3 = Math.exp(-d3 * t), decay4 = Math.exp(-d4 * t);
+                const x = A1 * Math.sin(f1 * t + p1) * decay1 + A2 * Math.sin(f2 * t + p2) * decay2;
+                const y = A3 * Math.sin(f3 * t + p3) * decay3 + A4 * Math.sin(f4 * t + p4) * decay4;
+                const radius = Math.sqrt(x * x + y * y) * scale;
+                let angle = Math.atan2(y, x) + angleOffset; if (angle < 0) angle += 2 * Math.PI;
+                t += 0.05;
+                if (t > maxT || radius < 50) { t = 0; angleOffset += rotationStep; }
+                return { radial: Math.min(Math.max(0, Math.round(radius)), MAX_R_STEPS), angular: Math.round(fmap(angle, 0, 2 * Math.PI, 0, STEPS_PER_A_AXIS_REV)) };
+              };
+            },
+            18: () => { // Custom Sandscript (units radius: cm, angle: degrees, rev continuous, steps & time)
               const stepsPerRev = STEPS_PER_A_AXIS_REV;
               const degToSteps = stepsPerRev / 360;
               const stepsPerCm = this.deviceStepsPerCm;
@@ -3404,7 +3544,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
             this.clearDslFault();
             return true;
           },
-          useScriptPattern() { if (!this.compiledScript) return; this.pattern = 11; this.setStatus('Using custom script'); this.regeneratePattern(); },
+          useScriptPattern() { if (!this.compiledScript) return; this.pattern = 18; this.setStatus('Using custom script'); this.regeneratePattern(); },
           simulateScript(options = {}) {
             const { silent = false, force = false } = options;
             if (this.debugStepsEnabled && !force) {
@@ -3419,7 +3559,7 @@ next_angle = angle + (3 + sin(angle*2.5)*1.8) * dir`
               }
               return false;
             }
-            if (this.pattern !== 11) this.pattern = 11;
+            if (this.pattern !== 18) this.pattern = 18;
             this.regeneratePattern();
             if (!silent) {
               this.setStatus('Sandscript preview regenerated');

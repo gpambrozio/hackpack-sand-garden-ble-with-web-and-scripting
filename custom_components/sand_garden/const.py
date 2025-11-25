@@ -35,7 +35,10 @@ PATTERNS = {
     12: "Star Spiral Detail",
     13: "Star Spiral Round",
     14: "Star Rainbow",
-    15: "SandScript",
+    15: "Spirograph",
+    16: "Lissajous",
+    17: "Harmonograph",
+    18: "SandScript",
 }
 
 # LED Effects (0-based index as per device)
